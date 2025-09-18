@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -37,8 +38,10 @@ export function PersonForm({
   const [isUploading, setIsUploading] = useState(false);
   const [globalProgress, setGlobalProgress] = useState<number>(0);
   const [fileProgress, setFileProgress] = useState<Record<string, number>>({});
+  const [failedFiles, setFailedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { toast } = useToast();
   const MAX_IMAGES = 5;
   const MAX_FILE_SIZE_MB = 3;
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -95,7 +98,7 @@ export function PersonForm({
     setGlobalProgress(0);
     setFileProgress({});
     try {
-      const uploads = await Promise.all(
+      const settled = await Promise.allSettled(
         toUpload.map((file) =>
           uploadToCloudinary(file, {
             folder: undefined,
@@ -113,10 +116,21 @@ export function PersonForm({
           })
         )
       );
-      const urls = uploads.map((u) => u.url);
-      form.setValue("imagenProfileUrl", [...current, ...urls], {
-        shouldDirty: true,
-      });
+
+      const successes = settled.filter(
+        (r) => r.status === "fulfilled"
+      ) as PromiseFulfilledResult<{ url: string; public_id: string }>[];
+      const failures = settled
+        .map((r, i) => ({ r, i }))
+        .filter((x) => x.r.status === "rejected")
+        .map((x) => toUpload[x.i]);
+
+      const urls = successes.map((r) => r.value.url);
+      if (urls.length > 0) {
+        form.setValue("imagenProfileUrl", [...current, ...urls], {
+          shouldDirty: true,
+        });
+      }
       if (messages.length) {
         form.setError("imagenProfileUrl" as any, {
           type: "manual",
@@ -124,6 +138,21 @@ export function PersonForm({
         });
       } else {
         form.clearErrors("imagenProfileUrl" as any);
+      }
+
+      if (urls.length > 0) {
+        toast({
+          title: "Imágenes subidas",
+          description: `${urls.length} imagen(es) agregadas.`,
+        });
+      }
+      if (failures.length > 0) {
+        setFailedFiles((prev) => [...prev, ...failures]);
+        toast({
+          title: "Error de subida",
+          description: `No se pudieron subir ${failures.length} archivo(s). Intenta nuevamente.`,
+          variant: "destructive",
+        });
       }
     } finally {
       setIsUploading(false);
@@ -136,6 +165,51 @@ export function PersonForm({
     const current = form.getValues("imagenProfileUrl") || [];
     const next = current.filter((_, i) => i !== index);
     form.setValue("imagenProfileUrl", next, { shouldDirty: true });
+  };
+
+  const retryFile = async (file: File) => {
+    setIsUploading(true);
+    setGlobalProgress(0);
+    setFileProgress({});
+    try {
+      const result = await uploadToCloudinary(file, {
+        folder: undefined,
+        onProgress: (p) => {
+          setFileProgress((prev) => {
+            const next = { ...prev, [file.name]: p };
+            const values = Object.values(next);
+            const avg = values.length
+              ? values.reduce((a, b) => a + b, 0) / values.length
+              : 0;
+            setGlobalProgress(Math.round(avg));
+            return next;
+          });
+        },
+      });
+      const current = form.getValues("imagenProfileUrl") || [];
+      form.setValue("imagenProfileUrl", [...current, result.url], {
+        shouldDirty: true,
+      });
+      setFailedFiles((prev) => prev.filter((f) => f.name !== file.name));
+      toast({ title: "Imagen subida", description: `${file.name} agregada.` });
+    } catch (e) {
+      toast({
+        title: "Error de subida",
+        description: `No se pudo subir ${file.name}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setGlobalProgress(0);
+      setFileProgress({});
+    }
+  };
+
+  const retryAll = async () => {
+    if (failedFiles.length === 0) return;
+    const files = [...failedFiles];
+    setFailedFiles([]);
+    await handleFiles(files);
   };
 
   return (
@@ -272,6 +346,44 @@ export function PersonForm({
                               {name}
                             </span>
                             <span>{p}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {failedFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          {failedFiles.length} archivo(s) fallidos
+                        </p>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={retryAll}
+                        >
+                          Reintentar todos
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 gap-1">
+                        {failedFiles.map((file) => (
+                          <div
+                            key={file.name}
+                            className="flex items-center justify-between text-xs"
+                          >
+                            <span className="truncate max-w-[200px] text-muted-foreground">
+                              {file.name}
+                            </span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => retryFile(file)}
+                            >
+                              Reintentar
+                            </Button>
                           </div>
                         ))}
                       </div>
