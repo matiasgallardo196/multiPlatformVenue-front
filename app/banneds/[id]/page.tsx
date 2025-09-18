@@ -310,35 +310,6 @@ export default function BannedDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Banned Places */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Banned Places
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {bannedPlaceNames.length > 0 ? (
-                <div className="space-y-2">
-                  {bannedPlaceNames.map((placeName, index) => (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="block w-fit"
-                    >
-                      {placeName}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No specific places restricted
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Actions */}
           {!isReadOnly && (
             <Card>
@@ -397,6 +368,35 @@ export default function BannedDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Banned Places */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Banned Places
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {bannedPlaceNames.length > 0 ? (
+                <div className="space-y-2">
+                  {bannedPlaceNames.map((placeName, index) => (
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="block w-fit"
+                    >
+                      {placeName}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No specific places restricted
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </DashboardLayout>

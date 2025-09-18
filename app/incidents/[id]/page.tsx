@@ -122,6 +122,64 @@ export default function IncidentDetailPage() {
           </CardContent>
         </Card>
 
+        {!isReadOnly && (
+          <Card>
+            <CardContent className="p-6 space-y-2">
+              <div className="text-sm font-medium mb-1">Actions</div>
+
+              <IncidentEditDialog id={incident.id}>
+                <Button
+                  className="w-full bg-transparent cursor-pointer"
+                  variant="outline"
+                >
+                  Edit Incident
+                </Button>
+              </IncidentEditDialog>
+
+              {!incident.banned && (
+                <BannedCreateDialog
+                  incidentId={incident.id}
+                  defaultPlaceId={incident.place?.id}
+                >
+                  <Button
+                    className="w-full bg-transparent cursor-pointer"
+                    variant="outline"
+                  >
+                    Create Ban
+                  </Button>
+                </BannedCreateDialog>
+              )}
+
+              <Button
+                className="w-full cursor-pointer"
+                variant="destructive"
+                onClick={async () => {
+                  if (
+                    !confirm("Are you sure you want to delete this incident?")
+                  )
+                    return;
+                  try {
+                    await deleteIncident.mutateAsync(incident.id);
+                    toast({
+                      title: "Deleted",
+                      description: "Incident removed.",
+                    });
+                    router.replace("/incidents");
+                  } catch (e: any) {
+                    toast({
+                      title: "Error",
+                      description: e?.message || "Failed to delete incident.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Delete Incident
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {incident.details && (
           <Card>
             <CardContent className="p-6 space-y-3">
