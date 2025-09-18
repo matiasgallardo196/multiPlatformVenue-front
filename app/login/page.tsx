@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/form";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
-import { Loader2, Eye, EyeOff, Lock, User } from "lucide-react";
+import { Loader2, Eye, EyeOff, Lock, User, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 
 const loginSchema = z.object({
   userName: z.string().min(1, "User name is required"),
@@ -30,6 +31,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { userName: "", password: "" },
@@ -47,6 +50,8 @@ export default function LoginPage() {
     })();
   }, [router]);
 
+  useEffect(() => setMounted(true), []);
+
   const onSubmit = async (values: LoginForm) => {
     setError(null);
     try {
@@ -57,10 +62,32 @@ export default function LoginPage() {
     }
   };
 
+  const isDark = (resolvedTheme || theme) === "dark";
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/40 flex items-center justify-center p-4">
+    <div className="relative min-h-screen bg-gradient-to-b from-background to-muted/40 flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-xl border bg-card shadow-sm">
         <div className="p-6 sm:p-8">
+          <div className="flex justify-end mb-2">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label={
+                isDark ? "Switch to light theme" : "Switch to dark theme"
+              }
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+            >
+              {mounted ? (
+                isDark ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
             <p className="text-sm text-muted-foreground mt-1">
