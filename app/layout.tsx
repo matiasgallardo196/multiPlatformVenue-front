@@ -15,6 +15,11 @@ export const metadata: Metadata = {
   description:
     "Admin dashboard for managing banned persons, places, and incidents",
   generator: "v0.app",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/placeholder-logo.png",
+  },
 };
 
 export default function RootLayout({
