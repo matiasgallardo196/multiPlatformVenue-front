@@ -99,7 +99,7 @@ export default function PersonsPage() {
       >
         {!isReadOnly && (
           <PersonCreateDialog>
-            <Button>
+            <Button className="cursor-pointer">
               <Plus className="mr-2 h-4 w-4" />
               Add New Person
             </Button>
@@ -135,7 +135,7 @@ export default function PersonsPage() {
                 {!isReadOnly && (
                   <div className="mt-6">
                     <PersonCreateDialog>
-                      <Button>
+                      <Button className="cursor-pointer">
                         <Plus className="mr-2 h-4 w-4" />
                         Add New Person
                       </Button>
@@ -216,17 +216,18 @@ export default function PersonsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-8 w-8 cursor-pointer"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
+                          <DropdownMenuItem asChild className="cursor-pointer">
                             <Link
                               href={`/persons/${person.id}`}
                               onClick={(e) => e.stopPropagation()}
+                              className="cursor-pointer"
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
@@ -237,6 +238,7 @@ export default function PersonsPage() {
                               <DropdownMenuItem
                                 onSelect={(e) => e.preventDefault()}
                                 onClick={(e) => e.stopPropagation()}
+                                className="cursor-pointer"
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
@@ -249,7 +251,7 @@ export default function PersonsPage() {
                                 e.stopPropagation();
                                 handleDelete(person.id);
                               }}
-                              className="text-destructive"
+                              className="text-destructive cursor-pointer"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete

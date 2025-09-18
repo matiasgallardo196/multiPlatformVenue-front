@@ -18,11 +18,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useIncident } from "@/hooks/queries";
+import { useIncident, useDeleteIncident } from "@/hooks/queries";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function IncidentDetailPage() {
   const params = useParams<{ id: string }>();
@@ -31,6 +33,9 @@ export default function IncidentDetailPage() {
   const { isReadOnly } = useAuth();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const deleteIncident = useDeleteIncident();
+  const { toast } = useToast();
+  const router = useRouter();
 
   const getPersonName = () => {
     const p = incident?.person;
@@ -69,19 +74,7 @@ export default function IncidentDetailPage() {
         <Button variant="outline" asChild>
           <Link href="/incidents">Back to List</Link>
         </Button>
-        {!isReadOnly && (
-          <div className="flex gap-2">
-            <IncidentEditDialog id={incident.id}>
-              <Button variant="outline">Edit Incident</Button>
-            </IncidentEditDialog>
-            <BannedCreateDialog
-              incidentId={incident.id}
-              defaultPlaceId={incident.place?.id}
-            >
-              <Button>Create Ban</Button>
-            </BannedCreateDialog>
-          </div>
-        )}
+        {/* Actions moved to the Actions block below; header actions removed to avoid duplication */}
       </PageHeader>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -218,6 +211,66 @@ export default function IncidentDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {!isReadOnly && (
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardContent className="p-6 space-y-2">
+              <div className="text-sm font-medium mb-1">Actions</div>
+
+              <IncidentEditDialog id={incident.id}>
+                <Button
+                  className="w-full bg-transparent cursor-pointer"
+                  variant="outline"
+                >
+                  Edit Incident
+                </Button>
+              </IncidentEditDialog>
+
+              {!incident.banned && (
+                <BannedCreateDialog
+                  incidentId={incident.id}
+                  defaultPlaceId={incident.place?.id}
+                >
+                  <Button
+                    className="w-full bg-transparent cursor-pointer"
+                    variant="outline"
+                  >
+                    Create Ban
+                  </Button>
+                </BannedCreateDialog>
+              )}
+
+              <Button
+                className="w-full cursor-pointer"
+                variant="destructive"
+                onClick={async () => {
+                  if (
+                    !confirm("Are you sure you want to delete this incident?")
+                  )
+                    return;
+                  try {
+                    await deleteIncident.mutateAsync(incident.id);
+                    toast({
+                      title: "Deleted",
+                      description: "Incident removed.",
+                    });
+                    router.replace("/incidents");
+                  } catch (e: any) {
+                    toast({
+                      title: "Error",
+                      description: e?.message || "Failed to delete incident.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Delete Incident
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

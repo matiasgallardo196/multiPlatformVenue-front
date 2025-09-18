@@ -113,7 +113,7 @@ export default function IncidentsPage() {
       >
         {!isReadOnly && (
           <IncidentCreateDialog>
-            <Button>
+            <Button className="cursor-pointer">
               <Plus className="mr-2 h-4 w-4" />
               Add New Incident
             </Button>
@@ -216,17 +216,18 @@ export default function IncidentsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-8 w-8 cursor-pointer"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
+                          <DropdownMenuItem asChild className="cursor-pointer">
                             <Link
                               href={`/incidents/${incident.id}`}
                               onClick={(e) => e.stopPropagation()}
+                              className="cursor-pointer"
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
@@ -237,6 +238,7 @@ export default function IncidentsPage() {
                               <DropdownMenuItem
                                 onSelect={(e) => e.preventDefault()}
                                 onClick={(e) => e.stopPropagation()}
+                                className="cursor-pointer"
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
@@ -249,7 +251,7 @@ export default function IncidentsPage() {
                                 e.stopPropagation();
                                 handleDelete(incident.id);
                               }}
-                              className="text-destructive"
+                              className="text-destructive cursor-pointer"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete

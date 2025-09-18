@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useBanned, usePlaces } from "@/hooks/queries";
+import { useBanned, usePlaces, useDeleteBanned } from "@/hooks/queries";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Dialog,
@@ -27,15 +27,20 @@ import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { BannedEditDialog } from "@/components/banned/banned-edit-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BannedDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
 
   const { data: banned, isLoading, error } = useBanned(id);
   const { data: places } = usePlaces();
   const { isReadOnly } = useAuth();
+  const deleteBanned = useDeleteBanned();
+  const { toast } = useToast();
 
   if (isLoading) {
     return (
@@ -341,12 +346,17 @@ export default function BannedDetailPage() {
                 <CardTitle>Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button className="w-full bg-transparent" variant="outline">
-                  Edit Ban Details
-                </Button>
+                <BannedEditDialog id={banned.id}>
+                  <Button
+                    className="w-full bg-transparent cursor-pointer"
+                    variant="outline"
+                  >
+                    Edit Ban Details
+                  </Button>
+                </BannedEditDialog>
                 {banned.incident?.id ? (
                   <Button
-                    className="w-full bg-transparent"
+                    className="w-full bg-transparent cursor-pointer"
                     variant="outline"
                     asChild
                   >
@@ -363,7 +373,25 @@ export default function BannedDetailPage() {
                     View Related Incidents
                   </Button>
                 )}
-                <Button className="w-full" variant="destructive">
+                <Button
+                  className="w-full cursor-pointer"
+                  variant="destructive"
+                  onClick={async () => {
+                    if (!confirm("Are you sure you want to delete this ban?"))
+                      return;
+                    try {
+                      await deleteBanned.mutateAsync(banned.id);
+                      toast({ title: "Deleted", description: "Ban removed." });
+                      router.replace("/banneds");
+                    } catch (e: any) {
+                      toast({
+                        title: "Error",
+                        description: e?.message || "Failed to delete ban.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
                   Delete Ban Record
                 </Button>
               </CardContent>

@@ -123,14 +123,14 @@ export function BannedCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 cursor-pointer"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="cursor-pointer">
                   <Link
                     href={`/banneds/${banned.id}`}
                     onClick={(e) => e.stopPropagation()}
@@ -144,6 +144,7 @@ export function BannedCard({
                     <DropdownMenuItem
                       onSelect={(e) => e.preventDefault()}
                       onClick={(e) => e.stopPropagation()}
+                      className="cursor-pointer"
                     >
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
@@ -156,7 +157,7 @@ export function BannedCard({
                       e.stopPropagation();
                       onDelete(banned.id);
                     }}
-                    className="text-destructive"
+                    className="text-destructive cursor-pointer"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete

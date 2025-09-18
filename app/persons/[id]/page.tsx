@@ -16,7 +16,16 @@ import {
   DialogTrigger,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { usePerson, usePersonBanStatus, usePersonBans } from "@/hooks/queries";
+import {
+  usePerson,
+  usePersonBanStatus,
+  usePersonBans,
+  useDeletePerson,
+} from "@/hooks/queries";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { PersonEditDialog } from "@/components/person/person-edit-dialog";
 import { useState } from "react";
 
 export default function PersonDetailPage() {
@@ -25,6 +34,10 @@ export default function PersonDetailPage() {
   const { data: person, isLoading, error } = usePerson(id);
   const { data: banStatus } = usePersonBanStatus(id);
   const { data: bans } = usePersonBans(id);
+  const { isReadOnly } = useAuth();
+  const deletePerson = useDeletePerson();
+  const { toast } = useToast();
+  const router = useRouter();
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
 
@@ -246,6 +259,50 @@ export default function PersonDetailPage() {
           </Card>
         )}
       </div>
+
+      {/* Actions */}
+      {!isReadOnly && (
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardContent className="p-6 space-y-2">
+              <div className="text-sm font-medium mb-1">Actions</div>
+
+              <PersonEditDialog id={person.id}>
+                <Button
+                  className="w-full bg-transparent cursor-pointer"
+                  variant="outline"
+                >
+                  Edit Person Details
+                </Button>
+              </PersonEditDialog>
+
+              {/* Removed View Related Incidents as requested */}
+
+              <Button
+                className="w-full cursor-pointer"
+                variant="destructive"
+                onClick={async () => {
+                  if (!confirm("Are you sure you want to delete this person?"))
+                    return;
+                  try {
+                    await deletePerson.mutateAsync(person.id);
+                    toast({ title: "Deleted", description: "Person removed." });
+                    router.replace("/persons");
+                  } catch (e: any) {
+                    toast({
+                      title: "Error",
+                      description: e?.message || "Failed to delete person.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Delete Person
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
