@@ -53,10 +53,7 @@ export default function IncidentDetailPage() {
 
   return (
     <DashboardLayout>
-      <PageHeader
-        title={`Incident #${incident.id.slice(-8)}`}
-        description={incident.details || undefined}
-      >
+      <PageHeader title={`Incident #${incident.id.slice(-8)}`}>
         <Button variant="outline" asChild>
           <Link href="/incidents">Back to List</Link>
         </Button>
@@ -119,6 +116,20 @@ export default function IncidentDetailPage() {
             {incident.banned && <Badge variant="destructive">Has Ban</Badge>}
           </CardContent>
         </Card>
+
+        {incident.details && (
+          <Card>
+            <CardContent className="p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Details</span>
+              </div>
+              <p className="text-sm bg-muted p-3 rounded text-pretty">
+                {incident.details}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardContent className="p-6 space-y-3">
