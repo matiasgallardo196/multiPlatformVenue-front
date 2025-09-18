@@ -22,6 +22,7 @@ import { BannedEditDialog } from "@/components/banned/banned-edit-dialog";
 import { format } from "date-fns";
 import type { Banned, Place } from "@/lib/types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface BannedCardProps {
   banned: Banned;
@@ -38,6 +39,7 @@ export function BannedCard({
   onDelete,
   readOnly = false,
 }: BannedCardProps) {
+  const router = useRouter();
   const person = banned.incident.person;
   const personName =
     [person?.name, person?.lastName].filter(Boolean).join(" ") ||
@@ -74,7 +76,14 @@ export function BannedCard({
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card
+      className="overflow-hidden transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+      onClick={() => router.push(`/banneds/${banned.id}`)}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") router.push(`/banneds/${banned.id}`);
+      }}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -111,7 +120,12 @@ export function BannedCard({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>

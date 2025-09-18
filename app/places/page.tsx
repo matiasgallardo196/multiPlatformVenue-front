@@ -145,7 +145,10 @@ export default function PlacesPage() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredPlaces.map((place: Place) => (
-                <Card key={place.id}>
+                <Card
+                  key={place.id}
+                  className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5"
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -165,6 +168,7 @@ export default function PlacesPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>

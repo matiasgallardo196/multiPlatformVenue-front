@@ -160,7 +160,13 @@ export default function PersonsPage() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredPersons.map((person) => (
-                <Card key={person.id}>
+                <Card
+                  key={person.id}
+                  className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                  onClick={() =>
+                    (window.location.href = `/persons/${person.id}`)
+                  }
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -199,6 +205,7 @@ export default function PersonsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
