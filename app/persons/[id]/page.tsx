@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, User } from "lucide-react";
+import { Loader2, User, Camera, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { usePerson, usePersonBanStatus, usePersonBans } from "@/hooks/queries";
+import { useState } from "react";
 
 export default function PersonDetailPage() {
   const params = useParams<{ id: string }>();
@@ -24,6 +25,8 @@ export default function PersonDetailPage() {
   const { data: person, isLoading, error } = usePerson(id);
   const { data: banStatus } = usePersonBanStatus(id);
   const { data: bans } = usePersonBans(id);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const getName = () => {
     if (!person) return "";
@@ -176,6 +179,72 @@ export default function PersonDetailPage() {
             )}
           </CardContent>
         </Card>
+        {person.imagenProfileUrl && person.imagenProfileUrl.length > 1 && (
+          <Card className="md:col-span-2">
+            <CardContent className="p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <Camera className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Additional Photos</span>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                {person.imagenProfileUrl.slice(1).map((url, idx) => (
+                  <img
+                    key={idx}
+                    src={url || "/placeholder.svg"}
+                    alt={`Photo ${idx + 2}`}
+                    className="w-full h-24 object-cover rounded border transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-zoom-in"
+                    onClick={() => {
+                      setGalleryIndex(idx + 1);
+                      setGalleryOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
+
+              <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
+                <DialogContent
+                  className="max-w-5xl p-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DialogTitle className="sr-only">Image preview</DialogTitle>
+                  <div className="relative">
+                    <img
+                      src={person.imagenProfileUrl[galleryIndex]}
+                      alt={`Photo ${galleryIndex + 1}`}
+                      className="w-full h-auto rounded"
+                    />
+                    {person.imagenProfileUrl.length > 2 && (
+                      <>
+                        <button
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const total = person.imagenProfileUrl.length;
+                            setGalleryIndex((galleryIndex - 1 + total) % total);
+                          }}
+                          aria-label="Previous"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const total = person.imagenProfileUrl.length;
+                            setGalleryIndex((galleryIndex + 1) % total);
+                          }}
+                          aria-label="Next"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
