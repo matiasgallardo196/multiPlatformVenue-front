@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { Loader2, Eye, EyeOff, Lock, User } from "lucide-react";
 
 const loginSchema = z.object({
   userName: z.string().min(1, "User name is required"),
@@ -27,15 +28,23 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { userName: "", password: "" },
   });
 
   useEffect(() => {
-    if (typeof window !== "undefined" && localStorage.getItem("accessToken")) {
-      router.replace("/dashboard");
-    }
+    (async () => {
+      try {
+        await api.get("/auth/me");
+        router.replace("/dashboard");
+      } catch {
+      } finally {
+        setChecking(false);
+      }
+    })();
   }, [router]);
 
   const onSubmit = async (values: LoginForm) => {
@@ -49,47 +58,106 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-sm border rounded-lg p-6">
-        <h1 className="text-xl font-semibold mb-4">Login</h1>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="userName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>User name</FormLabel>
-                  <FormControl>
-                    <Input autoComplete="username" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="current-password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full">
-              Sign in
-            </Button>
-          </form>
-        </Form>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/40 flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-xl border bg-card shadow-sm">
+        <div className="p-6 sm:p-8">
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Enter your credentials to access the dashboard
+            </p>
+          </div>
+
+          {checking ? (
+            <div className="flex items-center justify-center py-6 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin mr-2" /> Checking
+              session...
+            </div>
+          ) : (
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="userName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>User name</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            className="pl-9"
+                            placeholder="Your username"
+                            autoComplete="username"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            className="pl-9 pr-10"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Your password"
+                            autoComplete="current-password"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            aria-label={
+                              showPassword ? "Hide password" : "Show password"
+                            }
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            onClick={() => setShowPassword((v) => !v)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {error && (
+                  <p className="text-sm text-destructive" role="alert">
+                    {error}
+                  </p>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={form.formState.isSubmitting}
+                >
+                  {form.formState.isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Sign in
+                </Button>
+              </form>
+            </Form>
+          )}
+        </div>
       </div>
     </div>
   );
