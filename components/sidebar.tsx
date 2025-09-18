@@ -126,11 +126,7 @@ export function Sidebar() {
                 {currentUser.userName} ({currentUser.role})
               </div>
             )}
-            {!currentUser && (
-              <Button onClick={() => router.push("/login")} className="w-full">
-                Iniciar sesión
-              </Button>
-            )}
+            {/* Removed login button when no currentUser */}
             {visibleNavigation.map((item) => {
               const isActive =
                 pathname === item.href ||

@@ -28,7 +28,7 @@ export default function BannedsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
-  >("all");
+  >("active");
   const [selectedPlaces, setSelectedPlaces] = useState<string[]>([]);
 
   // Filter and search logic
