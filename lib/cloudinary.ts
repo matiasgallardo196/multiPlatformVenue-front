@@ -35,7 +35,8 @@ export async function uploadToCloudinary(
   formData.append("signature", sig.signature);
   formData.append("folder", sig.folder);
 
-  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
+  const cloudName = sig.cloudName || CLOUD_NAME;
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
 
   const xhr = new XMLHttpRequest();
   const promise = new Promise<{ url: string; public_id: string }>(
@@ -50,7 +51,18 @@ export async function uploadToCloudinary(
             reject(e);
           }
         } else {
-          reject(new Error(`Cloudinary upload failed: ${xhr.status}`));
+          let detail: string | undefined;
+          try {
+            const json = JSON.parse(xhr.responseText);
+            detail = json?.error?.message;
+          } catch {}
+          reject(
+            new Error(
+              `Cloudinary upload failed: ${xhr.status}${
+                detail ? ` - ${detail}` : ""
+              }`
+            )
+          );
         }
       };
       xhr.onerror = () =>
