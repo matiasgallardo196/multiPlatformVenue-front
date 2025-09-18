@@ -28,6 +28,7 @@ interface BannedCardProps {
   places: Place[];
   onEdit: (banned: Banned) => void;
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 }
 
 export function BannedCard({
@@ -35,6 +36,7 @@ export function BannedCard({
   places,
   onEdit,
   onDelete,
+  readOnly = false,
 }: BannedCardProps) {
   const person = banned.incident.person;
   const personName =
@@ -120,19 +122,23 @@ export function BannedCard({
                     View Details
                   </Link>
                 </DropdownMenuItem>
-                <BannedEditDialog id={banned.id}>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
+                {!readOnly && (
+                  <BannedEditDialog id={banned.id}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  </BannedEditDialog>
+                )}
+                {!readOnly && (
+                  <DropdownMenuItem
+                    onClick={() => onDelete(banned.id)}
+                    className="text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
                   </DropdownMenuItem>
-                </BannedEditDialog>
-                <DropdownMenuItem
-                  onClick={() => onDelete(banned.id)}
-                  className="text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

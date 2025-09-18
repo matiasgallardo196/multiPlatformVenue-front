@@ -11,9 +11,11 @@ import { useBanneds, usePlaces, useDeleteBanned } from "@/hooks/queries";
 import { Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Banned } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function BannedsPage() {
   const { toast } = useToast();
+  const { isReadOnly } = useAuth();
   const {
     data: banneds,
     isLoading: bannedsLoading,
@@ -116,12 +118,14 @@ export default function BannedsPage() {
         title="Banned Persons"
         description="Manage banned individuals and their restrictions"
       >
-        <BannedCreateFullDialog>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Ban
-          </Button>
-        </BannedCreateFullDialog>
+        {!isReadOnly && (
+          <BannedCreateFullDialog>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Ban
+            </Button>
+          </BannedCreateFullDialog>
+        )}
       </PageHeader>
 
       <div className="space-y-6">
@@ -168,6 +172,7 @@ export default function BannedsPage() {
                   places={places || []}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  readOnly={isReadOnly}
                 />
               ))}
             </div>

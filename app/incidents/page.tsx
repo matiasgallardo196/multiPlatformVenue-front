@@ -33,9 +33,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import type { Incident } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function IncidentsPage() {
   const { toast } = useToast();
+  const { isReadOnly } = useAuth();
   const { data: incidents, isLoading, error } = useIncidents();
   const deleteIncidentMutation = useDeleteIncident();
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,12 +111,14 @@ export default function IncidentsPage() {
         title="Incidents"
         description="Track and manage incident reports"
       >
-        <IncidentCreateDialog>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Incident
-          </Button>
-        </IncidentCreateDialog>
+        {!isReadOnly && (
+          <IncidentCreateDialog>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Incident
+            </Button>
+          </IncidentCreateDialog>
+        )}
       </PageHeader>
 
       <div className="space-y-6">
@@ -142,14 +146,16 @@ export default function IncidentsPage() {
                 <p className="mt-1 text-sm text-muted-foreground">
                   Get started by creating a new incident report.
                 </p>
-                <div className="mt-6">
-                  <IncidentCreateDialog>
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add New Incident
-                    </Button>
-                  </IncidentCreateDialog>
-                </div>
+                {!isReadOnly && (
+                  <div className="mt-6">
+                    <IncidentCreateDialog>
+                      <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add New Incident
+                      </Button>
+                    </IncidentCreateDialog>
+                  </div>
+                )}
               </>
             ) : (
               <p className="text-muted-foreground">
@@ -204,21 +210,25 @@ export default function IncidentsPage() {
                               View Details
                             </Link>
                           </DropdownMenuItem>
-                          <IncidentEditDialog id={incident.id}>
+                          {!isReadOnly && (
+                            <IncidentEditDialog id={incident.id}>
+                              <DropdownMenuItem
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                            </IncidentEditDialog>
+                          )}
+                          {!isReadOnly && (
                             <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
+                              onClick={() => handleDelete(incident.id)}
+                              className="text-destructive"
                             >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
                             </DropdownMenuItem>
-                          </IncidentEditDialog>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(incident.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

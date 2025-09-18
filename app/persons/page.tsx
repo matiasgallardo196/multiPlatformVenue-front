@@ -30,9 +30,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import type { Person } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function PersonsPage() {
   const { toast } = useToast();
+  const { isReadOnly } = useAuth();
   const { data: persons, isLoading, error } = usePersons();
   const deletePersonMutation = useDeletePerson();
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,12 +97,14 @@ export default function PersonsPage() {
         title="Persons"
         description="Manage individual person records and their information"
       >
-        <PersonCreateDialog>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Person
-          </Button>
-        </PersonCreateDialog>
+        {!isReadOnly && (
+          <PersonCreateDialog>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Person
+            </Button>
+          </PersonCreateDialog>
+        )}
       </PageHeader>
 
       <div className="space-y-6">
@@ -128,14 +132,16 @@ export default function PersonsPage() {
                 <p className="mt-1 text-sm text-muted-foreground">
                   Get started by creating a new person.
                 </p>
-                <div className="mt-6">
-                  <PersonCreateDialog>
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add New Person
-                    </Button>
-                  </PersonCreateDialog>
-                </div>
+                {!isReadOnly && (
+                  <div className="mt-6">
+                    <PersonCreateDialog>
+                      <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add New Person
+                      </Button>
+                    </PersonCreateDialog>
+                  </div>
+                )}
               </>
             ) : (
               <p className="text-muted-foreground">
@@ -204,21 +210,25 @@ export default function PersonsPage() {
                               View Details
                             </Link>
                           </DropdownMenuItem>
-                          <PersonEditDialog id={person.id}>
+                          {!isReadOnly && (
+                            <PersonEditDialog id={person.id}>
+                              <DropdownMenuItem
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                            </PersonEditDialog>
+                          )}
+                          {!isReadOnly && (
                             <DropdownMenuItem
-                              onSelect={(e) => e.preventDefault()}
+                              onClick={() => handleDelete(person.id)}
+                              className="text-destructive"
                             >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
                             </DropdownMenuItem>
-                          </PersonEditDialog>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(person.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

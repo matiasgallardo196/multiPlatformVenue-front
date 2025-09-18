@@ -27,9 +27,11 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function PlacesPage() {
   const { toast } = useToast();
+  const { isReadOnly } = useAuth();
   const { data: places, isLoading, error } = usePlaces();
   const deletePlace = useDeletePlace();
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,12 +83,14 @@ export default function PlacesPage() {
         title="Places"
         description="Manage locations and venues in the system"
       >
-        <PlaceCreateDialog>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Place
-          </Button>
-        </PlaceCreateDialog>
+        {!isReadOnly && (
+          <PlaceCreateDialog>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Place
+            </Button>
+          </PlaceCreateDialog>
+        )}
       </PageHeader>
 
       <div className="space-y-6">
@@ -115,12 +119,14 @@ export default function PlacesPage() {
                   Get started by creating a new place.
                 </p>
                 <div className="mt-6">
-                  <PlaceCreateDialog>
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add New Place
-                    </Button>
-                  </PlaceCreateDialog>
+                  {!isReadOnly && (
+                    <PlaceCreateDialog>
+                      <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add New Place
+                      </Button>
+                    </PlaceCreateDialog>
+                  )}
                 </div>
               </>
             ) : (
@@ -164,19 +170,23 @@ export default function PlacesPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <PlaceEditDialog id={place.id}>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
+                          {!isReadOnly && (
+                            <PlaceEditDialog id={place.id}>
+                              <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                            </PlaceEditDialog>
+                          )}
+                          {!isReadOnly && (
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(place.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
                             </DropdownMenuItem>
-                          </PlaceEditDialog>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(place.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

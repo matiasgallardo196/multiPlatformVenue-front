@@ -12,11 +12,13 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, AlertTriangle, MapPin, User, Camera } from "lucide-react";
 import { useIncident } from "@/hooks/queries";
 import Link from "next/link";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function IncidentDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const { data: incident, isLoading, error } = useIncident(id);
+  const { isReadOnly } = useAuth();
 
   const getPersonName = () => {
     const p = incident?.person;
@@ -55,17 +57,22 @@ export default function IncidentDetailPage() {
         title={`Incident #${incident.id.slice(-8)}`}
         description={incident.details || undefined}
       >
-        <div className="flex gap-2">
-          <IncidentEditDialog id={incident.id}>
-            <Button variant="outline">Edit Incident</Button>
-          </IncidentEditDialog>
-          <BannedCreateDialog
-            incidentId={incident.id}
-            defaultPlaceId={incident.place?.id}
-          >
-            <Button>Create Ban</Button>
-          </BannedCreateDialog>
-        </div>
+        <Button variant="outline" asChild>
+          <Link href="/incidents">Back to List</Link>
+        </Button>
+        {!isReadOnly && (
+          <div className="flex gap-2">
+            <IncidentEditDialog id={incident.id}>
+              <Button variant="outline">Edit Incident</Button>
+            </IncidentEditDialog>
+            <BannedCreateDialog
+              incidentId={incident.id}
+              defaultPlaceId={incident.place?.id}
+            >
+              <Button>Create Ban</Button>
+            </BannedCreateDialog>
+          </div>
+        )}
       </PageHeader>
 
       <div className="grid gap-6 md:grid-cols-2">

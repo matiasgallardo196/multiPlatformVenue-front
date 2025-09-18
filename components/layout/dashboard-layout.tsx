@@ -1,8 +1,9 @@
-import type React from "react"
-import { Sidebar } from "@/components/sidebar"
+"use client";
+import type React from "react";
+import { Sidebar } from "@/components/sidebar";
 
 interface DashboardLayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -15,5 +16,5 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <main className="p-4 lg:p-8">{children}</main>
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,9 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,7 +55,14 @@ export default function PersonDetailPage() {
       <PageHeader
         title={getName()}
         description={person.nickname ? `"${person.nickname}"` : undefined}
-      />
+      >
+        <Button variant="outline" asChild>
+          <Link href="/persons">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to List
+          </Link>
+        </Button>
+      </PageHeader>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

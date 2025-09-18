@@ -97,3 +97,9 @@ export interface PersonBanStatus {
   isBanned: boolean
   activeCount: number
 }
+
+export interface CurrentUser {
+  userId: string
+  userName: string
+  role: string
+}

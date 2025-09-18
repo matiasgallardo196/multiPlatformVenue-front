@@ -16,7 +16,7 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
   const config: RequestInit = {
     mode: "cors",
-    credentials: "omit",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
