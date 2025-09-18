@@ -86,35 +86,66 @@ export function BannedCard({
     >
       <CardContent className="p-4 md:p-5">
         <div className="flex items-center gap-8 md:gap-10">
-          <Avatar className="h-40 w-40 md:h-48 md:w-48 flex-shrink-0">
-            <AvatarImage
-              src={profileImages[0] || "/placeholder.svg"}
-              alt={personName}
-            />
-            <AvatarFallback className="bg-primary/10 text-primary">
-              {personName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
+          <div className="flex-shrink-0 flex flex-col items-center gap-3 md:gap-4">
+            <Avatar className="h-40 w-40 md:h-48 md:w-48">
+              <AvatarImage
+                src={profileImages[0] || "/placeholder.svg"}
+                alt={personName}
+              />
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {personName
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+
+            {profileImages.length > 1 && (
+              <div className="w-full">
+                <span className="block text-xs text-muted-foreground mb-1">
+                  Additional Photos:
+                </span>
+                <div className="flex gap-2 md:gap-3 overflow-x-auto">
+                  {profileImages.slice(1, 4).map((url, index) => (
+                    <Avatar key={index} className="h-12 w-12 flex-shrink-0">
+                      <AvatarImage
+                        src={url || "/placeholder.svg"}
+                        alt={`${personName} ${index + 2}`}
+                      />
+                      <AvatarFallback className="text-xs">
+                        {index + 2}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {profileImages.length > 4 && (
+                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                      +{profileImages.length - 4}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="flex-1 space-y-4">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-semibold text-card-foreground">
+                <h3 className="font-semibold text-card-foreground text-xl md:text-2xl">
                   {personName}
                 </h3>
                 {person?.nickname && person.nickname !== personName && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm md:text-base text-muted-foreground">
                     "{person.nickname}"
                   </p>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={banned.isActive ? "destructive" : "secondary"}>
+                <Badge
+                  variant={banned.isActive ? "destructive" : "secondary"}
+                  className="text-xs md:text-sm px-2.5 py-1"
+                >
                   {banned.isActive ? "Active" : "Inactive"}
                 </Badge>
                 <DropdownMenu>
@@ -218,33 +249,6 @@ export function BannedCard({
                       {placeName}
                     </Badge>
                   ))}
-                </div>
-              </div>
-            )}
-
-            {/* Additional Photos */}
-            {profileImages.length > 1 && (
-              <div className="space-y-2">
-                <span className="text-sm text-muted-foreground">
-                  Additional Photos:
-                </span>
-                <div className="flex gap-3 overflow-x-auto">
-                  {profileImages.slice(1, 4).map((url, index) => (
-                    <Avatar key={index} className="h-12 w-12 flex-shrink-0">
-                      <AvatarImage
-                        src={url || "/placeholder.svg"}
-                        alt={`${personName} ${index + 2}`}
-                      />
-                      <AvatarFallback className="text-xs">
-                        {index + 2}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
-                  {profileImages.length > 4 && (
-                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                      +{profileImages.length - 4}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
