@@ -16,13 +16,14 @@ import {
   DialogTrigger,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { usePerson, usePersonBanStatus } from "@/hooks/queries";
+import { usePerson, usePersonBanStatus, usePersonBans } from "@/hooks/queries";
 
 export default function PersonDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const { data: person, isLoading, error } = usePerson(id);
   const { data: banStatus } = usePersonBanStatus(id);
+  const { data: bans } = usePersonBans(id);
 
   const getName = () => {
     if (!person) return "";
@@ -126,6 +127,53 @@ export default function PersonDetailPage() {
             <div className="flex items-center gap-2">
               <Badge variant="outline">{person.incidents?.length || 0}</Badge>
             </div>
+            {person.incidents && person.incidents.length > 0 && (
+              <ul className="space-y-2">
+                {person.incidents.slice(0, 5).map((inc) => (
+                  <li key={inc.id} className="text-sm">
+                    <Link className="underline" href={`/incidents/${inc.id}`}>
+                      Incident #{inc.id.slice(-8)}
+                    </Link>
+                    {inc.place?.name && (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        · {inc.place.name}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6 space-y-3">
+            <div className="text-sm text-muted-foreground">Bans</div>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant={banStatus?.isBanned ? "destructive" : "secondary"}
+              >
+                {banStatus?.isBanned ? "Active" : "None"}
+              </Badge>
+            </div>
+            {bans && bans.length > 0 && (
+              <ul className="space-y-2">
+                {bans.slice(0, 5).map((b) => (
+                  <li key={b.id} className="text-sm">
+                    <Link className="underline" href={`/banneds/${b.id}`}>
+                      Ban #{b.id.slice(-8)}
+                    </Link>
+                    {b.bannedPlaces?.length ? (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        · {b.bannedPlaces.length} place(s)
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
