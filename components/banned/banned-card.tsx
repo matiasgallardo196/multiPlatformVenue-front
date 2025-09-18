@@ -104,10 +104,10 @@ export function BannedCard({
 
             {profileImages.length > 1 && (
               <div className="w-full">
-                <span className="block text-xs text-muted-foreground mb-1">
+                <span className="block text-xs text-muted-foreground mb-1 text-center">
                   Additional Photos:
                 </span>
-                <div className="flex gap-2 md:gap-3 overflow-x-auto">
+                <div className="flex justify-center gap-2 md:gap-3">
                   {profileImages.slice(1, 4).map((url, index) => (
                     <Avatar key={index} className="h-12 w-12 flex-shrink-0">
                       <AvatarImage
