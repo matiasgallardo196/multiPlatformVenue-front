@@ -10,6 +10,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, User } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { usePerson, usePersonBanStatus } from "@/hooks/queries";
 
 export default function PersonDetailPage() {
@@ -67,20 +73,32 @@ export default function PersonDetailPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardContent className="p-6 flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage
-                src={person.imagenProfileUrl?.[0] || "/placeholder.svg"}
-                alt={getName()}
-              />
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {getName()
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Avatar className="h-16 w-16 cursor-zoom-in">
+                  <AvatarImage
+                    src={person.imagenProfileUrl?.[0] || "/placeholder.svg"}
+                    alt={getName()}
+                  />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {getName()
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl p-0">
+                <DialogTitle className="sr-only">Image preview</DialogTitle>
+                <img
+                  src={person.imagenProfileUrl?.[0] || "/placeholder.svg"}
+                  alt={getName()}
+                  className="w-full h-auto rounded"
+                />
+              </DialogContent>
+            </Dialog>
 
             <div className="space-y-1">
               <div className="flex items-center gap-2">

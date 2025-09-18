@@ -9,8 +9,18 @@ import { BannedCreateDialog } from "@/components/banned/banned-create-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertTriangle, MapPin, User, Camera } from "lucide-react";
+import {
+  Loader2,
+  AlertTriangle,
+  MapPin,
+  User,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useIncident } from "@/hooks/queries";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -50,6 +60,9 @@ export default function IncidentDetailPage() {
       </DashboardLayout>
     );
   }
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   return (
     <DashboardLayout>
@@ -138,16 +151,65 @@ export default function IncidentDetailPage() {
               <span className="font-medium">Photos</span>
             </div>
             {incident.photoBook && incident.photoBook.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2">
-                {incident.photoBook.map((url, idx) => (
-                  <img
-                    key={idx}
-                    src={url}
-                    alt={`photo-${idx + 1}`}
-                    className="w-full h-24 object-cover rounded border"
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  {incident.photoBook.map((url, idx) => (
+                    <img
+                      key={idx}
+                      src={url}
+                      alt={`photo-${idx + 1}`}
+                      className="w-full h-24 object-cover rounded border transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-zoom-in"
+                      onClick={() => {
+                        setLightboxIndex(idx);
+                        setLightboxOpen(true);
+                      }}
+                    />
+                  ))}
+                </div>
+                <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+                  <DialogContent className="max-w-5xl p-0">
+                    <DialogTitle className="sr-only">Image preview</DialogTitle>
+                    <div className="relative">
+                      <img
+                        src={incident.photoBook[lightboxIndex]}
+                        alt={`photo-${lightboxIndex + 1}`}
+                        className="w-full h-auto rounded"
+                      />
+                      {incident.photoBook.length > 1 && (
+                        <>
+                          <button
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLightboxIndex(
+                                (lightboxIndex -
+                                  1 +
+                                  incident.photoBook.length) %
+                                  incident.photoBook.length
+                              );
+                            }}
+                            aria-label="Previous"
+                          >
+                            <ChevronLeft className="h-5 w-5" />
+                          </button>
+                          <button
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLightboxIndex(
+                                (lightboxIndex + 1) % incident.photoBook.length
+                              );
+                            }}
+                            aria-label="Next"
+                          >
+                            <ChevronRight className="h-5 w-5" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
             ) : (
               <p className="text-sm text-muted-foreground">No photos.</p>
             )}

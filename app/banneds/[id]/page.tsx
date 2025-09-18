@@ -9,6 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useBanned, usePlaces } from "@/hooks/queries";
 import { useAuth } from "@/hooks/use-auth";
 import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   Calendar,
   MapPin,
@@ -18,6 +24,8 @@ import {
   Building,
 } from "lucide-react";
 import { format } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -118,20 +126,32 @@ export default function BannedDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage
-                    src={profileImages[0] || "/placeholder.svg"}
-                    alt={personName}
-                  />
-                  <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                    {personName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Avatar className="h-16 w-16 cursor-zoom-in">
+                      <AvatarImage
+                        src={profileImages[0] || "/placeholder.svg"}
+                        alt={personName}
+                      />
+                      <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                        {personName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl p-0">
+                    <DialogTitle className="sr-only">Image preview</DialogTitle>
+                    <img
+                      src={profileImages[0] || "/placeholder.svg"}
+                      alt={personName}
+                      className="w-full h-auto rounded"
+                    />
+                  </DialogContent>
+                </Dialog>
                 <div>
                   <h3 className="text-xl font-semibold">{personName}</h3>
                   {person?.nickname && person.nickname !== personName && (
@@ -152,15 +172,29 @@ export default function BannedDetailPage() {
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     {profileImages.slice(1).map((url, index) => (
-                      <Avatar key={index} className="h-12 w-12">
-                        <AvatarImage
-                          src={url || "/placeholder.svg"}
-                          alt={`${personName} ${index + 2}`}
-                        />
-                        <AvatarFallback className="text-xs">
-                          {index + 2}
-                        </AvatarFallback>
-                      </Avatar>
+                      <Dialog key={index}>
+                        <DialogTrigger asChild>
+                          <Avatar className="h-12 w-12 cursor-zoom-in">
+                            <AvatarImage
+                              src={url || "/placeholder.svg"}
+                              alt={`${personName} ${index + 2}`}
+                            />
+                            <AvatarFallback className="text-xs">
+                              {index + 2}
+                            </AvatarFallback>
+                          </Avatar>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl p-0">
+                          <DialogTitle className="sr-only">
+                            Image preview
+                          </DialogTitle>
+                          <img
+                            src={url || "/placeholder.svg"}
+                            alt={`${personName} ${index + 2}`}
+                            className="w-full h-auto rounded"
+                          />
+                        </DialogContent>
+                      </Dialog>
                     ))}
                   </div>
                 </div>
@@ -256,19 +290,7 @@ export default function BannedDetailPage() {
                         Incident Photos
                       </span>
                     </div>
-                    <div className="flex gap-2 flex-wrap">
-                      {banned.incident.photoBook.map((url, index) => (
-                        <Avatar key={index} className="h-12 w-12">
-                          <AvatarImage
-                            src={url || "/placeholder.svg"}
-                            alt={`Incident photo ${index + 1}`}
-                          />
-                          <AvatarFallback className="text-xs">
-                            #{index + 1}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                    </div>
+                    <IncidentPhotosGallery urls={banned.incident.photoBook} />
                   </div>
                 )}
             </CardContent>
@@ -344,5 +366,69 @@ export default function BannedDetailPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+function IncidentPhotosGallery({ urls }: { urls: string[] }) {
+  const [open, setOpen] = useState(false);
+  const [index, setIndex] = useState(0);
+
+  return (
+    <>
+      <div className="flex gap-2 flex-wrap">
+        {urls.map((url, i) => (
+          <button
+            key={i}
+            className="h-12 w-12 rounded overflow-hidden border cursor-zoom-in"
+            onClick={() => {
+              setIndex(i);
+              setOpen(true);
+            }}
+          >
+            <img
+              src={url || "/placeholder.svg"}
+              alt={`Incident photo ${i + 1}`}
+              className="h-full w-full object-cover"
+            />
+          </button>
+        ))}
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-5xl p-0">
+          <DialogTitle className="sr-only">Image preview</DialogTitle>
+          <div className="relative">
+            <img
+              src={urls[index]}
+              alt={`Incident photo ${index + 1}`}
+              className="w-full h-auto rounded"
+            />
+            {urls.length > 1 && (
+              <>
+                <button
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIndex((index - 1 + urls.length) % urls.length);
+                  }}
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIndex((index + 1) % urls.length);
+                  }}
+                  aria-label="Next"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
