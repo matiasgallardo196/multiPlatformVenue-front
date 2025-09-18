@@ -1,0 +1,6 @@
+{
+  "/banneds/[id]/page": "app/banneds/[id]/page.js",
+  "/persons/page": "app/persons/page.js",
+  "/incidents/page": "app/incidents/page.js",
+  "/places/page": "app/places/page.js"
+}
