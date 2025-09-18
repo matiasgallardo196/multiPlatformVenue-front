@@ -65,7 +65,16 @@ export default function LoginPage() {
   const isDark = (resolvedTheme || theme) === "dark";
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-background to-muted/40 flex items-center justify-center p-4">
+    <div className="relative min-h-screen flex items-center justify-center p-4">
+      {/* Decorative background for login – mesh gradient + subtle grid */}
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden
+      >
+        <div className="absolute inset-0 opacity-90 [background:radial-gradient(60%_40%_at_20%_10%,hsl(var(--primary)/0.18),transparent_70%),radial-gradient(50%_35%_at_90%_15%,hsl(var(--accent)/0.14),transparent_70%),radial-gradient(45%_30%_at_50%_85%,hsl(var(--muted-foreground)/0.10),transparent_70%)]" />
+        <div className="absolute inset-0 mix-blend-overlay [background-image:linear-gradient(to_right,hsl(var(--border)/0.35)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.35)_1px,transparent_1px)] bg-[size:40px_40px]" />
+      </div>
+
       <div className="w-full max-w-md rounded-xl border bg-card shadow-sm">
         <div className="p-6 sm:p-8">
           <div className="flex justify-end mb-2">

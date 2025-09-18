@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -121,5 +121,116 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: radial-gradient(
+        1200px 600px at 100% -10%,
+        hsl(var(--muted) / 0.6),
+        transparent 60%
+      ),
+      radial-gradient(
+        800px 400px at -10% 110%,
+        hsl(var(--primary) / 0.12),
+        transparent 60%
+      ),
+      linear-gradient(to bottom, hsl(var(--background)), hsl(var(--card)));
+    background-attachment: fixed;
+    position: relative;
+  }
+
+  .dark body {
+    background-image: radial-gradient(
+        1200px 600px at 100% -10%,
+        hsl(var(--muted) / 0.12),
+        transparent 60%
+      ),
+      radial-gradient(
+        800px 400px at -10% 110%,
+        hsl(var(--primary) / 0.2),
+        transparent 60%
+      ),
+      linear-gradient(to bottom, hsl(var(--background)), hsl(var(--card)));
+  }
+
+  /* Subtle dotted pattern overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(
+      hsl(var(--border) / 0.35) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+    background-position: 0 0;
+  }
+
+  .dark body::before {
+    background-image: radial-gradient(
+      hsl(var(--border) / 0.18) 1px,
+      transparent 1px
+    );
+  }
+}
+
+@layer utilities {
+  @keyframes float-a {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(-10px, -14px, 0) scale(1.03);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+  @keyframes float-b {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(12px, 10px, 0) scale(0.98);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+  @keyframes rotate-slow {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes grid-move {
+    0% {
+      background-position: 0 0, 0 0;
+    }
+    100% {
+      background-position: 40px 0, 0 40px;
+    }
+  }
+  @keyframes sheen-move {
+    0% {
+      background-position: -200% -200%;
+    }
+    100% {
+      background-position: 200% 200%;
+    }
+  }
+
+  .anim-float-a {
+    animation: float-a 12s ease-in-out infinite;
+  }
+  .anim-float-b {
+    animation: float-b 16s ease-in-out infinite;
+  }
+  .spin-slower {
+    animation: rotate-slow 90s linear infinite;
+  }
+  .moving-grid {
+    animation: grid-move 45s linear infinite;
+  }
+  .sheen {
+    animation: sheen-move 14s linear infinite;
+    mix-blend-mode: overlay;
   }
 }
