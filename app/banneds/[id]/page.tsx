@@ -118,101 +118,160 @@ export default function BannedDetailPage() {
         </Button>
       </PageHeader>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Information */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Person Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Person Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Avatar className="h-16 w-16 cursor-zoom-in">
-                      <AvatarImage
-                        src={profileImages[0] || "/placeholder.svg"}
-                        alt={personName}
-                      />
-                      <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                        {personName
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()
-                          .slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </DialogTrigger>
-                  <DialogContent
-                    className="max-w-4xl p-0"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <DialogTitle className="sr-only">Image preview</DialogTitle>
-                    <img
+      {/* Row 1: Person Information (left) + Actions (right) with equal height */}
+      <div className="grid gap-6 lg:grid-cols-3 items-stretch">
+        <Card className="lg:col-span-2 h-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Person Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Avatar className="h-16 w-16 cursor-zoom-in">
+                    <AvatarImage
                       src={profileImages[0] || "/placeholder.svg"}
                       alt={personName}
-                      className="w-full h-auto rounded"
                     />
-                  </DialogContent>
-                </Dialog>
-                <div>
-                  <h3 className="text-xl font-semibold">{personName}</h3>
-                  {person?.nickname && person.nickname !== personName && (
-                    <p className="text-muted-foreground">
-                      Nickname: "{person.nickname}"
-                    </p>
-                  )}
-                </div>
+                    <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                      {personName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                </DialogTrigger>
+                <DialogContent
+                  className="max-w-4xl p-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DialogTitle className="sr-only">Image preview</DialogTitle>
+                  <img
+                    src={profileImages[0] || "/placeholder.svg"}
+                    alt={personName}
+                    className="w-full h-auto rounded"
+                  />
+                </DialogContent>
+              </Dialog>
+              <div>
+                <h3 className="text-xl font-semibold">{personName}</h3>
+                {person?.nickname && person.nickname !== personName && (
+                  <p className="text-muted-foreground">
+                    Nickname: "{person.nickname}"
+                  </p>
+                )}
               </div>
+            </div>
 
-              {profileImages.length > 1 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Camera className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">
-                      Additional Photos
-                    </span>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {profileImages.slice(1).map((url, index) => (
-                      <Dialog key={index}>
-                        <DialogTrigger asChild>
-                          <Avatar className="h-12 w-12 cursor-zoom-in">
-                            <AvatarImage
-                              src={url || "/placeholder.svg"}
-                              alt={`${personName} ${index + 2}`}
-                            />
-                            <AvatarFallback className="text-xs">
-                              {index + 2}
-                            </AvatarFallback>
-                          </Avatar>
-                        </DialogTrigger>
-                        <DialogContent
-                          className="max-w-4xl p-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <DialogTitle className="sr-only">
-                            Image preview
-                          </DialogTitle>
-                          <img
+            {profileImages.length > 1 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Additional Photos</span>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {profileImages.slice(1).map((url, index) => (
+                    <Dialog key={index}>
+                      <DialogTrigger asChild>
+                        <Avatar className="h-12 w-12 cursor-zoom-in">
+                          <AvatarImage
                             src={url || "/placeholder.svg"}
                             alt={`${personName} ${index + 2}`}
-                            className="w-full h-auto rounded"
                           />
-                        </DialogContent>
-                      </Dialog>
-                    ))}
-                  </div>
+                          <AvatarFallback className="text-xs">
+                            {index + 2}
+                          </AvatarFallback>
+                        </Avatar>
+                      </DialogTrigger>
+                      <DialogContent
+                        className="max-w-4xl p-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DialogTitle className="sr-only">
+                          Image preview
+                        </DialogTitle>
+                        <img
+                          src={url || "/placeholder.svg"}
+                          alt={`${personName} ${index + 2}`}
+                          className="w-full h-auto rounded"
+                        />
+                      </DialogContent>
+                    </Dialog>
+                  ))}
                 </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {!isReadOnly && (
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <BannedEditDialog id={banned.id}>
+                <Button
+                  className="w-full bg-transparent cursor-pointer"
+                  variant="outline"
+                >
+                  Edit Ban Details
+                </Button>
+              </BannedEditDialog>
+              {banned.incident?.id ? (
+                <Button
+                  className="w-full bg-transparent cursor-pointer"
+                  variant="outline"
+                  asChild
+                >
+                  <Link href={`/incidents/${banned.incident.id}`}>
+                    View Related Incidents
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  className="w-full bg-transparent"
+                  variant="outline"
+                  disabled
+                >
+                  View Related Incidents
+                </Button>
               )}
+              <Button
+                className="w-full cursor-pointer"
+                variant="destructive"
+                onClick={async () => {
+                  if (!confirm("Are you sure you want to delete this ban?"))
+                    return;
+                  try {
+                    await deleteBanned.mutateAsync(banned.id);
+                    toast({ title: "Deleted", description: "Ban removed." });
+                    router.replace("/banneds");
+                  } catch (e: any) {
+                    toast({
+                      title: "Error",
+                      description: e?.message || "Failed to delete ban.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Delete Ban Record
+              </Button>
             </CardContent>
           </Card>
+        )}
+      </div>
 
+      {/* Row 2: Rest of content */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        {/* Main Information */}
+        <div className="lg:col-span-2 space-y-6">
           {/* Ban Details */}
           <Card>
             <CardHeader>
@@ -310,65 +369,6 @@ export default function BannedDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Actions */}
-          {!isReadOnly && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <BannedEditDialog id={banned.id}>
-                  <Button
-                    className="w-full bg-transparent cursor-pointer"
-                    variant="outline"
-                  >
-                    Edit Ban Details
-                  </Button>
-                </BannedEditDialog>
-                {banned.incident?.id ? (
-                  <Button
-                    className="w-full bg-transparent cursor-pointer"
-                    variant="outline"
-                    asChild
-                  >
-                    <Link href={`/incidents/${banned.incident.id}`}>
-                      View Related Incidents
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full bg-transparent"
-                    variant="outline"
-                    disabled
-                  >
-                    View Related Incidents
-                  </Button>
-                )}
-                <Button
-                  className="w-full cursor-pointer"
-                  variant="destructive"
-                  onClick={async () => {
-                    if (!confirm("Are you sure you want to delete this ban?"))
-                      return;
-                    try {
-                      await deleteBanned.mutateAsync(banned.id);
-                      toast({ title: "Deleted", description: "Ban removed." });
-                      router.replace("/banneds");
-                    } catch (e: any) {
-                      toast({
-                        title: "Error",
-                        description: e?.message || "Failed to delete ban.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  Delete Ban Record
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Banned Places */}
           <Card>
             <CardHeader>
