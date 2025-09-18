@@ -29,6 +29,8 @@ export default function IncidentDetailPage() {
   const id = params?.id as string;
   const { data: incident, isLoading, error } = useIncident(id);
   const { isReadOnly } = useAuth();
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const getPersonName = () => {
     const p = incident?.person;
@@ -60,9 +62,6 @@ export default function IncidentDetailPage() {
       </DashboardLayout>
     );
   }
-
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   return (
     <DashboardLayout>
