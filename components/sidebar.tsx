@@ -72,9 +72,9 @@ export function Sidebar() {
   }, []);
 
   const visibleNavigation =
-    currentUser?.role === "staff"
-      ? navigation.filter((item) => item.name !== "Places")
-      : navigation;
+    currentUser?.role === "manager"
+      ? navigation
+      : navigation.filter((item) => item.name !== "Places");
 
   return (
     <>

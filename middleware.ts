@@ -20,6 +20,18 @@ export function middleware(req: NextRequest) {
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
+  // Role-based guard for Places: only allow managers
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64").toString()
+    );
+    const role = payload?.role;
+    if (role === "staff" && pathname.startsWith("/places")) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+  } catch {}
   return NextResponse.next();
 }
 
