@@ -212,7 +212,10 @@ export default function IncidentsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/incidents/${incident.id}`}>
+                            <Link
+                              href={`/incidents/${incident.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </Link>
@@ -221,6 +224,7 @@ export default function IncidentsPage() {
                             <IncidentEditDialog id={incident.id}>
                               <DropdownMenuItem
                                 onSelect={(e) => e.preventDefault()}
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
@@ -229,7 +233,10 @@ export default function IncidentsPage() {
                           )}
                           {!isReadOnly && (
                             <DropdownMenuItem
-                              onClick={() => handleDelete(incident.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(incident.id);
+                              }}
                               className="text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />

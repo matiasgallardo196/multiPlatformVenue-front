@@ -212,7 +212,10 @@ export default function PersonsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/persons/${person.id}`}>
+                            <Link
+                              href={`/persons/${person.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </Link>
@@ -221,6 +224,7 @@ export default function PersonsPage() {
                             <PersonEditDialog id={person.id}>
                               <DropdownMenuItem
                                 onSelect={(e) => e.preventDefault()}
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
@@ -229,7 +233,10 @@ export default function PersonsPage() {
                           )}
                           {!isReadOnly && (
                             <DropdownMenuItem
-                              onClick={() => handleDelete(person.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(person.id);
+                              }}
                               className="text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />

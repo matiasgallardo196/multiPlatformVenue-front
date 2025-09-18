@@ -131,14 +131,20 @@ export function BannedCard({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href={`/banneds/${banned.id}`}>
+                  <Link
+                    href={`/banneds/${banned.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Eye className="mr-2 h-4 w-4" />
                     View Details
                   </Link>
                 </DropdownMenuItem>
                 {!readOnly && (
                   <BannedEditDialog id={banned.id}>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
                     </DropdownMenuItem>
@@ -146,7 +152,10 @@ export function BannedCard({
                 )}
                 {!readOnly && (
                   <DropdownMenuItem
-                    onClick={() => onDelete(banned.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(banned.id);
+                    }}
                     className="text-destructive"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
