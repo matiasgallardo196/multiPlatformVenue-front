@@ -205,7 +205,9 @@ export default function PersonsPage() {
                             </Link>
                           </DropdownMenuItem>
                           <PersonEditDialog id={person.id}>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
