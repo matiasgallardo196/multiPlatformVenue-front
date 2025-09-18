@@ -16,6 +16,7 @@ import {
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navigation = [
   {
@@ -153,33 +154,36 @@ export function Sidebar() {
 
           {/* Footer */}
           <div className="border-t border-sidebar-border p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-sidebar-foreground/60">
-                Admin Dashboard v1.0
-              </p>
-              {currentUser && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    try {
-                      await fetch(
-                        (process.env.NEXT_PUBLIC_API_URL || "/api") +
-                          "/auth/logout",
-                        {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          credentials: "include",
-                        }
-                      );
-                    } catch {}
-                    setCurrentUser(null);
-                    router.replace("/");
-                  }}
-                >
-                  Logout
-                </Button>
-              )}
+            <div className="space-y-2">
+              <ThemeToggle />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-sidebar-foreground/60">
+                  Admin Dashboard v1.0
+                </p>
+                {currentUser && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        await fetch(
+                          (process.env.NEXT_PUBLIC_API_URL || "/api") +
+                            "/auth/logout",
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                          }
+                        );
+                      } catch {}
+                      setCurrentUser(null);
+                      router.replace("/");
+                    }}
+                  >
+                    Logout
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
