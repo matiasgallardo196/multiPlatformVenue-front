@@ -177,9 +177,21 @@ export default function IncidentsPage() {
                 <Card
                   key={incident.id}
                   className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-                  onClick={() =>
-                    (window.location.href = `/incidents/${incident.id}`)
-                  }
+                  onClick={(e) => {
+                    const modalOpen = document.querySelector(
+                      '[data-slot="dialog-content"][data-state="open"]'
+                    );
+                    if (modalOpen) return;
+                    window.location.href = `/incidents/${incident.id}`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    const modalOpen = document.querySelector(
+                      '[data-slot="dialog-content"][data-state="open"]'
+                    );
+                    if (modalOpen) return;
+                    window.location.href = `/incidents/${incident.id}`;
+                  }}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">

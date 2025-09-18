@@ -90,7 +90,10 @@ export default function PersonDetailPage() {
                   </AvatarFallback>
                 </Avatar>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl p-0">
+              <DialogContent
+                className="max-w-4xl p-0"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <DialogTitle className="sr-only">Image preview</DialogTitle>
                 <img
                   src={person.imagenProfileUrl?.[0] || "/placeholder.svg"}

@@ -143,7 +143,10 @@ export default function BannedDetailPage() {
                       </AvatarFallback>
                     </Avatar>
                   </DialogTrigger>
-                  <DialogContent className="max-w-4xl p-0">
+                  <DialogContent
+                    className="max-w-4xl p-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <DialogTitle className="sr-only">Image preview</DialogTitle>
                     <img
                       src={profileImages[0] || "/placeholder.svg"}
@@ -184,7 +187,10 @@ export default function BannedDetailPage() {
                             </AvatarFallback>
                           </Avatar>
                         </DialogTrigger>
-                        <DialogContent className="max-w-4xl p-0">
+                        <DialogContent
+                          className="max-w-4xl p-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <DialogTitle className="sr-only">
                             Image preview
                           </DialogTitle>
@@ -394,7 +400,10 @@ function IncidentPhotosGallery({ urls }: { urls: string[] }) {
         ))}
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-5xl p-0">
+        <DialogContent
+          className="max-w-5xl p-0"
+          onClick={(e) => e.stopPropagation()}
+        >
           <DialogTitle className="sr-only">Image preview</DialogTitle>
           <div className="relative">
             <img

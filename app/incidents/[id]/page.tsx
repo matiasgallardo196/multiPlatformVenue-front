@@ -166,7 +166,10 @@ export default function IncidentDetailPage() {
                   ))}
                 </div>
                 <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-                  <DialogContent className="max-w-5xl p-0">
+                  <DialogContent
+                    className="max-w-5xl p-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <DialogTitle className="sr-only">Image preview</DialogTitle>
                     <div className="relative">
                       <img

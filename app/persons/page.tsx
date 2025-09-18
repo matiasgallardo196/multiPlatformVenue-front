@@ -163,9 +163,21 @@ export default function PersonsPage() {
                 <Card
                   key={person.id}
                   className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-                  onClick={() =>
-                    (window.location.href = `/persons/${person.id}`)
-                  }
+                  onClick={(e) => {
+                    const modalOpen = document.querySelector(
+                      '[data-slot="dialog-content"][data-state="open"]'
+                    );
+                    if (modalOpen) return;
+                    window.location.href = `/persons/${person.id}`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    const modalOpen = document.querySelector(
+                      '[data-slot="dialog-content"][data-state="open"]'
+                    );
+                    if (modalOpen) return;
+                    window.location.href = `/persons/${person.id}`;
+                  }}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
