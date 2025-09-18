@@ -1,15 +1,22 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { PageHeader } from "@/components/ui/page-header"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useIncidents, useDeleteIncident } from "@/hooks/queries"
+import { useState, useMemo } from "react";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useIncidents, useDeleteIncident } from "@/hooks/queries";
+import { IncidentCreateDialog } from "@/components/incident/incident-create-dialog";
+import { IncidentEditDialog } from "@/components/incident/incident-edit-dialog";
 import {
   Plus,
   MoreHorizontal,
@@ -22,74 +29,92 @@ import {
   User,
   Camera,
   Search,
-} from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import Link from "next/link"
-import type { Incident } from "@/lib/types"
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import type { Incident } from "@/lib/types";
 
 export default function IncidentsPage() {
-  const { toast } = useToast()
-  const { data: incidents, isLoading, error } = useIncidents()
-  const deleteIncidentMutation = useDeleteIncident()
-  const [searchQuery, setSearchQuery] = useState("")
+  const { toast } = useToast();
+  const { data: incidents, isLoading, error } = useIncidents();
+  const deleteIncidentMutation = useDeleteIncident();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredIncidents = useMemo(() => {
-    if (!incidents) return []
-    if (!searchQuery) return incidents
+    if (!incidents) return [];
+    if (!searchQuery) return incidents;
 
     return incidents.filter((incident) => {
-      const person = incident.person
-      const personName = [person?.name, person?.lastName, person?.nickname].filter(Boolean).join(" ").toLowerCase()
-      const placeName = (incident.place?.name || "").toLowerCase()
-      const details = (incident.details || "").toLowerCase()
-      const searchTerm = searchQuery.toLowerCase()
+      const person = incident.person;
+      const personName = [person?.name, person?.lastName, person?.nickname]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const placeName = (incident.place?.name || "").toLowerCase();
+      const details = (incident.details || "").toLowerCase();
+      const searchTerm = searchQuery.toLowerCase();
 
-      return personName.includes(searchTerm) || placeName.includes(searchTerm) || details.includes(searchTerm)
-    })
-  }, [incidents, searchQuery])
+      return (
+        personName.includes(searchTerm) ||
+        placeName.includes(searchTerm) ||
+        details.includes(searchTerm)
+      );
+    });
+  }, [incidents, searchQuery]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this incident?")) return
+    if (!confirm("Are you sure you want to delete this incident?")) return;
 
     try {
-      await deleteIncidentMutation.mutateAsync(id)
+      await deleteIncidentMutation.mutateAsync(id);
       toast({
         title: "Success",
         description: "Incident deleted successfully.",
-      })
+      });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete incident. Please try again.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const getPersonName = (incident: Incident) => {
-    const person = incident.person
-    if (!person) return "Unknown Person"
-    return [person.name, person.lastName].filter(Boolean).join(" ") || person.nickname || "Unknown"
-  }
+    const person = incident.person;
+    if (!person) return "Unknown Person";
+    return (
+      [person.name, person.lastName].filter(Boolean).join(" ") ||
+      person.nickname ||
+      "Unknown"
+    );
+  };
 
   if (error) {
     return (
       <DashboardLayout>
         <PageHeader title="Incidents" />
         <div className="text-center py-8">
-          <p className="text-destructive">Error loading incidents: {error.message}</p>
+          <p className="text-destructive">
+            Error loading incidents: {error.message}
+          </p>
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   return (
     <DashboardLayout>
-      <PageHeader title="Incidents" description="Track and manage incident reports">
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Incident
-        </Button>
+      <PageHeader
+        title="Incidents"
+        description="Track and manage incident reports"
+      >
+        <IncidentCreateDialog>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Incident
+          </Button>
+        </IncidentCreateDialog>
       </PageHeader>
 
       <div className="space-y-6">
@@ -114,23 +139,30 @@ export default function IncidentsPage() {
               <>
                 <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-2 text-sm font-semibold">No incidents</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Get started by creating a new incident report.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Get started by creating a new incident report.
+                </p>
                 <div className="mt-6">
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add New Incident
-                  </Button>
+                  <IncidentCreateDialog>
+                    <Button>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add New Incident
+                    </Button>
+                  </IncidentCreateDialog>
                 </div>
               </>
             ) : (
-              <p className="text-muted-foreground">No incidents match your search criteria.</p>
+              <p className="text-muted-foreground">
+                No incidents match your search criteria.
+              </p>
             )}
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing {filteredIncidents.length} of {incidents?.length || 0} incidents
+                Showing {filteredIncidents.length} of {incidents?.length || 0}{" "}
+                incidents
               </p>
             </div>
 
@@ -144,7 +176,9 @@ export default function IncidentsPage() {
                           <AlertTriangle className="h-5 w-5 text-destructive" />
                         </div>
                         <div>
-                          <h3 className="font-semibold">Incident #{incident.id.slice(-8)}</h3>
+                          <h3 className="font-semibold">
+                            Incident #{incident.id.slice(-8)}
+                          </h3>
                           {incident.banned && (
                             <Badge variant="destructive" className="mt-1">
                               Has Ban
@@ -155,7 +189,11 @@ export default function IncidentsPage() {
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -166,11 +204,18 @@ export default function IncidentsPage() {
                               View Details
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(incident.id)} className="text-destructive">
+                          <IncidentEditDialog id={incident.id}>
+                            <DropdownMenuItem
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          </IncidentEditDialog>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(incident.id)}
+                            className="text-destructive"
+                          >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>
@@ -186,7 +231,10 @@ export default function IncidentsPage() {
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarImage
-                            src={incident.person?.imagenProfileUrl?.[0] || "/placeholder.svg"}
+                            src={
+                              incident.person?.imagenProfileUrl?.[0] ||
+                              "/placeholder.svg"
+                            }
                             alt={getPersonName(incident)}
                           />
                           <AvatarFallback className="text-xs">
@@ -198,21 +246,29 @@ export default function IncidentsPage() {
                               .slice(0, 2)}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-sm">{getPersonName(incident)}</span>
+                        <span className="text-sm">
+                          {getPersonName(incident)}
+                        </span>
                       </div>
                     </div>
 
                     {/* Place */}
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{incident.place?.name || "Unknown Location"}</span>
+                      <span className="text-sm">
+                        {incident.place?.name || "Unknown Location"}
+                      </span>
                     </div>
 
                     {/* Details */}
                     {incident.details && (
                       <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Details:</span>
-                        <p className="text-sm bg-muted p-2 rounded text-pretty line-clamp-2">{incident.details}</p>
+                        <span className="text-sm text-muted-foreground">
+                          Details:
+                        </span>
+                        <p className="text-sm bg-muted p-2 rounded text-pretty line-clamp-2">
+                          {incident.details}
+                        </p>
                       </div>
                     )}
 
@@ -220,7 +276,9 @@ export default function IncidentsPage() {
                     {incident.photoBook && incident.photoBook.length > 0 && (
                       <div className="flex items-center gap-2">
                         <Camera className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{incident.photoBook.length} photo(s)</span>
+                        <span className="text-sm">
+                          {incident.photoBook.length} photo(s)
+                        </span>
                       </div>
                     )}
                   </CardContent>
@@ -231,5 +289,5 @@ export default function IncidentsPage() {
         )}
       </div>
     </DashboardLayout>
-  )
+  );
 }

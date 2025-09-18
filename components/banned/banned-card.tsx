@@ -1,55 +1,75 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Eye, Edit, Trash2, Calendar, MapPin } from "lucide-react"
-import { format } from "date-fns"
-import type { Banned, Place } from "@/lib/types"
-import Link from "next/link"
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
+  Calendar,
+  MapPin,
+} from "lucide-react";
+import { BannedEditDialog } from "@/components/banned/banned-edit-dialog";
+import { format } from "date-fns";
+import type { Banned, Place } from "@/lib/types";
+import Link from "next/link";
 
 interface BannedCardProps {
-  banned: Banned
-  places: Place[]
-  onEdit: (banned: Banned) => void
-  onDelete: (id: string) => void
+  banned: Banned;
+  places: Place[];
+  onEdit: (banned: Banned) => void;
+  onDelete: (id: string) => void;
 }
 
-export function BannedCard({ banned, places, onEdit, onDelete }: BannedCardProps) {
-  const person = banned.incident.person
-  const personName = [person?.name, person?.lastName].filter(Boolean).join(" ") || person?.nickname || "Unknown"
-  const profileImages = person?.imagenProfileUrl || []
+export function BannedCard({
+  banned,
+  places,
+  onEdit,
+  onDelete,
+}: BannedCardProps) {
+  const person = banned.incident.person;
+  const personName =
+    [person?.name, person?.lastName].filter(Boolean).join(" ") ||
+    person?.nickname ||
+    "Unknown";
+  const profileImages = person?.imagenProfileUrl || [];
 
   // Create place name map for quick lookup
-  const placeMap = places.reduce(
-    (acc, place) => {
-      acc[place.id] = place.name || "Unknown Place"
-      return acc
-    },
-    {} as Record<string, string>,
-  )
+  const placeMap = places.reduce((acc, place) => {
+    acc[place.id] = place.name || "Unknown Place";
+    return acc;
+  }, {} as Record<string, string>);
 
-  const bannedPlaceNames = banned.bannedPlaces.map((bp) => placeMap[bp.placeId]).filter(Boolean)
+  const bannedPlaceNames = banned.bannedPlaces
+    .map((bp) => placeMap[bp.placeId])
+    .filter(Boolean);
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), "MMM dd, yyyy")
+      return format(new Date(dateString), "MMM dd, yyyy");
     } catch {
-      return "Invalid date"
+      return "Invalid date";
     }
-  }
+  };
 
   const getDurationText = () => {
-    if (!banned.howlong) return "Duration unknown"
-    const { years, months, days } = banned.howlong
-    const parts = []
-    if (years && years !== "0") parts.push(`${years}y`)
-    if (months && months !== "0") parts.push(`${months}m`)
-    if (days && days !== "0") parts.push(`${days}d`)
-    return parts.length > 0 ? parts.join(" ") : "Less than a day"
-  }
+    if (!banned.howlong) return "Duration unknown";
+    const { years, months, days } = banned.howlong;
+    const parts = [];
+    if (years && years !== "0") parts.push(`${years}y`);
+    if (months && months !== "0") parts.push(`${months}m`);
+    if (days && days !== "0") parts.push(`${days}d`);
+    return parts.length > 0 ? parts.join(" ") : "Less than a day";
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -57,7 +77,10 @@ export function BannedCard({ banned, places, onEdit, onDelete }: BannedCardProps
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={profileImages[0] || "/placeholder.svg"} alt={personName} />
+              <AvatarImage
+                src={profileImages[0] || "/placeholder.svg"}
+                alt={personName}
+              />
               <AvatarFallback className="bg-primary/10 text-primary">
                 {personName
                   .split(" ")
@@ -68,9 +91,13 @@ export function BannedCard({ banned, places, onEdit, onDelete }: BannedCardProps
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-card-foreground">{personName}</h3>
+              <h3 className="font-semibold text-card-foreground">
+                {personName}
+              </h3>
               {person?.nickname && person.nickname !== personName && (
-                <p className="text-sm text-muted-foreground">"{person.nickname}"</p>
+                <p className="text-sm text-muted-foreground">
+                  "{person.nickname}"
+                </p>
               )}
             </div>
           </div>
@@ -93,11 +120,16 @@ export function BannedCard({ banned, places, onEdit, onDelete }: BannedCardProps
                     View Details
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(banned)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDelete(banned.id)} className="text-destructive">
+                <BannedEditDialog id={banned.id}>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                </BannedEditDialog>
+                <DropdownMenuItem
+                  onClick={() => onDelete(banned.id)}
+                  className="text-destructive"
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
@@ -136,7 +168,9 @@ export function BannedCard({ banned, places, onEdit, onDelete }: BannedCardProps
         {banned.motive && (
           <div className="space-y-1">
             <span className="text-sm text-muted-foreground">Motive:</span>
-            <p className="text-sm bg-muted p-2 rounded text-pretty">{banned.motive}</p>
+            <p className="text-sm bg-muted p-2 rounded text-pretty">
+              {banned.motive}
+            </p>
           </div>
         )}
 
@@ -160,12 +194,19 @@ export function BannedCard({ banned, places, onEdit, onDelete }: BannedCardProps
         {/* Additional Photos */}
         {profileImages.length > 1 && (
           <div className="space-y-2">
-            <span className="text-sm text-muted-foreground">Additional Photos:</span>
+            <span className="text-sm text-muted-foreground">
+              Additional Photos:
+            </span>
             <div className="flex gap-2 overflow-x-auto">
               {profileImages.slice(1, 4).map((url, index) => (
                 <Avatar key={index} className="h-8 w-8 flex-shrink-0">
-                  <AvatarImage src={url || "/placeholder.svg"} alt={`${personName} ${index + 2}`} />
-                  <AvatarFallback className="text-xs">{index + 2}</AvatarFallback>
+                  <AvatarImage
+                    src={url || "/placeholder.svg"}
+                    alt={`${personName} ${index + 2}`}
+                  />
+                  <AvatarFallback className="text-xs">
+                    {index + 2}
+                  </AvatarFallback>
                 </Avatar>
               ))}
               {profileImages.length > 4 && (
@@ -178,5 +219,5 @@ export function BannedCard({ banned, places, onEdit, onDelete }: BannedCardProps
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

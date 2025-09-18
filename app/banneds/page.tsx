@@ -1,108 +1,127 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { PageHeader } from "@/components/ui/page-header"
-import { Button } from "@/components/ui/button"
-import { BannedCard } from "@/components/banned/banned-card"
-import { BannedSearch } from "@/components/banned/banned-search"
-import { useBanneds, usePlaces, useDeleteBanned } from "@/hooks/queries"
-import { Plus, Loader2 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import type { Banned } from "@/lib/types"
+import { useState, useMemo } from "react";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { BannedCreateFullDialog } from "@/components/banned/banned-create-full-dialog";
+import { BannedCard } from "@/components/banned/banned-card";
+import { BannedSearch } from "@/components/banned/banned-search";
+import { useBanneds, usePlaces, useDeleteBanned } from "@/hooks/queries";
+import { Plus, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import type { Banned } from "@/lib/types";
 
 export default function BannedsPage() {
-  const { toast } = useToast()
-  const { data: banneds, isLoading: bannedsLoading, error: bannedsError } = useBanneds()
-  const { data: places, isLoading: placesLoading } = usePlaces()
-  const deleteBannedMutation = useDeleteBanned()
+  const { toast } = useToast();
+  const {
+    data: banneds,
+    isLoading: bannedsLoading,
+    error: bannedsError,
+  } = useBanneds();
+  const { data: places, isLoading: placesLoading } = usePlaces();
+  const deleteBannedMutation = useDeleteBanned();
 
   // Search and filter state
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
-  const [selectedPlaces, setSelectedPlaces] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
+  const [selectedPlaces, setSelectedPlaces] = useState<string[]>([]);
 
   // Filter and search logic
   const filteredBanneds = useMemo(() => {
-    if (!banneds) return []
+    if (!banneds) return [];
 
     return banneds.filter((banned) => {
-      const person = banned.incident.person
-      const personName = [person?.name, person?.lastName, person?.nickname].filter(Boolean).join(" ").toLowerCase()
+      const person = banned.incident.person;
+      const personName = [person?.name, person?.lastName, person?.nickname]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
       // Search filter
-      const matchesSearch = !searchQuery || personName.includes(searchQuery.toLowerCase())
+      const matchesSearch =
+        !searchQuery || personName.includes(searchQuery.toLowerCase());
 
       // Status filter
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "active" && banned.isActive) ||
-        (statusFilter === "inactive" && !banned.isActive)
+        (statusFilter === "inactive" && !banned.isActive);
 
       // Place filter
       const matchesPlace =
-        selectedPlaces.length === 0 || banned.bannedPlaces.some((bp) => selectedPlaces.includes(bp.placeId))
+        selectedPlaces.length === 0 ||
+        banned.bannedPlaces.some((bp) => selectedPlaces.includes(bp.placeId));
 
-      return matchesSearch && matchesStatus && matchesPlace
-    })
-  }, [banneds, searchQuery, statusFilter, selectedPlaces])
+      return matchesSearch && matchesStatus && matchesPlace;
+    });
+  }, [banneds, searchQuery, statusFilter, selectedPlaces]);
 
   const handlePlaceToggle = (placeId: string) => {
-    setSelectedPlaces((prev) => (prev.includes(placeId) ? prev.filter((id) => id !== placeId) : [...prev, placeId]))
-  }
+    setSelectedPlaces((prev) =>
+      prev.includes(placeId)
+        ? prev.filter((id) => id !== placeId)
+        : [...prev, placeId]
+    );
+  };
 
   const handleClearFilters = () => {
-    setSearchQuery("")
-    setStatusFilter("all")
-    setSelectedPlaces([])
-  }
+    setSearchQuery("");
+    setStatusFilter("all");
+    setSelectedPlaces([]);
+  };
 
   const handleEdit = (banned: Banned) => {
-    // TODO: Open edit modal/form
-    toast({
-      title: "Edit Banned",
-      description: "Edit functionality will be implemented in the next phase.",
-    })
-  }
+    // handled inline via dialog trigger
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this ban record?")) return
+    if (!confirm("Are you sure you want to delete this ban record?")) return;
 
     try {
-      await deleteBannedMutation.mutateAsync(id)
+      await deleteBannedMutation.mutateAsync(id);
       toast({
         title: "Success",
         description: "Ban record deleted successfully.",
-      })
+      });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete ban record. Please try again.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
-  const isLoading = bannedsLoading || placesLoading
+  const isLoading = bannedsLoading || placesLoading;
 
   if (bannedsError) {
     return (
       <DashboardLayout>
         <PageHeader title="Banned Persons" />
         <div className="text-center py-8">
-          <p className="text-destructive">Error loading banned persons: {bannedsError.message}</p>
+          <p className="text-destructive">
+            Error loading banned persons: {bannedsError.message}
+          </p>
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   return (
     <DashboardLayout>
-      <PageHeader title="Banned Persons" description="Manage banned individuals and their restrictions">
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Ban
-        </Button>
+      <PageHeader
+        title="Banned Persons"
+        description="Manage banned individuals and their restrictions"
+      >
+        <BannedCreateFullDialog>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Ban
+          </Button>
+        </BannedCreateFullDialog>
       </PageHeader>
 
       <div className="space-y-6">
@@ -127,14 +146,17 @@ export default function BannedsPage() {
         ) : filteredBanneds.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">
-              {banneds?.length === 0 ? "No banned persons found." : "No results match your filters."}
+              {banneds?.length === 0
+                ? "No banned persons found."
+                : "No results match your filters."}
             </p>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing {filteredBanneds.length} of {banneds?.length || 0} banned persons
+                Showing {filteredBanneds.length} of {banneds?.length || 0}{" "}
+                banned persons
               </p>
             </div>
 
@@ -153,5 +175,5 @@ export default function BannedsPage() {
         )}
       </div>
     </DashboardLayout>
-  )
+  );
 }
