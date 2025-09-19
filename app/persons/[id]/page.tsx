@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { PersonEditDialog } from "@/components/person/person-edit-dialog";
+import { IncidentCreateDialog } from "@/components/incident/incident-create-dialog";
 import { useState } from "react";
 
 export default function PersonDetailPage() {
@@ -154,6 +155,14 @@ export default function PersonDetailPage() {
                   Edit Person Details
                 </Button>
               </PersonEditDialog>
+              <IncidentCreateDialog lockedPersonId={person.id}>
+                <Button
+                  className="w-full bg-transparent cursor-pointer"
+                  variant="outline"
+                >
+                  Create Incident for this Person
+                </Button>
+              </IncidentCreateDialog>
               <Button
                 className="w-full cursor-pointer"
                 variant="destructive"

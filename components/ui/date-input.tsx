@@ -70,7 +70,7 @@ export function DateInput({
   onBlur,
   name,
   id,
-  placeholder = "dd/mm/aaaa",
+  placeholder = "dd/mm/yyyy",
   disabled,
   className,
 }: DateInputProps) {

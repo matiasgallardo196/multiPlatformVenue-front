@@ -39,6 +39,8 @@ export function IncidentForm({
   onSubmit,
   onCancel,
   submitLabel,
+  lockedPersonId,
+  isSubmitting,
 }: {
   form: UseFormReturn<IncidentFormValues>;
   persons: Person[];
@@ -46,6 +48,8 @@ export function IncidentForm({
   onSubmit: (values: IncidentFormValues) => void | Promise<void>;
   onCancel: () => void;
   submitLabel: string;
+  lockedPersonId?: string;
+  isSubmitting?: boolean;
 }) {
   const [isUploading, setIsUploading] = useState(false);
   const [globalProgress, setGlobalProgress] = useState<number>(0);
@@ -158,32 +162,40 @@ export function IncidentForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="personId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Person</FormLabel>
-              <FormControl>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select person" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {persons.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {[p.name, p.lastName].filter(Boolean).join(" ") ||
-                          p.nickname ||
-                          "Unknown"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {lockedPersonId ? (
+          <input
+            type="hidden"
+            value={lockedPersonId}
+            {...form.register("personId")}
+          />
+        ) : (
+          <FormField
+            control={form.control}
+            name="personId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Person</FormLabel>
+                <FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select person" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {persons.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {[p.name, p.lastName].filter(Boolean).join(" ") ||
+                            p.nickname ||
+                            "Unknown"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
@@ -233,8 +245,8 @@ export function IncidentForm({
               <FormControl>
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">
-                    Máx. {MAX_IMAGES} imágenes, hasta {MAX_FILE_SIZE_MB}MB cada
-                    una. Formatos: JPG, PNG, WebP.
+                    Max. {MAX_IMAGES} images, up to {MAX_FILE_SIZE_MB}MB each.
+                    Formats: JPG, PNG, WebP.
                   </p>
                   <input
                     ref={fileInputRef}
@@ -249,7 +261,7 @@ export function IncidentForm({
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    Seleccionar imágenes
+                    Select images
                   </Button>
 
                   {isUploading && (
@@ -300,10 +312,15 @@ export function IncidentForm({
         />
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={isUploading}>
+          <Button type="submit" disabled={isUploading || isSubmitting}>
             {isUploading ? "Uploading..." : submitLabel}
           </Button>
         </div>

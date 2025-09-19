@@ -69,7 +69,7 @@ export function PersonForm({
     if (current.length >= MAX_IMAGES) {
       form.setError("imagenProfileUrl" as any, {
         type: "manual",
-        message: `Máximo ${MAX_IMAGES} imágenes en total.`,
+        message: `Maximum ${MAX_IMAGES} images in total.`,
       });
       return;
     }
@@ -77,19 +77,19 @@ export function PersonForm({
     const picked = Array.isArray(files) ? files : Array.from(files);
     const byType = picked.filter((f) => {
       const ok = ALLOWED_TYPES.has(f.type);
-      if (!ok) messages.push(`Formato no permitido: ${f.name}`);
+      if (!ok) messages.push(`Unsupported format: ${f.name}`);
       return ok;
     });
     const bySize = byType.filter((f) => {
       const ok = f.size <= MAX_FILE_SIZE_BYTES;
-      if (!ok) messages.push(`${f.name} supera ${MAX_FILE_SIZE_MB}MB`);
+      if (!ok) messages.push(`${f.name} exceeds ${MAX_FILE_SIZE_MB}MB`);
       return ok;
     });
 
     const remaining = Math.max(0, MAX_IMAGES - current.length);
     const toUpload = bySize.slice(0, remaining);
     if (bySize.length > toUpload.length) {
-      messages.push(`Solo se permiten ${MAX_IMAGES} imágenes en total.`);
+      messages.push(`Only ${MAX_IMAGES} images allowed in total.`);
     }
 
     if (toUpload.length === 0) {
@@ -150,15 +150,15 @@ export function PersonForm({
 
       if (urls.length > 0) {
         toast({
-          title: "Imágenes subidas",
-          description: `${urls.length} imagen(es) agregadas.`,
+          title: "Images uploaded",
+          description: `${urls.length} image(s) added.`,
         });
       }
       if (failures.length > 0) {
         setFailedFiles((prev) => [...prev, ...failures]);
         toast({
-          title: "Error de subida",
-          description: `No se pudieron subir ${failures.length} archivo(s). Intenta nuevamente.`,
+          title: "Upload error",
+          description: `Couldn't upload ${failures.length} file(s). Please try again.`,
           variant: "destructive",
         });
       }
@@ -199,11 +199,11 @@ export function PersonForm({
         shouldDirty: true,
       });
       setFailedFiles((prev) => prev.filter((f) => f.name !== file.name));
-      toast({ title: "Imagen subida", description: `${file.name} agregada.` });
+      toast({ title: "Image uploaded", description: `${file.name} added.` });
     } catch (e) {
       toast({
-        title: "Error de subida",
-        description: `No se pudo subir ${file.name}.`,
+        title: "Upload error",
+        description: `Couldn't upload ${file.name}.`,
         variant: "destructive",
       });
     } finally {
@@ -296,8 +296,8 @@ export function PersonForm({
               <FormControl>
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">
-                    Máx. {MAX_IMAGES} imágenes, hasta {MAX_FILE_SIZE_MB}MB cada
-                    una. Formatos: JPG, PNG, WebP.
+                    Max. {MAX_IMAGES} images, up to {MAX_FILE_SIZE_MB}MB each.
+                    Formats: JPG, PNG, WebP.
                   </p>
                   <input
                     ref={fileInputRef}
@@ -312,7 +312,7 @@ export function PersonForm({
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    Seleccionar imágenes
+                    Select images
                   </Button>
 
                   <div
@@ -360,7 +360,7 @@ export function PersonForm({
                     }`}
                   >
                     <span className="text-xs text-muted-foreground">
-                      Arrastra y suelta imágenes aquí
+                      Drag and drop images here
                     </span>
                   </div>
                   {isUploading && (
@@ -386,7 +386,7 @@ export function PersonForm({
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <p className="text-xs text-muted-foreground">
-                          {failedFiles.length} archivo(s) fallidos
+                          {failedFiles.length} failed file(s)
                         </p>
                         <Button
                           type="button"
@@ -394,7 +394,7 @@ export function PersonForm({
                           size="sm"
                           onClick={retryAll}
                         >
-                          Reintentar todos
+                          Retry all
                         </Button>
                       </div>
                       <div className="grid grid-cols-1 gap-1">
@@ -412,7 +412,7 @@ export function PersonForm({
                               variant="outline"
                               onClick={() => retryFile(file)}
                             >
-                              Reintentar
+                              Retry
                             </Button>
                           </div>
                         ))}

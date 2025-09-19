@@ -18,32 +18,43 @@ import {
 } from "@/lib/validations";
 import { useCreateIncident, usePersons, usePlaces } from "@/hooks/queries";
 import { IncidentForm } from "./incident-form";
+import { useRouter } from "next/navigation";
 
 export function IncidentCreateDialog({
   children,
+  lockedPersonId,
 }: {
   children: React.ReactNode;
+  lockedPersonId?: string;
 }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [navigating, setNavigating] = useState(false);
   const createIncident = useCreateIncident();
   const { data: persons = [] } = usePersons();
   const { data: places = [] } = usePlaces();
+  const router = useRouter();
 
   const form = useForm<CreateIncidentForm>({
     resolver: zodResolver(createIncidentSchema),
-    defaultValues: { personId: "", placeId: "", details: "", photoBook: [] },
+    defaultValues: {
+      personId: lockedPersonId || "",
+      placeId: "",
+      details: "",
+      photoBook: [],
+    },
   });
 
   const onSubmit = async (values: CreateIncidentForm) => {
     try {
-      await createIncident.mutateAsync(values);
+      const created = await createIncident.mutateAsync(values);
       toast({
         title: "Success",
         description: "Incident created successfully.",
       });
       form.reset({ personId: "", placeId: "", details: "", photoBook: [] });
-      setOpen(false);
+      setNavigating(true);
+      router.push(`/incidents/${created.id}`);
     } catch (error) {
       toast({
         title: "Error",
@@ -67,7 +78,15 @@ export function IncidentCreateDialog({
           places={places}
           onSubmit={onSubmit}
           onCancel={() => setOpen(false)}
-          submitLabel={createIncident.isPending ? "Creating..." : "Create"}
+          submitLabel={
+            createIncident.isPending
+              ? "Creating..."
+              : navigating
+              ? "Navigating..."
+              : "Create"
+          }
+          lockedPersonId={lockedPersonId}
+          isSubmitting={createIncident.isPending || navigating}
         />
 
         <DialogFooter />
