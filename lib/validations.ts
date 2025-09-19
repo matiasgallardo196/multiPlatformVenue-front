@@ -29,19 +29,42 @@ export const createIncidentSchema = z.object({
 export const updateIncidentSchema = createIncidentSchema.partial();
 
 // Banned validation schemas
-export const createBannedSchema = z.object({
-  incidentId: z.string().min(1, "Incident is required"),
-  startingDate: z.string().min(1, "Starting date is required"),
-  endingDate: z.string().min(1, "Ending date is required"),
-  motive: z.string().optional(),
-  placeIds: z.array(z.string()).optional(),
-});
+export const createBannedSchema = z
+  .object({
+    incidentId: z.string().min(1, "Incident is required"),
+    startingDate: z.string().min(1, "Starting date is required"),
+    endingDate: z.string().min(1, "Ending date is required"),
+    motive: z.string().optional(),
+    placeIds: z.array(z.string()).optional(),
+  })
+  .refine(
+    (data) => {
+      // Compare ISO dates lexicographically (yyyy-MM-dd)
+      if (!data.startingDate || !data.endingDate) return true;
+      return data.endingDate >= data.startingDate;
+    },
+    {
+      path: ["endingDate"],
+      message: "End date must be after start date.",
+    }
+  );
 
-export const updateBannedSchema = z.object({
-  startingDate: z.string().optional(),
-  endingDate: z.string().nullable().optional(),
-  motive: z.string().optional(),
-});
+export const updateBannedSchema = z
+  .object({
+    startingDate: z.string().optional(),
+    endingDate: z.string().nullable().optional(),
+    motive: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.startingDate || !data.endingDate) return true;
+      return data.endingDate >= data.startingDate;
+    },
+    {
+      path: ["endingDate"],
+      message: "End date must be after start date.",
+    }
+  );
 
 // Search and filter schemas
 export const searchSchema = z.object({

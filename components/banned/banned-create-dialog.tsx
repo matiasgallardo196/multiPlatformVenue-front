@@ -107,20 +107,29 @@ export function BannedCreateDialog({
     const daysNum = parseInt(durationDays || "0", 10) || 0;
     const hasPositiveDuration = yearsNum + monthsNum + daysNum > 0;
 
-    if (end < start && !hasPositiveDuration) {
+    if (end < start) {
       form.setError("endingDate" as any, {
         type: "validate",
-        message: "Provide a positive duration or pick an end date after start.",
+        message: "End date must be after start date.",
       });
+      // Don't update duration fields if end date is before start date
       return;
     }
 
     form.clearErrors("endingDate" as any);
     const dur = intervalToDuration({ start, end });
-    setDurationYears(String(dur.years || 0));
-    setDurationMonths(String(dur.months || 0));
-    setDurationDays(String(dur.days || 0));
-  }, [startingDate, endingDate]);
+    // Ensure we don't set negative values
+    setDurationYears(String(Math.max(0, dur.years || 0)));
+    setDurationMonths(String(Math.max(0, dur.months || 0)));
+    setDurationDays(String(Math.max(0, dur.days || 0)));
+  }, [
+    startingDate,
+    endingDate,
+    durationYears,
+    durationMonths,
+    durationDays,
+    form,
+  ]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -160,7 +169,23 @@ export function BannedCreateDialog({
                   <FormControl>
                     <DateInput
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        // Immediate validation
+                        const start = form.getValues("startingDate");
+                        if (
+                          start &&
+                          value &&
+                          new Date(value) < new Date(start)
+                        ) {
+                          form.setError("endingDate", {
+                            type: "validate",
+                            message: "End date must be after start date.",
+                          });
+                        } else {
+                          form.clearErrors("endingDate");
+                        }
+                      }}
                       onBlur={field.onBlur}
                       name={field.name}
                     />
@@ -194,6 +219,8 @@ export function BannedCreateDialog({
                   value={durationYears}
                   onChange={(e) => {
                     const val = e.target.value;
+                    // Prevent negative numbers
+                    if (val && parseInt(val, 10) < 0) return;
                     setDurationYears(val);
                     const s = form.getValues("startingDate");
                     if (!s) return;
@@ -203,6 +230,8 @@ export function BannedCreateDialog({
                     const months = parseInt(durationMonths || "0", 10) || 0;
                     const days = parseInt(durationDays || "0", 10) || 0;
                     const end = add(base, { years, months, days });
+                    // Ensure end date is not before start date
+                    if (end < base) return;
                     form.setValue(
                       "endingDate",
                       end.toISOString().slice(0, 10),
@@ -221,6 +250,8 @@ export function BannedCreateDialog({
                   value={durationMonths}
                   onChange={(e) => {
                     const val = e.target.value;
+                    // Prevent negative numbers
+                    if (val && parseInt(val, 10) < 0) return;
                     setDurationMonths(val);
                     const s = form.getValues("startingDate");
                     if (!s) return;
@@ -230,6 +261,8 @@ export function BannedCreateDialog({
                     const months = parseInt(val || "0", 10) || 0;
                     const days = parseInt(durationDays || "0", 10) || 0;
                     const end = add(base, { years, months, days });
+                    // Ensure end date is not before start date
+                    if (end < base) return;
                     form.setValue(
                       "endingDate",
                       end.toISOString().slice(0, 10),
@@ -248,6 +281,8 @@ export function BannedCreateDialog({
                   value={durationDays}
                   onChange={(e) => {
                     const val = e.target.value;
+                    // Prevent negative numbers
+                    if (val && parseInt(val, 10) < 0) return;
                     setDurationDays(val);
                     const s = form.getValues("startingDate");
                     if (!s) return;
@@ -257,6 +292,8 @@ export function BannedCreateDialog({
                     const months = parseInt(durationMonths || "0", 10) || 0;
                     const days = parseInt(val || "0", 10) || 0;
                     const end = add(base, { years, months, days });
+                    // Ensure end date is not before start date
+                    if (end < base) return;
                     form.setValue(
                       "endingDate",
                       end.toISOString().slice(0, 10),
