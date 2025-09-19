@@ -176,7 +176,9 @@ export default function PlacesPage() {
                         <DropdownMenuContent align="end">
                           {!isReadOnly && (
                             <PlaceEditDialog id={place.id}>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={(e) => e.preventDefault()}
+                              >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
                               </DropdownMenuItem>
