@@ -41,6 +41,7 @@ export default function BannedDetailPage() {
   const { isReadOnly } = useAuth();
   const deleteBanned = useDeleteBanned();
   const { toast } = useToast();
+  const [deleting, setDeleting] = useState(false);
 
   if (isLoading) {
     return (
@@ -249,9 +250,11 @@ export default function BannedDetailPage() {
                   if (!confirm("Are you sure you want to delete this ban?"))
                     return;
                   try {
+                    setDeleting(true);
+                    // Navigate away immediately to avoid a 404 fetch on this page after deletion
+                    router.replace("/banneds");
                     await deleteBanned.mutateAsync(banned.id);
                     toast({ title: "Deleted", description: "Ban removed." });
-                    router.replace("/banneds");
                   } catch (e: any) {
                     toast({
                       title: "Error",
