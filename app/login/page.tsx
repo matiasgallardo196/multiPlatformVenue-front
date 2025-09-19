@@ -78,24 +78,31 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-xl border bg-card shadow-sm">
         <div className="p-6 sm:p-8">
           <div className="flex justify-end mb-2">
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label={
-                isDark ? "Switch to light theme" : "Switch to dark theme"
-              }
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-            >
-              {mounted ? (
-                isDark ? (
+            {mounted ? (
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label={
+                  isDark ? "Switch to light theme" : "Switch to dark theme"
+                }
+                onClick={() => setTheme(isDark ? "light" : "dark")}
+              >
+                {isDark ? (
                   <Sun className="h-4 w-4" />
                 ) : (
                   <Moon className="h-4 w-4" />
-                )
-              ) : (
+                )}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Toggle theme"
+                disabled
+              >
                 <Moon className="h-4 w-4" />
-              )}
-            </Button>
+              </Button>
+            )}
           </div>
           <div className="mb-6 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
