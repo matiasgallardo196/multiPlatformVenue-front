@@ -36,10 +36,10 @@ export function PersonCombobox({
   const { data: allPersons = [], isLoading } = usePersons();
 
   const filteredPersons = useMemo<Person[]>(() => {
-    const list = allPersons || [];
+    const list: Person[] = (allPersons || []) as Person[];
     const q = query.trim().toLowerCase();
     if (!q) return list;
-    return list.filter((p) => {
+    return list.filter((p: Person) => {
       const parts = [p.name || "", p.lastName || "", p.nickname || ""]
         .filter(Boolean)
         .map((s) => s.toLowerCase());
@@ -52,7 +52,7 @@ export function PersonCombobox({
   }, [allPersons, query]);
 
   const selectedPerson = useMemo<Person | undefined>(
-    () => (allPersons || []).find((p) => p.id === value),
+    () => ((allPersons || []) as Person[]).find((p: Person) => p.id === value),
     [allPersons, value]
   );
 
@@ -90,12 +90,18 @@ export function PersonCombobox({
             value={query}
             onValueChange={setQuery}
           />
-          <CommandList className="max-h-64 overflow-y-auto">
+          <CommandList
+            className="max-h-64 overflow-y-auto"
+            onWheel={(e) => {
+              // Ensure mouse wheel scrolls the list instead of bubbling
+              e.stopPropagation();
+            }}
+          >
             <CommandEmpty>
               {isLoading ? "Loading..." : "No persons match your search."}
             </CommandEmpty>
             <CommandGroup>
-              {filteredPersons.map((p) => {
+              {filteredPersons.map((p: Person) => {
                 const label =
                   [p.name, p.lastName].filter(Boolean).join(" ") ||
                   p.nickname ||
