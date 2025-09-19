@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { IncidentCombobox } from "@/components/incident/incident-combobox";
 import {
   Form,
   FormControl,
@@ -88,22 +89,10 @@ export function BannedCreateFullDialog({
                 <FormItem>
                   <FormLabel>Incident</FormLabel>
                   <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select incident" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {incidents.map((inc) => (
-                          <SelectItem key={inc.id} value={inc.id}>
-                            {`#${inc.id.slice(-6)} - ${
-                              inc.person?.name ||
-                              inc.person?.nickname ||
-                              "Unknown"
-                            }`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <IncidentCombobox
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
