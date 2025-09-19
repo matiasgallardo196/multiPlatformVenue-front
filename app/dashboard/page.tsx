@@ -18,6 +18,9 @@ import {
 import { Users, MapPin, AlertTriangle, UserX } from "lucide-react";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { BannedCreateFullDialog } from "@/components/banned/banned-create-full-dialog";
+import { IncidentCreateDialog } from "@/components/incident/incident-create-dialog";
+import { PersonCreateDialog } from "@/components/person/person-create-dialog";
 
 export default function DashboardPage() {
   const { isReadOnly } = useAuth();
@@ -174,33 +177,43 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div>
-                    <p className="font-medium">Create New Ban</p>
-                    <p className="text-sm text-muted-foreground">
-                      Add a new ban record
-                    </p>
+                <PersonCreateDialog
+                  onCreated={(person) => {
+                    window.location.href = `/persons/${person.id}`;
+                  }}
+                >
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer">
+                    <div>
+                      <p className="font-medium">Add Person</p>
+                      <p className="text-sm text-muted-foreground">
+                        Register new individual
+                      </p>
+                    </div>
+                    <Users className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <UserX className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div>
-                    <p className="font-medium">Report Incident</p>
-                    <p className="text-sm text-muted-foreground">
-                      Create new incident report
-                    </p>
+                </PersonCreateDialog>
+                <IncidentCreateDialog shouldRedirect>
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer">
+                    <div>
+                      <p className="font-medium">Report Incident</p>
+                      <p className="text-sm text-muted-foreground">
+                        Create new incident report
+                      </p>
+                    </div>
+                    <AlertTriangle className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div>
-                    <p className="font-medium">Add Person</p>
-                    <p className="text-sm text-muted-foreground">
-                      Register new individual
-                    </p>
+                </IncidentCreateDialog>
+                <BannedCreateFullDialog redirectOnSuccess>
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer">
+                    <div>
+                      <p className="font-medium">Create New Ban</p>
+                      <p className="text-sm text-muted-foreground">
+                        Add a new ban record
+                      </p>
+                    </div>
+                    <UserX className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <Users className="h-5 w-5 text-muted-foreground" />
-                </div>
+                </BannedCreateFullDialog>
               </div>
             </CardContent>
           </Card>

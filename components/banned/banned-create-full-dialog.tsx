@@ -32,17 +32,21 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export function BannedCreateFullDialog({
   children,
+  redirectOnSuccess = false,
 }: {
   children: React.ReactNode;
+  redirectOnSuccess?: boolean;
 }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const createBanned = useCreateBanned();
   const { data: incidents = [] } = useIncidents();
   const { data: places = [] } = usePlaces();
+  const router = useRouter();
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -60,9 +64,13 @@ export function BannedCreateFullDialog({
 
   const onSubmit = async (values: CreateBannedForm) => {
     try {
-      await createBanned.mutateAsync(values);
+      const created = await createBanned.mutateAsync(values);
       toast({ title: "Success", description: "Ban created successfully." });
-      setOpen(false);
+      if (redirectOnSuccess) {
+        router.push(`/banneds/${created.id}`);
+      } else {
+        setOpen(false);
+      }
     } catch (error) {
       toast({
         title: "Error",
