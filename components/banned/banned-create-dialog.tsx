@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createBannedSchema, type CreateBannedForm } from "@/lib/validations";
 import { useCreateBanned } from "@/hooks/queries";
 import { useRouter } from "next/navigation";
+import { add, intervalToDuration, isValid } from "date-fns";
 
 export function BannedCreateDialog({
   children,
@@ -48,6 +49,7 @@ export function BannedCreateDialog({
 
   const form = useForm<CreateBannedForm>({
     resolver: zodResolver(createBannedSchema),
+    mode: "onChange",
     defaultValues: {
       incidentId,
       startingDate: today,
@@ -84,6 +86,40 @@ export function BannedCreateDialog({
       });
     }
   };
+
+  // Local duration UI state (not sent to backend)
+  const [durationYears, setDurationYears] = useState<string>("");
+  const [durationMonths, setDurationMonths] = useState<string>("");
+  const [durationDays, setDurationDays] = useState<string>("");
+
+  // Sync: dates -> durations and validate
+  const startingDate = form.watch("startingDate");
+  const endingDate = form.watch("endingDate");
+
+  useEffect(() => {
+    if (!startingDate || !endingDate) return;
+    const start = new Date(startingDate);
+    const end = new Date(endingDate);
+    if (!isValid(start) || !isValid(end)) return;
+    const yearsNum = parseInt(durationYears || "0", 10) || 0;
+    const monthsNum = parseInt(durationMonths || "0", 10) || 0;
+    const daysNum = parseInt(durationDays || "0", 10) || 0;
+    const hasPositiveDuration = yearsNum + monthsNum + daysNum > 0;
+
+    if (end < start && !hasPositiveDuration) {
+      form.setError("endingDate" as any, {
+        type: "validate",
+        message: "Provide a positive duration or pick an end date after start.",
+      });
+      return;
+    }
+
+    form.clearErrors("endingDate" as any);
+    const dur = intervalToDuration({ start, end });
+    setDurationYears(String(dur.years || 0));
+    setDurationMonths(String(dur.months || 0));
+    setDurationDays(String(dur.days || 0));
+  }, [startingDate, endingDate]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -147,6 +183,91 @@ export function BannedCreateDialog({
               )}
             />
 
+            {/* Duration inputs */}
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <FormLabel>Years</FormLabel>
+                <Input
+                  type="number"
+                  min={0}
+                  value={durationYears}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDurationYears(val);
+                    const s = form.getValues("startingDate");
+                    if (!s) return;
+                    const base = new Date(s);
+                    if (!isValid(base)) return;
+                    const years = parseInt(val || "0", 10) || 0;
+                    const months = parseInt(durationMonths || "0", 10) || 0;
+                    const days = parseInt(durationDays || "0", 10) || 0;
+                    const end = add(base, { years, months, days });
+                    form.setValue(
+                      "endingDate",
+                      end.toISOString().slice(0, 10),
+                      {
+                        shouldDirty: true,
+                      }
+                    );
+                  }}
+                />
+              </div>
+              <div>
+                <FormLabel>Months</FormLabel>
+                <Input
+                  type="number"
+                  min={0}
+                  value={durationMonths}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDurationMonths(val);
+                    const s = form.getValues("startingDate");
+                    if (!s) return;
+                    const base = new Date(s);
+                    if (!isValid(base)) return;
+                    const years = parseInt(durationYears || "0", 10) || 0;
+                    const months = parseInt(val || "0", 10) || 0;
+                    const days = parseInt(durationDays || "0", 10) || 0;
+                    const end = add(base, { years, months, days });
+                    form.setValue(
+                      "endingDate",
+                      end.toISOString().slice(0, 10),
+                      {
+                        shouldDirty: true,
+                      }
+                    );
+                  }}
+                />
+              </div>
+              <div>
+                <FormLabel>Days</FormLabel>
+                <Input
+                  type="number"
+                  min={0}
+                  value={durationDays}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDurationDays(val);
+                    const s = form.getValues("startingDate");
+                    if (!s) return;
+                    const base = new Date(s);
+                    if (!isValid(base)) return;
+                    const years = parseInt(durationYears || "0", 10) || 0;
+                    const months = parseInt(durationMonths || "0", 10) || 0;
+                    const days = parseInt(val || "0", 10) || 0;
+                    const end = add(base, { years, months, days });
+                    form.setValue(
+                      "endingDate",
+                      end.toISOString().slice(0, 10),
+                      {
+                        shouldDirty: true,
+                      }
+                    );
+                  }}
+                />
+              </div>
+            </div>
+
             {defaultPlaceId && (
               <div className="text-xs text-muted-foreground">
                 This ban will apply by default to the incident's place. You can
@@ -165,7 +286,11 @@ export function BannedCreateDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={createBanned.isPending || navigating}
+                disabled={
+                  createBanned.isPending ||
+                  navigating ||
+                  !form.formState.isValid
+                }
               >
                 {createBanned.isPending
                   ? "Saving..."

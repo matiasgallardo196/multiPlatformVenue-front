@@ -33,6 +33,7 @@ export function BannedEditDialog({
 
   const form = useForm<UpdateBannedForm>({
     resolver: zodResolver(updateBannedSchema),
+    mode: "onChange",
     defaultValues: {
       startingDate: "",
       endingDate: "",
@@ -86,7 +87,10 @@ export function BannedEditDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={updateBanned.isPending}>
+              <Button
+                type="submit"
+                disabled={updateBanned.isPending || !form.formState.isValid}
+              >
                 {updateBanned.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
