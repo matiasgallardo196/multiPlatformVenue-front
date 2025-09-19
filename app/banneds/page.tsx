@@ -96,10 +96,14 @@ export default function BannedsPage() {
         title: "Success",
         description: "Ban record deleted successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      const message =
+        typeof error?.message === "string"
+          ? error.message
+          : "Failed to delete ban record. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to delete ban record. Please try again.",
+        description: message,
         variant: "destructive",
       });
     }
