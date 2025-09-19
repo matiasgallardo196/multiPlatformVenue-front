@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === "production";
+
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -9,8 +11,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Usa un directorio de salida distinto para reducir colisiones
-  distDir: ".next-dev",
+  // Usa un directorio distinto solo en desarrollo; en producción Vercel espera ".next"
+  distDir: isProd ? ".next" : ".next-dev",
   // Mitigar problemas de permisos/caché en entornos OneDrive/Windows
   // Desactiva cache persistente de webpack en dev y usa directorio temporal
   webpack: (config, { dev }) => {
@@ -25,12 +27,27 @@ const nextConfig = {
     return config;
   },
   async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: "http://localhost:3001/:path*",
-      },
-    ];
+    const apiBase = process.env.NEXT_PUBLIC_API_URL;
+    // En producción, si NEXT_PUBLIC_API_URL apunta a un dominio externo, proxyear a ese dominio
+    if (apiBase && !apiBase.startsWith("/")) {
+      return [
+        {
+          source: "/api/:path*",
+          destination: `${apiBase}/:path*`,
+        },
+      ];
+    }
+    // En desarrollo, usa el backend local por defecto
+    if (!isProd) {
+      return [
+        {
+          source: "/api/:path*",
+          destination: "http://localhost:3001/:path*",
+        },
+      ];
+    }
+    // Sin rewrites en producción si no hay API externa definida
+    return [];
   },
 };
 
