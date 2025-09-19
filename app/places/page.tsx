@@ -55,10 +55,14 @@ export default function PlacesPage() {
         title: "Success",
         description: "Place deleted successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      const message =
+        typeof error?.message === "string"
+          ? error.message
+          : "Failed to delete place. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to delete place. Please try again.",
+        description: message,
         variant: "destructive",
       });
     }
