@@ -15,9 +15,24 @@ export async function getUploadSignature(
   const res = await fetch(`${API_BASE_URL}/cloudinary/signature`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ folder }),
   });
-  if (!res.ok) throw new Error("Failed to get upload signature");
+  if (!res.ok) {
+    try {
+      const ct = res.headers.get("content-type") || "";
+      const data = ct.includes("application/json")
+        ? await res.json()
+        : await res.text();
+      const msg =
+        (data && (data.message || data.error)) ||
+        String(data) ||
+        res.statusText;
+      throw new Error(msg || "Failed to get upload signature");
+    } catch (e: any) {
+      throw new Error(e?.message || "Failed to get upload signature");
+    }
+  }
   return res.json();
 }
 

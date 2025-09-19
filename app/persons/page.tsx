@@ -61,10 +61,14 @@ export default function PersonsPage() {
         title: "Success",
         description: "Person deleted successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      const message =
+        typeof error?.message === "string"
+          ? error.message
+          : "Failed to delete person. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to delete person. Please try again.",
+        description: message,
         variant: "destructive",
       });
     }
