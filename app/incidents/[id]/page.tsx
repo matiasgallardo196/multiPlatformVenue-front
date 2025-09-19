@@ -21,6 +21,17 @@ import {
 import { useIncident, useDeleteIncident } from "@/hooks/queries";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -151,32 +162,49 @@ export default function IncidentDetailPage() {
                 </BannedCreateDialog>
               )}
 
-              <Button
-                className="w-full cursor-pointer"
-                variant="destructive"
-                onClick={async () => {
-                  if (
-                    !confirm("Are you sure you want to delete this incident?")
-                  )
-                    return;
-                  try {
-                    await deleteIncident.mutateAsync(incident.id);
-                    toast({
-                      title: "Deleted",
-                      description: "Incident removed.",
-                    });
-                    router.replace("/incidents");
-                  } catch (e: any) {
-                    toast({
-                      title: "Error",
-                      description: e?.message || "Failed to delete incident.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-              >
-                Delete Incident
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="w-full cursor-pointer"
+                    variant="destructive"
+                  >
+                    Delete Incident
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this incident?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      the incident and remove it from the list.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Incident</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        try {
+                          await deleteIncident.mutateAsync(incident.id);
+                          toast({
+                            title: "Deleted",
+                            description: "Incident removed.",
+                          });
+                          router.replace("/incidents");
+                        } catch (e: any) {
+                          toast({
+                            title: "Error",
+                            description:
+                              e?.message || "Failed to delete incident.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         )}

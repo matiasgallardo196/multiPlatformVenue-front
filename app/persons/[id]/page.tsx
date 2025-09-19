@@ -28,6 +28,17 @@ import { useRouter } from "next/navigation";
 import { PersonEditDialog } from "@/components/person/person-edit-dialog";
 import { IncidentCreateDialog } from "@/components/incident/incident-create-dialog";
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function PersonDetailPage() {
   const params = useParams<{ id: string }>();
@@ -101,7 +112,7 @@ export default function PersonDetailPage() {
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {getName()
                       .split(" ")
-                      .map((n) => n[0])
+                      .map((n: string) => n[0])
                       .join("")
                       .toUpperCase()
                       .slice(0, 2)}
@@ -166,27 +177,49 @@ export default function PersonDetailPage() {
                   Create Incident for this Person
                 </Button>
               </IncidentCreateDialog>
-              <Button
-                className="w-full cursor-pointer"
-                variant="destructive"
-                onClick={async () => {
-                  if (!confirm("Are you sure you want to delete this person?"))
-                    return;
-                  try {
-                    await deletePerson.mutateAsync(person.id);
-                    toast({ title: "Deleted", description: "Person removed." });
-                    router.replace("/persons");
-                  } catch (e: any) {
-                    toast({
-                      title: "Error",
-                      description: e?.message || "Failed to delete person.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-              >
-                Delete Person
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="w-full cursor-pointer"
+                    variant="destructive"
+                  >
+                    Delete Person
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this person?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      the person and remove it from the list.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Person</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        try {
+                          await deletePerson.mutateAsync(person.id);
+                          toast({
+                            title: "Deleted",
+                            description: "Person removed.",
+                          });
+                          router.replace("/persons");
+                        } catch (e: any) {
+                          toast({
+                            title: "Error",
+                            description:
+                              e?.message || "Failed to delete person.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         )}
@@ -199,7 +232,7 @@ export default function PersonDetailPage() {
             </div>
             {person.incidents && person.incidents.length > 0 && (
               <ul className="space-y-2">
-                {person.incidents.slice(0, 5).map((inc) => (
+                {person.incidents.slice(0, 5).map((inc: any) => (
                   <li key={inc.id} className="text-sm">
                     <Link className="underline" href={`/incidents/${inc.id}`}>
                       Incident #{inc.id.slice(-8)}
@@ -229,7 +262,7 @@ export default function PersonDetailPage() {
             </div>
             {bans && bans.length > 0 && (
               <ul className="space-y-2">
-                {bans.slice(0, 5).map((b) => (
+                {bans.slice(0, 5).map((b: any) => (
                   <li key={b.id} className="text-sm">
                     <Link className="underline" href={`/banneds/${b.id}`}>
                       Ban #{b.id.slice(-8)}
@@ -254,18 +287,20 @@ export default function PersonDetailPage() {
                 <span className="font-medium">Additional Photos</span>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                {person.imagenProfileUrl.slice(1).map((url, idx) => (
-                  <img
-                    key={idx}
-                    src={url || "/placeholder.svg"}
-                    alt={`Photo ${idx + 2}`}
-                    className="w-full h-24 object-cover rounded border transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-zoom-in"
-                    onClick={() => {
-                      setGalleryIndex(idx + 1);
-                      setGalleryOpen(true);
-                    }}
-                  />
-                ))}
+                {person.imagenProfileUrl
+                  .slice(1)
+                  .map((url: string, idx: number) => (
+                    <img
+                      key={idx}
+                      src={url || "/placeholder.svg"}
+                      alt={`Photo ${idx + 2}`}
+                      className="w-full h-24 object-cover rounded border transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-zoom-in"
+                      onClick={() => {
+                        setGalleryIndex(idx + 1);
+                        setGalleryOpen(true);
+                      }}
+                    />
+                  ))}
               </div>
 
               <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>

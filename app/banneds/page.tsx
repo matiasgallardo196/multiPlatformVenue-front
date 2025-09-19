@@ -8,6 +8,17 @@ import { BannedCreateFullDialog } from "@/components/banned/banned-create-full-d
 import { BannedCard } from "@/components/banned/banned-card";
 import { BannedSearch } from "@/components/banned/banned-search";
 import { useBanneds, usePlaces, useDeleteBanned } from "@/hooks/queries";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Banned } from "@/lib/types";
@@ -185,7 +196,7 @@ export default function BannedsPage() {
                   banned={banned}
                   places={places || []}
                   onEdit={handleEdit}
-                  onDelete={handleDelete}
+                  onDelete={(id) => handleDelete(id)}
                   readOnly={isReadOnly}
                 />
               ))}

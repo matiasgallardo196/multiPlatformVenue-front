@@ -15,6 +15,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIncidents, useDeleteIncident } from "@/hooks/queries";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { IncidentCreateDialog } from "@/components/incident/incident-create-dialog";
 import { IncidentEditDialog } from "@/components/incident/incident-edit-dialog";
 import {
@@ -65,8 +76,6 @@ export default function IncidentsPage() {
   }, [incidents, searchQuery]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this incident?")) return;
-
     try {
       await deleteIncidentMutation.mutateAsync(id);
       toast({
@@ -183,7 +192,7 @@ export default function IncidentsPage() {
                   className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
                   onClick={(e) => {
                     const modalOpen = document.querySelector(
-                      '[data-slot="dialog-content"][data-state="open"]'
+                      '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
                     );
                     if (modalOpen) return;
                     window.location.href = `/incidents/${incident.id}`;
@@ -191,7 +200,7 @@ export default function IncidentsPage() {
                   onKeyDown={(e) => {
                     if (e.key !== "Enter") return;
                     const modalOpen = document.querySelector(
-                      '[data-slot="dialog-content"][data-state="open"]'
+                      '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
                     );
                     if (modalOpen) return;
                     window.location.href = `/incidents/${incident.id}`;
@@ -250,16 +259,42 @@ export default function IncidentsPage() {
                             </IncidentEditDialog>
                           )}
                           {!isReadOnly && (
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(incident.id);
-                              }}
-                              className="text-destructive cursor-pointer"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem
+                                  className="text-destructive cursor-pointer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onSelect={(e) => e.preventDefault()}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Delete incident?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will
+                                    permanently delete the incident and remove
+                                    it from the list.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    Keep Incident
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(incident.id)}
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
