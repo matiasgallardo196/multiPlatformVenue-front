@@ -1,6 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { DateInput } from "@/components/ui/date-input";
 import {
   FormControl,
   FormField,
@@ -45,7 +46,12 @@ export function BannedForm({
             <FormItem>
               <FormLabel>Starting date</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <DateInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -58,7 +64,12 @@ export function BannedForm({
             <FormItem>
               <FormLabel>Ending date</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <DateInput
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -85,7 +85,7 @@ export default function BannedDetailPage() {
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), "MMMM dd, yyyy 'at' h:mm a");
+      return format(new Date(dateString), "dd/MM/yyyy");
     } catch {
       return "Invalid date";
     }
