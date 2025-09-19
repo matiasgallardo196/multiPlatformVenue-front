@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonCombobox } from "@/components/person/person-combobox";
 import { Progress } from "@/components/ui/progress";
 import type { UseFormReturn } from "react-hook-form";
 import type { Person, Place } from "@/lib/types";
@@ -176,20 +177,10 @@ export function IncidentForm({
               <FormItem>
                 <FormLabel>Person</FormLabel>
                 <FormControl>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select person" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {persons.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {[p.name, p.lastName].filter(Boolean).join(" ") ||
-                            p.nickname ||
-                            "Unknown"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <PersonCombobox
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -19,8 +19,10 @@ import { PersonForm } from "./person-form";
 
 export function PersonCreateDialog({
   children,
+  onCreated,
 }: {
   children: React.ReactNode;
+  onCreated?: (person: import("@/lib/types").Person) => void;
 }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -39,10 +41,11 @@ export function PersonCreateDialog({
 
   const onSubmit = async (values: CreatePersonForm) => {
     try {
-      await createPerson.mutateAsync(values);
+      const created = await createPerson.mutateAsync(values);
       toast({ title: "Success", description: "Person created successfully." });
       form.reset();
       setOpen(false);
+      onCreated?.(created);
     } catch (error) {
       toast({
         title: "Error",
