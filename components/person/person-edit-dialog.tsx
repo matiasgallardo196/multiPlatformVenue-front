@@ -36,6 +36,7 @@ export function PersonEditDialog({
       lastName: "",
       nickname: "",
       imagenProfileUrl: [],
+      gender: undefined,
     },
   });
 
@@ -46,6 +47,7 @@ export function PersonEditDialog({
         lastName: person.lastName || "",
         nickname: person.nickname || "",
         imagenProfileUrl: person.imagenProfileUrl || [],
+        gender: person.gender || undefined,
       });
     }
   }, [person, form]);

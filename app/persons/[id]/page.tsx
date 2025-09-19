@@ -133,6 +133,11 @@ export default function PersonDetailPage() {
                   "{person.nickname}"
                 </div>
               )}
+              {person.gender && (
+                <div className="text-xs text-muted-foreground">
+                  Gender: {person.gender}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

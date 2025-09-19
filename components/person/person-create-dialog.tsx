@@ -33,6 +33,7 @@ export function PersonCreateDialog({
       lastName: "",
       nickname: "",
       imagenProfileUrl: [],
+      gender: undefined,
     },
   });
 

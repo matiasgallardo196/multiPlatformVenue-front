@@ -30,6 +30,9 @@ export default function BannedsPage() {
     "all" | "active" | "inactive"
   >("active");
   const [selectedPlaces, setSelectedPlaces] = useState<string[]>([]);
+  const [genderFilter, setGenderFilter] = useState<"all" | "Male" | "Female">(
+    "all"
+  );
 
   // Filter and search logic
   const filteredBanneds = useMemo(() => {
@@ -57,9 +60,13 @@ export default function BannedsPage() {
         selectedPlaces.length === 0 ||
         banned.bannedPlaces.some((bp) => selectedPlaces.includes(bp.placeId));
 
-      return matchesSearch && matchesStatus && matchesPlace;
+      // Gender filter
+      const matchesGender =
+        genderFilter === "all" || person?.gender === genderFilter;
+
+      return matchesSearch && matchesStatus && matchesPlace && matchesGender;
     });
-  }, [banneds, searchQuery, statusFilter, selectedPlaces]);
+  }, [banneds, searchQuery, statusFilter, selectedPlaces, genderFilter]);
 
   const handlePlaceToggle = (placeId: string) => {
     setSelectedPlaces((prev) =>
@@ -73,6 +80,7 @@ export default function BannedsPage() {
     setSearchQuery("");
     setStatusFilter("all");
     setSelectedPlaces([]);
+    setGenderFilter("all");
   };
 
   const handleEdit = (banned: Banned) => {
@@ -139,6 +147,8 @@ export default function BannedsPage() {
           onPlaceToggle={handlePlaceToggle}
           places={places || []}
           onClearFilters={handleClearFilters}
+          genderFilter={genderFilter}
+          onGenderFilterChange={setGenderFilter}
         />
 
         {/* Results */}

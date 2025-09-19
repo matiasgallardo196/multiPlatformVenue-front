@@ -1,21 +1,29 @@
-"use client"
+"use client";
 
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Search, Filter } from "lucide-react"
-import type { Place } from "@/lib/types"
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { X, Search, Filter } from "lucide-react";
+import type { Place } from "@/lib/types";
 
 interface BannedSearchProps {
-  searchQuery: string
-  onSearchChange: (query: string) => void
-  statusFilter: "all" | "active" | "inactive"
-  onStatusFilterChange: (status: "all" | "active" | "inactive") => void
-  selectedPlaces: string[]
-  onPlaceToggle: (placeId: string) => void
-  places: Place[]
-  onClearFilters: () => void
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  statusFilter: "all" | "active" | "inactive";
+  onStatusFilterChange: (status: "all" | "active" | "inactive") => void;
+  selectedPlaces: string[];
+  onPlaceToggle: (placeId: string) => void;
+  places: Place[];
+  onClearFilters: () => void;
+  genderFilter: "all" | "Male" | "Female";
+  onGenderFilterChange: (gender: "all" | "Male" | "Female") => void;
 }
 
 export function BannedSearch({
@@ -27,8 +35,14 @@ export function BannedSearch({
   onPlaceToggle,
   places,
   onClearFilters,
+  genderFilter,
+  onGenderFilterChange,
 }: BannedSearchProps) {
-  const hasActiveFilters = searchQuery || statusFilter !== "all" || selectedPlaces.length > 0
+  const hasActiveFilters =
+    searchQuery ||
+    statusFilter !== "all" ||
+    selectedPlaces.length > 0 ||
+    genderFilter !== "all";
 
   return (
     <div className="space-y-4">
@@ -62,6 +76,18 @@ export function BannedSearch({
           </SelectContent>
         </Select>
 
+        {/* Gender Filter */}
+        <Select value={genderFilter} onValueChange={onGenderFilterChange}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Gender" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Genders</SelectItem>
+            <SelectItem value="Male">Male</SelectItem>
+            <SelectItem value="Female">Female</SelectItem>
+          </SelectContent>
+        </Select>
+
         {/* Place Filter */}
         <Select onValueChange={onPlaceToggle}>
           <SelectTrigger className="w-40">
@@ -69,7 +95,11 @@ export function BannedSearch({
           </SelectTrigger>
           <SelectContent>
             {places.map((place) => (
-              <SelectItem key={place.id} value={place.id} disabled={selectedPlaces.includes(place.id)}>
+              <SelectItem
+                key={place.id}
+                value={place.id}
+                disabled={selectedPlaces.includes(place.id)}
+              >
                 {place.name || "Unnamed Place"}
               </SelectItem>
             ))}
@@ -86,25 +116,42 @@ export function BannedSearch({
       </div>
 
       {/* Active Filters Display */}
-      {(statusFilter !== "all" || selectedPlaces.length > 0) && (
+      {(statusFilter !== "all" ||
+        selectedPlaces.length > 0 ||
+        genderFilter !== "all") && (
         <div className="flex flex-wrap gap-2">
           {statusFilter !== "all" && (
             <Badge variant="secondary" className="gap-1">
               Status: {statusFilter}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => onStatusFilterChange("all")} />
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => onStatusFilterChange("all")}
+              />
+            </Badge>
+          )}
+          {genderFilter !== "all" && (
+            <Badge variant="secondary" className="gap-1">
+              Gender: {genderFilter}
+              <X
+                className="h-3 w-3 cursor-pointer"
+                onClick={() => onGenderFilterChange("all")}
+              />
             </Badge>
           )}
           {selectedPlaces.map((placeId) => {
-            const place = places.find((p) => p.id === placeId)
+            const place = places.find((p) => p.id === placeId);
             return (
               <Badge key={placeId} variant="secondary" className="gap-1">
                 {place?.name || "Unknown Place"}
-                <X className="h-3 w-3 cursor-pointer" onClick={() => onPlaceToggle(placeId)} />
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => onPlaceToggle(placeId)}
+                />
               </Badge>
-            )
+            );
           })}
         </div>
       )}
     </div>
-  )
+  );
 }

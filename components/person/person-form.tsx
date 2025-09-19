@@ -2,6 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { useRef, useState } from "react";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { X } from "lucide-react";
@@ -22,6 +29,7 @@ type PersonFormValues = {
   lastName?: string;
   nickname?: string;
   imagenProfileUrl?: string[];
+  gender?: "Male" | "Female";
 };
 
 export function PersonForm({
@@ -252,6 +260,28 @@ export function PersonForm({
               <FormControl>
                 <Input placeholder="Nickname" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="gender"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gender</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

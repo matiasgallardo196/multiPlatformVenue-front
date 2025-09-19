@@ -140,6 +140,11 @@ export function BannedCard({
                     "{person.nickname}"
                   </p>
                 )}
+                {person?.gender && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Gender: {person.gender}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Badge
