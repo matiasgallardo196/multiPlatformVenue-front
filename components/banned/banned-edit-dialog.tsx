@@ -33,7 +33,12 @@ export function BannedEditDialog({
 
   const form = useForm<UpdateBannedForm>({
     resolver: zodResolver(updateBannedSchema),
-    defaultValues: { startingDate: "", endingDate: "", motive: "" },
+    defaultValues: {
+      startingDate: "",
+      endingDate: "",
+      motive: "",
+      placeIds: [] as any,
+    },
   });
 
   useEffect(() => {
@@ -42,6 +47,8 @@ export function BannedEditDialog({
         startingDate: banned.startingDate?.slice(0, 10) || "",
         endingDate: banned.endingDate?.slice(0, 10) || "",
         motive: banned.motive || "",
+        // Preselect existing banned places
+        placeIds: (banned.bannedPlaces || []).map((bp) => bp.placeId) as any,
       });
     }
   }, [banned, form]);
