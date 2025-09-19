@@ -30,6 +30,17 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { BannedEditDialog } from "@/components/banned/banned-edit-dialog";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function BannedDetailPage() {
   const params = useParams();
@@ -243,29 +254,49 @@ export default function BannedDetailPage() {
                   View Related Incidents
                 </Button>
               )}
-              <Button
-                className="w-full cursor-pointer"
-                variant="destructive"
-                onClick={async () => {
-                  if (!confirm("Are you sure you want to delete this ban?"))
-                    return;
-                  try {
-                    setDeleting(true);
-                    // Navigate away immediately to avoid a 404 fetch on this page after deletion
-                    router.replace("/banneds");
-                    await deleteBanned.mutateAsync(banned.id);
-                    toast({ title: "Deleted", description: "Ban removed." });
-                  } catch (e: any) {
-                    toast({
-                      title: "Error",
-                      description: e?.message || "Failed to delete ban.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-              >
-                Delete Ban Record
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="w-full cursor-pointer"
+                    variant="destructive"
+                  >
+                    Delete Ban Record
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this ban?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      the ban and remove it from the list.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Ban</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        try {
+                          setDeleting(true);
+                          router.replace("/banneds");
+                          await deleteBanned.mutateAsync(banned.id);
+                          toast({
+                            title: "Deleted",
+                            description: "Ban removed.",
+                          });
+                        } catch (e: any) {
+                          toast({
+                            title: "Error",
+                            description: e?.message || "Failed to delete ban.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         )}
