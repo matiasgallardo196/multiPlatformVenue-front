@@ -4,7 +4,7 @@ import { z } from "zod";
 export const createPersonSchema = z.object({
   name: z.string().min(1, "Name is required").optional(),
   lastName: z.string().min(1, "Last name is required").optional(),
-  nickname: z.string().min(1, "Nickname is required").optional(),
+  nickname: z.string().optional(),
   imagenProfileUrl: z.array(z.string().url("Invalid URL")).optional(),
   gender: z.enum(["Male", "Female"]).optional(),
 });
