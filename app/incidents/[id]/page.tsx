@@ -140,6 +140,7 @@ export default function IncidentDetailPage() {
                 <BannedCreateDialog
                   incidentId={incident.id}
                   defaultPlaceId={incident.place?.id}
+                  redirectOnSuccess
                 >
                   <Button
                     className="w-full bg-transparent cursor-pointer"

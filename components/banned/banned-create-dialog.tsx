@@ -25,19 +25,24 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { createBannedSchema, type CreateBannedForm } from "@/lib/validations";
 import { useCreateBanned } from "@/hooks/queries";
+import { useRouter } from "next/navigation";
 
 export function BannedCreateDialog({
   children,
   incidentId,
   defaultPlaceId,
+  redirectOnSuccess,
 }: {
   children: React.ReactNode;
   incidentId: string;
   defaultPlaceId?: string;
+  redirectOnSuccess?: boolean;
 }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [navigating, setNavigating] = useState(false);
   const createBanned = useCreateBanned();
+  const router = useRouter();
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -54,7 +59,7 @@ export function BannedCreateDialog({
 
   const onSubmit = async (values: CreateBannedForm) => {
     try {
-      await createBanned.mutateAsync({
+      const created = await createBanned.mutateAsync({
         incidentId: values.incidentId,
         startingDate: values.startingDate,
         endingDate: values.endingDate,
@@ -65,7 +70,12 @@ export function BannedCreateDialog({
             : undefined,
       });
       toast({ title: "Success", description: "Ban created successfully." });
-      setOpen(false);
+      if (redirectOnSuccess) {
+        setNavigating(true);
+        router.push(`/banneds/${created.id}`);
+      } else {
+        setOpen(false);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -149,11 +159,19 @@ export function BannedCreateDialog({
                 type="button"
                 variant="ghost"
                 onClick={() => setOpen(false)}
+                disabled={createBanned.isPending || navigating}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={createBanned.isPending}>
-                {createBanned.isPending ? "Saving..." : "Save"}
+              <Button
+                type="submit"
+                disabled={createBanned.isPending || navigating}
+              >
+                {createBanned.isPending
+                  ? "Saving..."
+                  : navigating
+                  ? "Navigating..."
+                  : "Save"}
               </Button>
             </DialogFooter>
           </form>
