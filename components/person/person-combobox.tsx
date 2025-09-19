@@ -64,7 +64,7 @@ export function PersonCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-60 justify-between"
           disabled={disabled}
         >
           {selectedPerson
@@ -79,14 +79,18 @@ export function PersonCombobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+      <PopoverContent
+        align="start"
+        side="bottom"
+        className="p-0 w-[--radix-popover-trigger-width]"
+      >
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search persons..."
             value={query}
             onValueChange={setQuery}
           />
-          <CommandList>
+          <CommandList className="max-h-64 overflow-y-auto">
             <CommandEmpty>
               {isLoading ? "Loading..." : "No persons match your search."}
             </CommandEmpty>
