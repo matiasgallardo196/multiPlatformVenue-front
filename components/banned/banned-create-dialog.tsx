@@ -155,7 +155,9 @@ export function BannedCreateDialog({
                       name={field.name}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <div className="min-h-5">
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />
@@ -190,7 +192,9 @@ export function BannedCreateDialog({
                       name={field.name}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <div className="min-h-5">
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />

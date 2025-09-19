@@ -99,7 +99,9 @@ export function BannedForm({
                   name={field.name}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="min-h-5">
+                <FormMessage />
+              </div>
             </FormItem>
           )}
         />
@@ -129,7 +131,9 @@ export function BannedForm({
                   name={field.name}
                 />
               </FormControl>
-              <FormMessage />
+              <div className="min-h-5">
+                <FormMessage />
+              </div>
             </FormItem>
           )}
         />
