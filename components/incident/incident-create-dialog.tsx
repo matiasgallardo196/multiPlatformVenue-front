@@ -23,13 +23,14 @@ import { useRouter } from "next/navigation";
 export function IncidentCreateDialog({
   children,
   lockedPersonId,
+  shouldRedirect = false,
 }: {
   children: React.ReactNode;
   lockedPersonId?: string;
+  shouldRedirect?: boolean;
 }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [navigating, setNavigating] = useState(false);
   const createIncident = useCreateIncident();
   const { data: persons = [] } = usePersons();
   const { data: places = [] } = usePlaces();
@@ -53,8 +54,11 @@ export function IncidentCreateDialog({
         description: "Incident created successfully.",
       });
       form.reset({ personId: "", placeId: "", details: "", photoBook: [] });
-      setNavigating(true);
-      router.push(`/incidents/${created.id}`);
+      setOpen(false);
+
+      if (shouldRedirect) {
+        router.push(`/incidents/${created.id}`);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -78,15 +82,9 @@ export function IncidentCreateDialog({
           places={places}
           onSubmit={onSubmit}
           onCancel={() => setOpen(false)}
-          submitLabel={
-            createIncident.isPending
-              ? "Creating..."
-              : navigating
-              ? "Navigating..."
-              : "Create"
-          }
+          submitLabel={createIncident.isPending ? "Creating..." : "Create"}
           lockedPersonId={lockedPersonId}
-          isSubmitting={createIncident.isPending || navigating}
+          isSubmitting={createIncident.isPending}
         />
 
         <DialogFooter />

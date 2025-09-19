@@ -155,7 +155,10 @@ export default function PersonDetailPage() {
                   Edit Person Details
                 </Button>
               </PersonEditDialog>
-              <IncidentCreateDialog lockedPersonId={person.id}>
+              <IncidentCreateDialog
+                lockedPersonId={person.id}
+                shouldRedirect={true}
+              >
                 <Button
                   className="w-full bg-transparent cursor-pointer"
                   variant="outline"
