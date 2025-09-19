@@ -23,6 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { FormDescription } from "@/components/ui/form";
 import { createBannedSchema, type CreateBannedForm } from "@/lib/validations";
 import { useCreateBanned } from "@/hooks/queries";
 import { useRouter } from "next/navigation";
@@ -267,6 +268,10 @@ export function BannedCreateDialog({
                 />
               </div>
             </div>
+            <FormDescription>
+              You can set the ban by duration (years, months, days) or by
+              picking start and end dates. Both are synchronized.
+            </FormDescription>
 
             {defaultPlaceId && (
               <div className="text-xs text-muted-foreground">
