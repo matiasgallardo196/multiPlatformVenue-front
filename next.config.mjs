@@ -27,8 +27,9 @@ const nextConfig = {
     return config;
   },
   async rewrites() {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL;
-    // En producción, si NEXT_PUBLIC_API_URL apunta a un dominio externo, proxyear a ese dominio
+    // Usar BACKEND_API_URL para proxy del backend
+    const apiBase =
+      process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
     if (apiBase && !apiBase.startsWith("/")) {
       return [
         {
@@ -37,7 +38,7 @@ const nextConfig = {
         },
       ];
     }
-    // En desarrollo, usa el backend local por defecto
+    // En desarrollo, si no está definido, usa backend local por defecto
     if (!isProd) {
       return [
         {
@@ -46,7 +47,7 @@ const nextConfig = {
         },
       ];
     }
-    // Sin rewrites en producción si no hay API externa definida
+    // Sin rewrites si no hay backend configurado (Vercel Edge puede llamar rutas /api/* locales)
     return [];
   },
 };

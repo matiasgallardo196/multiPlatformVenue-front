@@ -2,6 +2,12 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export function middleware(req: NextRequest) {
+  // Skip auth middleware in development to avoid cross-site cookie issues
+  // when the API is on a different domain (e.g., onrender) and the cookie
+  // is not available under the frontend's domain (localhost).
+  if (process.env.NODE_ENV !== "production") {
+    return NextResponse.next();
+  }
   const { pathname } = req.nextUrl;
 
   // Public routes: root login page, Next assets, favicon
