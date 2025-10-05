@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const res = NextResponse.json(data as any, { status: backendRes.status });
 
     // Mirror the accessToken cookie into the frontend domain
-    const setCookie = backendRes.headers.get("set-cookie") || "";
+    const setCookie = backendRes.headers.get("Set-Cookie") || "";
     const match = /accessToken=([^;]+)/i.exec(setCookie);
     if (match && match[1] && backendRes.ok) {
       const token = match[1];
