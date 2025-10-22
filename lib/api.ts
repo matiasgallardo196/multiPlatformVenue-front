@@ -1,4 +1,5 @@
 // Simple API client for the admin dashboard
+import { createClient } from "./supabase/client";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -14,12 +15,20 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
   console.log("[v0] Making API request to:", url);
 
+  // Obtener el token de Supabase
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
   const config: RequestInit = {
     mode: "cors",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
     ...options,

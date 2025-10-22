@@ -45,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import type { Incident } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
+import { RouteGuard } from "@/components/auth/route-guard";
 
 export default function IncidentsPage() {
   const { toast } = useToast();
@@ -107,264 +108,271 @@ export default function IncidentsPage() {
 
   if (error) {
     return (
-      <DashboardLayout>
-        <PageHeader title="Incidents" />
-        <div className="text-center py-8">
-          <p className="text-destructive">
-            Error loading incidents: {error.message}
-          </p>
-        </div>
-      </DashboardLayout>
+      <RouteGuard>
+        <DashboardLayout>
+          <PageHeader title="Incidents" />
+          <div className="text-center py-8">
+            <p className="text-destructive">
+              Error loading incidents: {error.message}
+            </p>
+          </div>
+        </DashboardLayout>
+      </RouteGuard>
     );
   }
 
   return (
-    <DashboardLayout>
-      <PageHeader
-        title="Incidents"
-        description="Track and manage incident reports"
-      >
-        {!isReadOnly && (
-          <IncidentCreateDialog>
-            <Button className="cursor-pointer">
-              <Plus className="mr-2 h-4 w-4" />
-              Add New Incident
-            </Button>
-          </IncidentCreateDialog>
-        )}
-      </PageHeader>
+    <RouteGuard>
+      <DashboardLayout>
+        <PageHeader
+          title="Incidents"
+          description="Track and manage incident reports"
+        >
+          {!isReadOnly && (
+            <IncidentCreateDialog>
+              <Button className="cursor-pointer">
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Incident
+              </Button>
+            </IncidentCreateDialog>
+          )}
+        </PageHeader>
 
-      <div className="space-y-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by person, place, or incident details..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <div className="space-y-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by person, place, or incident details..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading incidents...</span>
-          </div>
-        ) : filteredIncidents.length === 0 ? (
-          <div className="text-center py-8">
-            {incidents?.length === 0 ? (
-              <>
-                <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-2 text-sm font-semibold">No incidents</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Get started by creating a new incident report.
-                </p>
-                {!isReadOnly && (
-                  <div className="mt-6">
-                    <IncidentCreateDialog>
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add New Incident
-                      </Button>
-                    </IncidentCreateDialog>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-muted-foreground">
-                No incidents match your search criteria.
-              </p>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Showing {filteredIncidents.length} of {incidents?.length || 0}{" "}
-                incidents
-              </p>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading incidents...</span>
             </div>
+          ) : filteredIncidents.length === 0 ? (
+            <div className="text-center py-8">
+              {incidents?.length === 0 ? (
+                <>
+                  <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-2 text-sm font-semibold">No incidents</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Get started by creating a new incident report.
+                  </p>
+                  {!isReadOnly && (
+                    <div className="mt-6">
+                      <IncidentCreateDialog>
+                        <Button>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add New Incident
+                        </Button>
+                      </IncidentCreateDialog>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted-foreground">
+                  No incidents match your search criteria.
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredIncidents.length} of {incidents?.length || 0}{" "}
+                  incidents
+                </p>
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredIncidents.map((incident) => (
-                <Card
-                  key={incident.id}
-                  className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-                  onClick={(e) => {
-                    const modalOpen = document.querySelector(
-                      '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
-                    );
-                    if (modalOpen) return;
-                    window.location.href = `/incidents/${incident.id}`;
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key !== "Enter") return;
-                    const modalOpen = document.querySelector(
-                      '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
-                    );
-                    if (modalOpen) return;
-                    window.location.href = `/incidents/${incident.id}`;
-                  }}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                          <AlertTriangle className="h-5 w-5 text-destructive" />
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredIncidents.map((incident) => (
+                  <Card
+                    key={incident.id}
+                    className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                    onClick={(e) => {
+                      const modalOpen = document.querySelector(
+                        '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
+                      );
+                      if (modalOpen) return;
+                      window.location.href = `/incidents/${incident.id}`;
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      const modalOpen = document.querySelector(
+                        '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
+                      );
+                      if (modalOpen) return;
+                      window.location.href = `/incidents/${incident.id}`;
+                    }}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                            <AlertTriangle className="h-5 w-5 text-destructive" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">
+                              Incident #{incident.id.slice(-8)}
+                            </h3>
+                            {incident.banned && (
+                              <Badge variant="destructive" className="mt-1">
+                                Has Ban
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold">
-                            Incident #{incident.id.slice(-8)}
-                          </h3>
-                          {incident.banned && (
-                            <Badge variant="destructive" className="mt-1">
-                              Has Ban
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 cursor-pointer"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild className="cursor-pointer">
-                            <Link
-                              href={`/incidents/${incident.id}`}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 cursor-pointer"
                               onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              asChild
                               className="cursor-pointer"
                             >
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </Link>
-                          </DropdownMenuItem>
-                          {!isReadOnly && (
-                            <IncidentEditDialog id={incident.id}>
-                              <DropdownMenuItem
-                                onSelect={(e) => e.preventDefault()}
+                              <Link
+                                href={`/incidents/${incident.id}`}
                                 onClick={(e) => e.stopPropagation()}
                                 className="cursor-pointer"
                               >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                            </IncidentEditDialog>
-                          )}
-                          {!isReadOnly && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </Link>
+                            </DropdownMenuItem>
+                            {!isReadOnly && (
+                              <IncidentEditDialog id={incident.id}>
                                 <DropdownMenuItem
-                                  className="text-destructive cursor-pointer"
-                                  onClick={(e) => e.stopPropagation()}
                                   onSelect={(e) => e.preventDefault()}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="cursor-pointer"
                                 >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
                                 </DropdownMenuItem>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Delete incident?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will
-                                    permanently delete the incident and remove
-                                    it from the list.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>
-                                    Keep Incident
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(incident.id)}
+                              </IncidentEditDialog>
+                            )}
+                            {!isReadOnly && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    className="text-destructive cursor-pointer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    onSelect={(e) => e.preventDefault()}
                                   >
+                                    <Trash2 className="mr-2 h-4 w-4" />
                                     Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardHeader>
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Delete incident?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. This will
+                                      permanently delete the incident and remove
+                                      it from the list.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Keep Incident
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDelete(incident.id)}
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </CardHeader>
 
-                  <CardContent className="space-y-3">
-                    {/* Person */}
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
+                    <CardContent className="space-y-3">
+                      {/* Person */}
                       <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage
-                            src={
-                              incident.person?.imagenProfileUrl?.[0] ||
-                              "/placeholder.svg"
-                            }
-                            alt={getPersonName(incident)}
-                          />
-                          <AvatarFallback className="text-xs">
-                            {getPersonName(incident)
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()
-                              .slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm">
-                          {getPersonName(incident)}
-                        </span>
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage
+                              src={
+                                incident.person?.imagenProfileUrl?.[0] ||
+                                "/placeholder.svg"
+                              }
+                              alt={getPersonName(incident)}
+                            />
+                            <AvatarFallback className="text-xs">
+                              {getPersonName(incident)
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()
+                                .slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">
+                            {getPersonName(incident)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Place */}
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        {incident.place?.name || "Unknown Location"}
-                      </span>
-                    </div>
-
-                    {/* Details */}
-                    {incident.details && (
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">
-                          Details:
-                        </span>
-                        <p className="text-sm bg-muted p-2 rounded text-pretty line-clamp-2">
-                          {incident.details}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Photos */}
-                    {incident.photoBook && incident.photoBook.length > 0 && (
+                      {/* Place */}
                       <div className="flex items-center gap-2">
-                        <Camera className="h-4 w-4 text-muted-foreground" />
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
-                          {incident.photoBook.length} photo(s)
+                          {incident.place?.name || "Unknown Location"}
                         </span>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </DashboardLayout>
+
+                      {/* Details */}
+                      {incident.details && (
+                        <div className="space-y-1">
+                          <span className="text-sm text-muted-foreground">
+                            Details:
+                          </span>
+                          <p className="text-sm bg-muted p-2 rounded text-pretty line-clamp-2">
+                            {incident.details}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Photos */}
+                      {incident.photoBook && incident.photoBook.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Camera className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">
+                            {incident.photoBook.length} photo(s)
+                          </span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </DashboardLayout>
+    </RouteGuard>
   );
 }

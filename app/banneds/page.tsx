@@ -23,6 +23,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Banned } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
+import { RouteGuard } from "@/components/auth/route-guard";
 
 export default function BannedsPage() {
   const { toast } = useToast();
@@ -122,86 +123,90 @@ export default function BannedsPage() {
 
   if (bannedsError) {
     return (
-      <DashboardLayout>
-        <PageHeader title="Banned Persons" />
-        <div className="text-center py-8">
-          <p className="text-destructive">
-            Error loading banned persons: {bannedsError.message}
-          </p>
-        </div>
-      </DashboardLayout>
+      <RouteGuard>
+        <DashboardLayout>
+          <PageHeader title="Banned Persons" />
+          <div className="text-center py-8">
+            <p className="text-destructive">
+              Error loading banned persons: {bannedsError.message}
+            </p>
+          </div>
+        </DashboardLayout>
+      </RouteGuard>
     );
   }
 
   return (
-    <DashboardLayout>
-      <PageHeader
-        title="Banned Persons"
-        description="Manage banned individuals and their restrictions"
-      >
-        {!isReadOnly && (
-          <BannedCreateFullDialog>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add New Ban
-            </Button>
-          </BannedCreateFullDialog>
-        )}
-      </PageHeader>
+    <RouteGuard>
+      <DashboardLayout>
+        <PageHeader
+          title="Banned Persons"
+          description="Manage banned individuals and their restrictions"
+        >
+          {!isReadOnly && (
+            <BannedCreateFullDialog>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Ban
+              </Button>
+            </BannedCreateFullDialog>
+          )}
+        </PageHeader>
 
-      <div className="space-y-6">
-        {/* Search and Filters */}
-        <BannedSearch
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          selectedPlaces={selectedPlaces}
-          onPlaceToggle={handlePlaceToggle}
-          places={places || []}
-          onClearFilters={handleClearFilters}
-          genderFilter={genderFilter}
-          onGenderFilterChange={setGenderFilter}
-        />
+        <div className="space-y-6">
+          {/* Search and Filters */}
+          <BannedSearch
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            selectedPlaces={selectedPlaces}
+            onPlaceToggle={handlePlaceToggle}
+            places={places || []}
+            onClearFilters={handleClearFilters}
+            genderFilter={genderFilter}
+            onGenderFilterChange={setGenderFilter}
+          />
 
-        {/* Results */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading banned persons...</span>
-          </div>
-        ) : filteredBanneds.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">
-              {banneds?.length === 0
-                ? "No banned persons found."
-                : "No results match your filters."}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Showing {filteredBanneds.length} of {banneds?.length || 0}{" "}
-                banned persons
+          {/* Results */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading banned persons...</span>
+            </div>
+          ) : filteredBanneds.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">
+                {banneds?.length === 0
+                  ? "No banned persons found."
+                  : "No results match your filters."}
               </p>
             </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredBanneds.length} of {banneds?.length || 0}{" "}
+                  banned persons
+                </p>
+              </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-              {filteredBanneds.map((banned) => (
-                <BannedCard
-                  key={banned.id}
-                  banned={banned}
-                  places={places || []}
-                  onEdit={handleEdit}
-                  onDelete={(id) => handleDelete(id)}
-                  readOnly={isReadOnly}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </DashboardLayout>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                {filteredBanneds.map((banned) => (
+                  <BannedCard
+                    key={banned.id}
+                    banned={banned}
+                    places={places || []}
+                    onEdit={handleEdit}
+                    onDelete={(id) => handleDelete(id)}
+                    readOnly={isReadOnly}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </DashboardLayout>
+    </RouteGuard>
   );
 }

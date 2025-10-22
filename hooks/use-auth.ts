@@ -1,51 +1,91 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { api } from "@/lib/api";
 
 export type AuthUser = {
   userId: string;
   userName: string;
-  role: "manager" | "staff" | string;
+  role: "manager" | "staff" | "head-manager" | string;
+  email: string;
 } | null;
 
 export function useAuth() {
   const [user, setUser] = useState<AuthUser>(null);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  // Función para obtener el usuario desde el backend (que consulta la BD)
+  const fetchUserFromBackend = async () => {
+    try {
+      const userData = await api.get("/auth/me");
+      return {
+        userId: userData.userId,
+        userName: userData.userName,
+        role: userData.role,
+        email: userData.email,
+      };
+    } catch (error) {
+      console.error("Error fetching user from backend:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch(
-          (process.env.NEXT_PUBLIC_API_URL || "/api") + "/auth/me",
-          {
-            credentials: "include",
-          }
-        );
-        if (!mounted) return;
-        if (res.ok) {
-          const data = await res.json();
-          setUser({
-            userId: data.userId,
-            userName: data.userName,
-            role: data.role,
-          });
-        } else {
+
+    // Obtener sesión inicial y datos del backend
+    const initAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!mounted) return;
+
+      if (session?.user) {
+        // Obtener los datos desde el backend (PostgreSQL)
+        const userData = await fetchUserFromBackend();
+        if (mounted && userData) {
+          setUser(userData);
+        } else if (mounted) {
           setUser(null);
         }
-      } catch {
+      } else {
         if (mounted) setUser(null);
-      } finally {
-        if (mounted) setLoading(false);
       }
-    })();
+
+      if (mounted) setLoading(false);
+    };
+
+    initAuth();
+
+    // Escuchar cambios en la autenticación
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
+
+      if (session?.user) {
+        // Obtener los datos desde el backend (PostgreSQL)
+        const userData = await fetchUserFromBackend();
+        if (mounted && userData) {
+          setUser(userData);
+        }
+      } else {
+        if (mounted) setUser(null);
+      }
+    });
+
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
-  const isManager = user?.role === "manager";
+  const isManager = user?.role === "manager" || user?.role === "head-manager";
+  const isHeadManager = user?.role === "head-manager";
   const isReadOnly = !isManager;
 
-  return { user, loading, isManager, isReadOnly };
+  return { user, loading, isManager, isHeadManager, isReadOnly };
 }

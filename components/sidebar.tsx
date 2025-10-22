@@ -15,34 +15,48 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { toast } from "sonner";
+
+import { User as UserIcon } from "lucide-react";
 
 const navigation = [
   {
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    roles: ["manager", "staff", "head-manager"],
   },
   {
     name: "Banned",
     href: "/banneds",
     icon: UserX,
+    roles: ["manager", "staff", "head-manager"],
   },
   {
     name: "Persons",
     href: "/persons",
     icon: Users,
+    roles: ["manager", "staff", "head-manager"],
   },
   {
     name: "Places",
     href: "/places",
     icon: MapPin,
+    roles: ["manager", "head-manager"],
   },
   {
     name: "Incidents",
     href: "/incidents",
     icon: AlertTriangle,
+    roles: ["manager", "staff", "head-manager"],
+  },
+  {
+    name: "Users",
+    href: "/users",
+    icon: UserIcon,
+    roles: ["head-manager"],
   },
 ];
 
@@ -50,6 +64,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
+  const supabase = createClient();
 
   const [currentUser, setCurrentUser] = useState<{
     userName: string;
@@ -58,24 +73,69 @@ export function Sidebar() {
 
   useEffect(() => {
     let mounted = true;
+
+    // Función para obtener usuario desde el backend
+    const fetchUserFromBackend = async () => {
+      try {
+        const { api } = await import("@/lib/api");
+        const userData = await api.get("/auth/me");
+        return {
+          userName: userData.userName,
+          role: userData.role,
+        };
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        return null;
+      }
+    };
+
+    // Obtener usuario actual desde el backend
     (async () => {
       try {
-        const data = await api.get("/auth/me");
-        if (mounted)
-          setCurrentUser({ userName: data.userName, role: data.role });
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (mounted && session?.user) {
+          // Obtener datos desde el backend (PostgreSQL)
+          const userData = await fetchUserFromBackend();
+          if (mounted && userData) {
+            setCurrentUser(userData);
+          } else if (mounted) {
+            setCurrentUser(null);
+          }
+        } else {
+          if (mounted) setCurrentUser(null);
+        }
       } catch {
         if (mounted) setCurrentUser(null);
       }
     })();
+
+    // Escuchar cambios en la autenticación
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
+      if (session?.user) {
+        // Obtener datos desde el backend (PostgreSQL)
+        const userData = await fetchUserFromBackend();
+        if (mounted && userData) {
+          setCurrentUser(userData);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
-  const visibleNavigation =
-    currentUser?.role === "manager"
-      ? navigation
-      : navigation.filter((item) => item.name !== "Places");
+  const visibleNavigation = currentUser?.role
+    ? navigation.filter((item) => item.roles.includes(currentUser.role))
+    : [];
 
   return (
     <>
@@ -166,18 +226,14 @@ export function Sidebar() {
                     size="sm"
                     onClick={async () => {
                       try {
-                        await fetch(
-                          (process.env.NEXT_PUBLIC_API_URL || "/api") +
-                            "/auth/logout",
-                          {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            credentials: "include",
-                          }
-                        );
-                      } catch {}
-                      setCurrentUser(null);
-                      router.replace("/");
+                        await supabase.auth.signOut();
+                        setCurrentUser(null);
+                        toast.success("Sesión cerrada");
+                        router.replace("/");
+                        router.refresh();
+                      } catch (error) {
+                        toast.error("Error al cerrar sesión");
+                      }
                     }}
                   >
                     Logout
