@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthMe } from "@/hooks/queries";
 import { useQueryClient } from "@tanstack/react-query";
+import { ensureAuthSubscription } from "@/lib/auth-subscription";
 
 export type AuthUser = {
   userId: string;
@@ -15,6 +16,7 @@ export type AuthUser = {
 export function useAuth() {
   const [user, setUser] = useState<AuthUser>(null);
   const [loading, setLoading] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
   const supabase = createClient();
   const queryClient = useQueryClient();
 
@@ -29,36 +31,25 @@ export function useAuth() {
 
       if (!mounted) return;
 
-      if (!session?.user) {
-        setUser(null);
-      }
+      const loggedIn = !!session?.user;
+      setHasSession(loggedIn);
+      if (!loggedIn) setUser(null);
 
       setLoading(false);
     };
 
     initAuth();
 
-    // Escuchar cambios en la autenticación
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return;
-      if (session?.user) {
-        // Invalida la cache de /auth/me para reconsultar una vez
-        queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
-      } else {
-        setUser(null);
-      }
-    });
+    // Garantizar una única suscripción global
+    ensureAuthSubscription(queryClient);
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
   }, [supabase, queryClient]);
 
   // Vincular con la query compartida para evitar múltiples llamadas
-  const { data: meData } = useAuthMe(true);
+  const { data: meData, isFetching: meFetching, isLoading: meLoading } = useAuthMe(hasSession);
 
   useEffect(() => {
     setUser(meData ?? null);
@@ -68,6 +59,7 @@ export function useAuth() {
   const isHeadManager = user?.role === "head-manager";
   const isReadOnly = !isManager;
 
-  return { user, loading, isManager, isHeadManager, isReadOnly };
-}
+  const effectiveLoading = loading || (hasSession && (meLoading || meFetching));
 
+  return { user, loading: effectiveLoading, isManager, isHeadManager, isReadOnly };
+}
