@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import type { AuthUser } from "@/hooks/use-auth";
 import type {
   Person,
   Place,
@@ -20,6 +21,7 @@ import type {
 
 // Query Keys
 export const queryKeys = {
+  authMe: ["auth", "me"] as const,
   persons: ["persons"] as const,
   person: (id: string) => ["persons", id] as const,
   places: ["places"] as const,
@@ -282,5 +284,28 @@ export function useDeleteBanned() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.banneds });
     },
+  });
+}
+// Auth Hooks
+export async function fetchAuthMe() {
+  const userData = await api.get<any>("/auth/me");
+  return {
+    userId: userData.userId as string,
+    userName: userData.userName as string,
+    role: userData.role as string,
+    email: userData.email as string,
+  } satisfies NonNullable<AuthUser>;
+}
+
+export function useAuthMe(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.authMe,
+    queryFn: fetchAuthMe,
+    enabled,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 }

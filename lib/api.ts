@@ -12,8 +12,8 @@ export class ApiError extends Error {
 
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
-
-  console.log("[v0] Making API request to:", url);
+  const start = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+  console.log("[api] →", options.method || "GET", url);
 
   // Obtener el token de Supabase
   const supabase = createClient();
@@ -36,8 +36,9 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
   try {
     const response = await fetch(url, config);
-
-    console.log("[v0] API response status:", response.status);
+    const end = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+    const ms = Math.round(end - start);
+    console.log("[api] ←", response.status, options.method || "GET", url, `${ms}ms`);
 
     if (!response.ok) {
       // Try to parse JSON error first for clearer messages
@@ -56,10 +57,7 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
       const serverMessage =
         parsed?.message || parsed?.error || rawText || response.statusText;
-      console.log(
-        "[v0] API error response:",
-        parsed || rawText || response.statusText
-      );
+      console.log("[api] ✖ error: ", parsed || rawText || response.statusText);
       throw new ApiError(
         response.status,
         String(serverMessage),
@@ -69,14 +67,14 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
     // Handle no-content responses gracefully
     if (response.status === 204) {
-      console.log("[v0] API response: 204 No Content");
+      console.log("[api] 204 No Content");
       return null as unknown as any;
     }
 
     // Some endpoints may return empty body with 200/201
     const contentLength = response.headers.get("content-length");
     if (contentLength === "0") {
-      console.log("[v0] API response: empty body");
+      console.log("[api] empty body");
       return null as unknown as any;
     }
 
@@ -84,20 +82,20 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     if (!contentType.includes("application/json")) {
       // Attempt text fallback
       const text = await response.text();
-      console.log("[v0] API response (non-JSON):", text);
+      console.log("[api] non-JSON response:", text);
       return text as unknown as any;
     }
 
     try {
       const data = await response.json();
-      console.log("[v0] API response data:", data);
+      console.log("[api] response data:", data);
       return data;
     } catch (e) {
-      console.log("[v0] Failed to parse JSON response, returning null");
+      console.log("[api] Failed to parse JSON response, returning null");
       return null as unknown as any;
     }
   } catch (error) {
-    console.log("[v0] API request failed:", error);
+    console.log("[api] request failed:", error);
     if (error instanceof ApiError) {
       throw error;
     }
