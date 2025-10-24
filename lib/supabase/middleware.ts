@@ -38,6 +38,7 @@ export async function updateSession(request: NextRequest) {
     "/auth/reset-password",
     "/auth/update-password",
     "/auth/callback",
+    "/auth/confirm",
   ];
 
   const isPublicRoute = publicRoutes.some((route) =>
@@ -52,13 +53,16 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname === "/auth/update-password";
     const isOnSetPasswordPage =
       request.nextUrl.pathname === "/auth/set-password";
+    const isClearingPasswordCookieApi =
+      request.nextUrl.pathname.startsWith("/api/auth/clear-password-cookie");
 
     // Si requiere cambio de contraseña y no está en las páginas de password
     if (
       requiresPasswordChange &&
       !isOnUpdatePasswordPage &&
       !isOnSetPasswordPage &&
-      request.nextUrl.pathname !== "/auth/callback"
+      request.nextUrl.pathname !== "/auth/callback" &&
+      !isClearingPasswordCookieApi
     ) {
       console.log(
         "[Middleware] User requires password change, redirecting to update-password"

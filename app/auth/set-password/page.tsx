@@ -140,10 +140,15 @@ export default function SetPasswordPage() {
 
       console.log("[SetPassword] Contraseña actualizada exitosamente");
 
-      // Eliminar la cookie que indica que requiere cambio de contraseña
-      document.cookie =
-        "requires_password_change=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      console.log("[SetPassword] Removed requires_password_change cookie");
+      // Solicitar al servidor que elimine la cookie httpOnly de 'requires_password_change'
+      try {
+        await fetch("/api/auth/clear-password-cookie", { method: "POST" });
+        console.log(
+          "[SetPassword] Cleared requires_password_change cookie (server)"
+        );
+      } catch {
+        // Ignorar fallos de limpieza de cookie
+      }
 
       setSuccess(true);
       toast.success("Contraseña establecida correctamente");
