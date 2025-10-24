@@ -13,51 +13,21 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
-
+import { useAuth } from "@/hooks/use-auth";
 import { User as UserIcon } from "lucide-react";
 
 const navigation = [
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    roles: ["manager", "staff", "head-manager"],
-  },
-  {
-    name: "Banned",
-    href: "/banneds",
-    icon: UserX,
-    roles: ["manager", "staff", "head-manager"],
-  },
-  {
-    name: "Persons",
-    href: "/persons",
-    icon: Users,
-    roles: ["manager", "staff", "head-manager"],
-  },
-  {
-    name: "Places",
-    href: "/places",
-    icon: MapPin,
-    roles: ["manager", "head-manager"],
-  },
-  {
-    name: "Incidents",
-    href: "/incidents",
-    icon: AlertTriangle,
-    roles: ["manager", "staff", "head-manager"],
-  },
-  {
-    name: "Users",
-    href: "/users",
-    icon: UserIcon,
-    roles: ["head-manager"],
-  },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["manager", "staff", "head-manager"] },
+  { name: "Banned", href: "/banneds", icon: UserX, roles: ["manager", "staff", "head-manager"] },
+  { name: "Persons", href: "/persons", icon: Users, roles: ["manager", "staff", "head-manager"] },
+  { name: "Places", href: "/places", icon: MapPin, roles: ["manager", "head-manager"] },
+  { name: "Incidents", href: "/incidents", icon: AlertTriangle, roles: ["manager", "staff", "head-manager"] },
+  { name: "Users", href: "/users", icon: UserIcon, roles: ["head-manager"] },
 ];
 
 export function Sidebar() {
@@ -65,73 +35,7 @@ export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const supabase = createClient();
-
-  const [currentUser, setCurrentUser] = useState<{
-    userName: string;
-    role: string;
-  } | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    // Función para obtener usuario desde el backend
-    const fetchUserFromBackend = async () => {
-      try {
-        const { api } = await import("@/lib/api");
-        const userData = await api.get("/auth/me");
-        return {
-          userName: userData.userName,
-          role: userData.role,
-        };
-      } catch (error) {
-        console.error("Error fetching user:", error);
-        return null;
-      }
-    };
-
-    // Obtener usuario actual desde el backend
-    (async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (mounted && session?.user) {
-          // Obtener datos desde el backend (PostgreSQL)
-          const userData = await fetchUserFromBackend();
-          if (mounted && userData) {
-            setCurrentUser(userData);
-          } else if (mounted) {
-            setCurrentUser(null);
-          }
-        } else {
-          if (mounted) setCurrentUser(null);
-        }
-      } catch {
-        if (mounted) setCurrentUser(null);
-      }
-    })();
-
-    // Escuchar cambios en la autenticación
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return;
-      if (session?.user) {
-        // Obtener datos desde el backend (PostgreSQL)
-        const userData = await fetchUserFromBackend();
-        if (mounted && userData) {
-          setCurrentUser(userData);
-        }
-      } else {
-        setCurrentUser(null);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
+  const { user: currentUser } = useAuth();
 
   const visibleNavigation = currentUser?.role
     ? navigation.filter((item) => item.roles.includes(currentUser.role))
@@ -167,17 +71,13 @@ export function Sidebar() {
       <div
         className={cn(
           "fixed left-0 top-0 z-40 h-full w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300 ease-in-out lg:translate-x-0",
-          isMobileMenuOpen
-            ? "translate-x-0"
-            : "-translate-x-full lg:translate-x-0"
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex h-full flex-col">
           {/* Header */}
           <div className="flex h-16 items-center border-b border-sidebar-border px-6">
-            <h1 className="text-lg font-semibold text-sidebar-foreground">
-              Admin Dashboard
-            </h1>
+            <h1 className="text-lg font-semibold text-sidebar-foreground">Admin Dashboard</h1>
           </div>
 
           {/* Navigation */}
@@ -187,12 +87,8 @@ export function Sidebar() {
                 {currentUser.userName} ({currentUser.role})
               </div>
             )}
-            {/* Removed login button when no currentUser */}
             {visibleNavigation.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== "/" && pathname.startsWith(item.href));
-
+              const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
               return (
                 <Link
                   key={item.name}
@@ -217,9 +113,7 @@ export function Sidebar() {
             <div className="space-y-2">
               <ThemeToggle />
               <div className="flex items-center justify-between">
-                <p className="text-xs text-sidebar-foreground/60">
-                  Admin Dashboard v1.0
-                </p>
+                <p className="text-xs text-sidebar-foreground/60">Admin Dashboard v1.0</p>
                 {currentUser && (
                   <Button
                     variant="outline"
@@ -227,7 +121,6 @@ export function Sidebar() {
                     onClick={async () => {
                       try {
                         await supabase.auth.signOut();
-                        setCurrentUser(null);
                         toast.success("Sesión cerrada");
                         router.replace("/");
                         router.refresh();
@@ -247,3 +140,4 @@ export function Sidebar() {
     </>
   );
 }
+

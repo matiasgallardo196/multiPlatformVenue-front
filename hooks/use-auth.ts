@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { api } from "@/lib/api";
+import { useAuthMe } from "@/hooks/queries";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type AuthUser = {
   userId: string;
@@ -15,27 +16,12 @@ export function useAuth() {
   const [user, setUser] = useState<AuthUser>(null);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
-
-  // Función para obtener el usuario desde el backend (que consulta la BD)
-  const fetchUserFromBackend = async () => {
-    try {
-      const userData = await api.get("/auth/me");
-      return {
-        userId: userData.userId,
-        userName: userData.userName,
-        role: userData.role,
-        email: userData.email,
-      };
-    } catch (error) {
-      console.error("Error fetching user from backend:", error);
-      return null;
-    }
-  };
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let mounted = true;
 
-    // Obtener sesión inicial y datos del backend
+    // Obtener sesión inicial
     const initAuth = async () => {
       const {
         data: { session },
@@ -43,19 +29,11 @@ export function useAuth() {
 
       if (!mounted) return;
 
-      if (session?.user) {
-        // Obtener los datos desde el backend (PostgreSQL)
-        const userData = await fetchUserFromBackend();
-        if (mounted && userData) {
-          setUser(userData);
-        } else if (mounted) {
-          setUser(null);
-        }
-      } else {
-        if (mounted) setUser(null);
+      if (!session?.user) {
+        setUser(null);
       }
 
-      if (mounted) setLoading(false);
+      setLoading(false);
     };
 
     initAuth();
@@ -65,15 +43,11 @@ export function useAuth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
-
       if (session?.user) {
-        // Obtener los datos desde el backend (PostgreSQL)
-        const userData = await fetchUserFromBackend();
-        if (mounted && userData) {
-          setUser(userData);
-        }
+        // Invalida la cache de /auth/me para reconsultar una vez
+        queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
       } else {
-        if (mounted) setUser(null);
+        setUser(null);
       }
     });
 
@@ -81,7 +55,14 @@ export function useAuth() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, queryClient]);
+
+  // Vincular con la query compartida para evitar múltiples llamadas
+  const { data: meData } = useAuthMe(true);
+
+  useEffect(() => {
+    setUser(meData ?? null);
+  }, [meData]);
 
   const isManager = user?.role === "manager" || user?.role === "head-manager";
   const isHeadManager = user?.role === "head-manager";
@@ -89,3 +70,4 @@ export function useAuth() {
 
   return { user, loading, isManager, isHeadManager, isReadOnly };
 }
+
