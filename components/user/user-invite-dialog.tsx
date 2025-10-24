@@ -1,45 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const inviteSchema = z.object({
-  email: z.string().email("Email inválido"),
-  userName: z
-    .string()
-    .min(3, "El nombre de usuario debe tener al menos 3 caracteres"),
+  email: z.string().email("Invalid email"),
+  userName: z.string().min(3, "Username must be at least 3 characters"),
   role: z.enum(["manager", "staff", "head-manager"]),
 });
 
@@ -50,18 +26,11 @@ interface UserInviteDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function UserInviteDialog({
-  open,
-  onOpenChange,
-}: UserInviteDialogProps) {
+export function UserInviteDialog({ open, onOpenChange }: UserInviteDialogProps) {
   const queryClient = useQueryClient();
   const form = useForm<InviteForm>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: {
-      email: "",
-      userName: "",
-      role: "staff",
-    },
+    defaultValues: { email: "", userName: "", role: "staff" },
   });
 
   const inviteMutation = useMutation({
@@ -70,12 +39,12 @@ export function UserInviteDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Invitación enviada exitosamente");
+      toast.success("Invitation sent successfully");
       form.reset();
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Error al enviar invitación");
+      toast.error(error?.message || "Failed to send invitation");
     },
   });
 
@@ -87,10 +56,9 @@ export function UserInviteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Invitar Usuario por Email</DialogTitle>
+          <DialogTitle>Invite User by Email</DialogTitle>
           <DialogDescription>
-            El usuario recibirá un email con un enlace para establecer su
-            contraseña
+            The user will receive an email with a link to set their password
           </DialogDescription>
         </DialogHeader>
 
@@ -103,11 +71,7 @@ export function UserInviteDialog({
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="usuario@ejemplo.com"
-                      type="email"
-                      {...field}
-                    />
+                    <Input placeholder="user@example.com" type="email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,9 +83,9 @@ export function UserInviteDialog({
               name="userName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre de Usuario</FormLabel>
+                  <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="nombreusuario" {...field} />
+                    <Input placeholder="username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -133,14 +97,11 @@ export function UserInviteDialog({
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Rol</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar rol" />
+                        <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -149,30 +110,24 @@ export function UserInviteDialog({
                       <SelectItem value="head-manager">Head Manager</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    Define los permisos del usuario en el sistema
-                  </FormDescription>
+                  <FormDescription>Define the user's permissions in the system</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancelar
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
               </Button>
               <Button type="submit" disabled={inviteMutation.isPending}>
                 {inviteMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
+                    Sending...
                   </>
                 ) : (
-                  "Enviar Invitación"
+                  "Send Invitation"
                 )}
               </Button>
             </DialogFooter>
@@ -182,3 +137,4 @@ export function UserInviteDialog({
     </Dialog>
   );
 }
+

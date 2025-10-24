@@ -16,19 +16,15 @@ export default function AuthConfirmPage() {
       try {
         const next = searchParams.get("next") || "/dashboard";
 
-        // Parsear hash fragments (#access_token, #refresh_token, #type)
+        // Parse hash fragments (#access_token, #refresh_token, #type)
         const hashParams = new URLSearchParams(
-          typeof window !== "undefined"
-            ? window.location.hash.substring(1)
-            : ""
+          typeof window !== "undefined" ? window.location.hash.substring(1) : ""
         );
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token") || undefined;
 
         if (!accessToken) {
-          setError(
-            "No se encontró access_token en el enlace. El link puede haber expirado."
-          );
+          setError("No access_token found in the link. The link may have expired.");
           return;
         }
 
@@ -45,7 +41,7 @@ export default function AuthConfirmPage() {
         router.replace(next);
         router.refresh();
       } catch (e: any) {
-        setError(e?.message || "Error desconocido al confirmar sesión");
+        setError(e?.message || "Unknown error while confirming session");
       }
     };
 
@@ -58,7 +54,7 @@ export default function AuthConfirmPage() {
         <div className="space-y-2 text-center">
           <p className="text-destructive">{error}</p>
           <p className="text-sm text-muted-foreground">
-            Intenta solicitar un nuevo enlace o vuelve al login.
+            Try requesting a new link or go back to login.
           </p>
         </div>
       </div>
@@ -68,7 +64,7 @@ export default function AuthConfirmPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="flex items-center gap-2 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin" /> Procesando enlace...
+        <Loader2 className="h-5 w-5 animate-spin" /> Processing link...
       </div>
     </div>
   );

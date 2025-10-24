@@ -18,26 +18,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Loader2,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  Moon,
-  Sun,
-  Sparkles,
-} from "lucide-react";
+import { Loader2, Eye, EyeOff, Lock, Mail, Moon, Sun, Sparkles } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 const loginSchema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 const magicLinkSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.string().email("Invalid email"),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -91,12 +82,12 @@ export default function LoginPage() {
 
       if (error) throw error;
 
-      toast.success("¡Bienvenido!");
+      toast.success("Welcome!");
       router.replace("/dashboard");
       router.refresh();
     } catch (e: any) {
-      setError(e?.message || "Credenciales inválidas");
-      toast.error("Error al iniciar sesión");
+      setError(e?.message || "Invalid credentials");
+      toast.error("Failed to sign in");
     }
   };
 
@@ -113,10 +104,10 @@ export default function LoginPage() {
       if (error) throw error;
 
       setMagicLinkSent(true);
-      toast.success("¡Revisa tu email!");
+      toast.success("Check your email!");
     } catch (e: any) {
-      setError(e?.message || "Error al enviar el enlace mágico");
-      toast.error("Error al enviar el enlace");
+      setError(e?.message || "Failed to send magic link");
+      toast.error("Failed to send link");
     }
   };
 
@@ -125,10 +116,7 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4">
       {/* Decorative background for login – mesh gradient + subtle grid */}
-      <div
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-        aria-hidden
-      >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         <div className="absolute inset-0 opacity-90 [background:radial-gradient(60%_40%_at_20%_10%,hsl(var(--primary)/0.18),transparent_70%),radial-gradient(50%_35%_at_90%_15%,hsl(var(--accent)/0.14),transparent_70%),radial-gradient(45%_30%_at_50%_85%,hsl(var(--muted-foreground)/0.10),transparent_70%)]" />
         <div className="absolute inset-0 mix-blend-overlay [background-image:linear-gradient(to_right,hsl(var(--border)/0.35)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.35)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
@@ -140,61 +128,40 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 size="icon"
-                aria-label={
-                  isDark ? "Switch to light theme" : "Switch to dark theme"
-                }
+                aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
                 onClick={() => setTheme(isDark ? "light" : "dark")}
               >
-                {isDark ? (
-                  <Sun className="h-4 w-4" />
-                ) : (
-                  <Moon className="h-4 w-4" />
-                )}
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
             ) : (
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Toggle theme"
-                disabled
-              >
+              <Button variant="outline" size="icon" aria-label="Toggle theme" disabled>
                 <Moon className="h-4 w-4" />
               </Button>
             )}
           </div>
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Iniciar Sesión
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Accede al panel de control
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">Sign In</h1>
+            <p className="text-sm text-muted-foreground mt-1">Access the dashboard</p>
           </div>
 
           {checking ? (
             <div className="flex items-center justify-center py-6 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin mr-2" /> Verificando
-              sesión...
+              <Loader2 className="h-5 w-5 animate-spin mr-2" /> Checking session...
             </div>
           ) : (
             <Tabs defaultValue="password" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="password">
-                  <Lock className="h-4 w-4 mr-2" />
-                  Contraseña
+                  <Lock className="h-4 w-4 mr-2" /> Password
                 </TabsTrigger>
                 <TabsTrigger value="magic">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Magic Link
+                  <Sparkles className="h-4 w-4 mr-2" /> Magic Link
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="password">
                 <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-4 mt-4"
-                  >
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
                     <FormField
                       control={form.control}
                       name="email"
@@ -206,7 +173,7 @@ export default function LoginPage() {
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
                                 className="pl-9"
-                                placeholder="tu@email.com"
+                                placeholder="you@example.com"
                                 autoComplete="email"
                                 type="email"
                                 {...field}
@@ -223,32 +190,24 @@ export default function LoginPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Contraseña</FormLabel>
+                          <FormLabel>Password</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
                                 className="pl-9 pr-10"
                                 type={showPassword ? "text" : "password"}
-                                placeholder="Tu contraseña"
+                                placeholder="Your password"
                                 autoComplete="current-password"
                                 {...field}
                               />
                               <button
                                 type="button"
-                                aria-label={
-                                  showPassword
-                                    ? "Ocultar contraseña"
-                                    : "Mostrar contraseña"
-                                }
+                                aria-label={showPassword ? "Hide password" : "Show password"}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 onClick={() => setShowPassword((v) => !v)}
                               >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                               </button>
                             </div>
                           </FormControl>
@@ -262,7 +221,7 @@ export default function LoginPage() {
                         href="/auth/reset-password"
                         className="text-sm text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
                       >
-                        ¿Olvidaste tu contraseña?
+                        Forgot your password?
                       </Link>
                     </div>
 
@@ -272,15 +231,11 @@ export default function LoginPage() {
                       </p>
                     )}
 
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={form.formState.isSubmitting}
-                    >
+                    <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                       {form.formState.isSubmitting && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
-                      Iniciar Sesión
+                      Sign In
                     </Button>
                   </form>
                 </Form>
@@ -290,25 +245,17 @@ export default function LoginPage() {
                 {magicLinkSent ? (
                   <div className="mt-4 p-4 rounded-lg bg-muted text-center space-y-2">
                     <Mail className="h-12 w-12 mx-auto text-primary" />
-                    <h3 className="font-semibold">¡Email enviado!</h3>
+                    <h3 className="font-semibold">Email sent!</h3>
                     <p className="text-sm text-muted-foreground">
-                      Revisa tu bandeja de entrada y haz clic en el enlace
-                      mágico para iniciar sesión.
+                      Check your inbox and click the magic link to sign in.
                     </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => setMagicLinkSent(false)}
-                      className="mt-4"
-                    >
-                      Enviar otro enlace
+                    <Button variant="outline" onClick={() => setMagicLinkSent(false)} className="mt-4">
+                      Send another link
                     </Button>
                   </div>
                 ) : (
                   <Form {...magicLinkForm}>
-                    <form
-                      onSubmit={magicLinkForm.handleSubmit(onMagicLinkSubmit)}
-                      className="space-y-4 mt-4"
-                    >
+                    <form onSubmit={magicLinkForm.handleSubmit(onMagicLinkSubmit)} className="space-y-4 mt-4">
                       <FormField
                         control={magicLinkForm.control}
                         name="email"
@@ -320,7 +267,7 @@ export default function LoginPage() {
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                   className="pl-9"
-                                  placeholder="tu@email.com"
+                                  placeholder="you@example.com"
                                   autoComplete="email"
                                   type="email"
                                   {...field}
@@ -329,8 +276,7 @@ export default function LoginPage() {
                             </FormControl>
                             <FormMessage />
                             <p className="text-xs text-muted-foreground mt-2">
-                              Recibirás un enlace mágico en tu email para
-                              iniciar sesión sin contraseña.
+                              You'll receive a magic link via email to sign in without a password.
                             </p>
                           </FormItem>
                         )}
@@ -342,15 +288,11 @@ export default function LoginPage() {
                         </p>
                       )}
 
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={magicLinkForm.formState.isSubmitting}
-                      >
+                      <Button type="submit" className="w-full" disabled={magicLinkForm.formState.isSubmitting}>
                         {magicLinkForm.formState.isSubmitting && (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
-                        Enviar Magic Link
+                        Send Magic Link
                       </Button>
                     </form>
                   </Form>
@@ -363,3 +305,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

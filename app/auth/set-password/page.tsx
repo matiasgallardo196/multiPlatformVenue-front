@@ -7,21 +7,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Loader2, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -30,14 +17,14 @@ const setPasswordSchema = z
   .object({
     password: z
       .string()
-      .min(8, "La contraseña debe tener al menos 8 caracteres")
-      .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
-      .regex(/[a-z]/, "Debe contener al menos una minúscula")
-      .regex(/[0-9]/, "Debe contener al menos un número"),
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Must contain at least one number"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Las contraseñas no coinciden",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
@@ -56,65 +43,45 @@ export default function SetPasswordPage() {
 
   const form = useForm<SetPasswordForm>({
     resolver: zodResolver(setPasswordSchema),
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
+    defaultValues: { password: "", confirmPassword: "" },
   });
 
   useEffect(() => {
     const checkSession = async () => {
       try {
-        console.log("[SetPassword] Checking session...");
-
-        // Verificar si hay un error en la URL (del callback)
+        // Check for error from callback
         const searchParams = new URLSearchParams(window.location.search);
         const errorParam = searchParams.get("error");
 
         if (errorParam) {
-          console.error("[SetPassword] Error from callback:", errorParam);
           setError(decodeURIComponent(errorParam));
           setLoading(false);
           return;
         }
 
-        // Verificar si hay sesión activa (el callback ya intercambió el código)
+        // Check active session (callback already exchanged the code)
         const {
           data: { session },
           error: sessionError,
         } = await supabase.auth.getSession();
 
-        console.log("[SetPassword] Session check:", {
-          hasSession: !!session,
-          userId: session?.user?.id,
-          email: session?.user?.email,
-          error: sessionError,
-        });
-
         if (sessionError) {
-          console.error("[SetPassword] Error getting session:", sessionError);
-          setError(`Error al obtener sesión: ${sessionError.message}`);
+          setError(`Error getting session: ${sessionError.message}`);
           setLoading(false);
           return;
         }
 
         if (session) {
-          console.log(
-            "[SetPassword] ✅ Session encontrada exitosamente:",
-            session.user.email
-          );
           setTokenValid(true);
           setLoading(false);
         } else {
-          console.error("[SetPassword] ❌ No session found");
           setError(
-            "Link de invitación inválido o expirado. Por favor, solicita una nueva invitación."
+            "Invalid or expired invitation link. Please request a new invitation."
           );
           setLoading(false);
         }
       } catch (err: any) {
-        console.error("[SetPassword] Exception caught:", err);
-        setError(`Error: ${err.message || "Error desconocido"}`);
+        setError(`Error: ${err.message || "Unknown error"}`);
         setLoading(false);
       }
     };
@@ -126,41 +93,26 @@ export default function SetPasswordPage() {
     try {
       setError(null);
 
-      console.log("[SetPassword] Actualizando contraseña...");
+      // Update user's password
+      const { error: updateError } = await supabase.auth.updateUser({ password: values.password });
+      if (updateError) throw updateError;
 
-      // Actualizar la contraseña del usuario
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: values.password,
-      });
-
-      if (updateError) {
-        console.error("[SetPassword] Error updating password:", updateError);
-        throw updateError;
-      }
-
-      console.log("[SetPassword] Contraseña actualizada exitosamente");
-
-      // Solicitar al servidor que elimine la cookie httpOnly de 'requires_password_change'
+      // Ask server to clear httpOnly 'requires_password_change' cookie
       try {
         await fetch("/api/auth/clear-password-cookie", { method: "POST" });
-        console.log(
-          "[SetPassword] Cleared requires_password_change cookie (server)"
-        );
       } catch {
-        // Ignorar fallos de limpieza de cookie
+        // ignore
       }
 
       setSuccess(true);
-      toast.success("Contraseña establecida correctamente");
+      toast.success("Password set successfully");
 
-      // Redirigir al dashboard después de 2 segundos
       setTimeout(() => {
         router.push("/dashboard");
       }, 2000);
     } catch (err: any) {
-      console.error("[SetPassword] Error:", err);
-      setError(err.message || "Error al establecer la contraseña");
-      toast.error("Error al establecer la contraseña");
+      setError(err.message || "Failed to set password");
+      toast.error("Failed to set password");
     }
   };
 
@@ -170,7 +122,7 @@ export default function SetPasswordPage() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 flex flex-col items-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Verificando invitación...</p>
+            <p className="text-muted-foreground">Verifying invitation...</p>
           </CardContent>
         </Card>
       </div>
@@ -182,16 +134,12 @@ export default function SetPasswordPage() {
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted px-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-destructive">Link Inválido</CardTitle>
+            <CardTitle className="text-destructive">Invalid Link</CardTitle>
             <CardDescription>{error}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              onClick={() => router.push("/login")}
-              className="w-full"
-              variant="outline"
-            >
-              Ir al Login
+            <Button onClick={() => router.push("/login")} className="w-full" variant="outline">
+              Go to Login
             </Button>
           </CardContent>
         </Card>
@@ -207,10 +155,9 @@ export default function SetPasswordPage() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
               <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
-            <CardTitle>¡Contraseña Establecida!</CardTitle>
+            <CardTitle>Password Set!</CardTitle>
             <CardDescription>
-              Tu contraseña ha sido configurada exitosamente. Serás redirigido
-              al dashboard...
+              Your password has been configured successfully. Redirecting to the dashboard...
             </CardDescription>
           </CardHeader>
         </Card>
@@ -222,10 +169,9 @@ export default function SetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Establece tu Contraseña</CardTitle>
+          <CardTitle>Set Your Password</CardTitle>
           <CardDescription>
-            Crea una contraseña segura para tu cuenta. Este es un link de un
-            solo uso que expirará después de establecer tu contraseña.
+            Create a secure password for your account. This is a one-time link that will expire after setting your password.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -236,14 +182,14 @@ export default function SetPasswordPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nueva Contraseña</FormLabel>
+                    <FormLabel>New Password</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           className="pl-9 pr-10"
                           type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
+                          placeholder="Enter new password"
                           autoComplete="new-password"
                           {...field}
                         />
@@ -252,11 +198,7 @@ export default function SetPasswordPage() {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </FormControl>
@@ -270,29 +212,23 @@ export default function SetPasswordPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirmar Contraseña</FormLabel>
+                    <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           className="pl-9 pr-10"
                           type={showConfirmPassword ? "text" : "password"}
-                          placeholder="••••••••"
+                          placeholder="Confirm new password"
                           autoComplete="new-password"
                           {...field}
                         />
                         <button
                           type="button"
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </FormControl>
@@ -302,12 +238,12 @@ export default function SetPasswordPage() {
               />
 
               <div className="text-xs text-muted-foreground space-y-1">
-                <p>La contraseña debe contener:</p>
+                <p>Password must contain:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>Al menos 8 caracteres</li>
-                  <li>Una letra mayúscula</li>
-                  <li>Una letra minúscula</li>
-                  <li>Un número</li>
+                  <li>At least 8 characters</li>
+                  <li>One uppercase letter</li>
+                  <li>One lowercase letter</li>
+                  <li>One number</li>
                 </ul>
               </div>
 
@@ -317,18 +253,14 @@ export default function SetPasswordPage() {
                 </p>
               )}
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={form.formState.isSubmitting}
-              >
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Estableciendo contraseña...
+                    Setting password...
                   </>
                 ) : (
-                  "Establecer Contraseña"
+                  "Set Password"
                 )}
               </Button>
             </form>
@@ -338,3 +270,4 @@ export default function SetPasswordPage() {
     </div>
   );
 }
+

@@ -4,21 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Mail, Trash2, Loader2 } from "lucide-react";
 import { UserInviteDialog } from "@/components/user/user-invite-dialog";
@@ -54,7 +41,7 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const { isHeadManager } = useAuth();
 
-  // Obtener lista de usuarios
+  // Fetch users list
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["users"],
     queryFn: async () => {
@@ -63,19 +50,19 @@ export default function UsersPage() {
     },
   });
 
-  // Mutación para eliminar usuario
+  // Delete user mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await api.delete(`/users/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("Usuario eliminado exitosamente");
+      toast.success("User deleted successfully");
       setDeleteDialogOpen(false);
       setUserToDelete(null);
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Error al eliminar usuario");
+      toast.error(error?.message || "Failed to delete user");
     },
   });
 
@@ -85,9 +72,7 @@ export default function UsersPage() {
   };
 
   const confirmDelete = () => {
-    if (userToDelete) {
-      deleteMutation.mutate(userToDelete.id);
-    }
+    if (userToDelete) deleteMutation.mutate(userToDelete.id);
   };
 
   const getRoleBadge = (role: string) => {
@@ -108,142 +93,113 @@ export default function UsersPage() {
           </div>
         ) : (
           <div className="container mx-auto py-6 space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
-              <p className="text-muted-foreground">
-                Administra los usuarios del sistema
-              </p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold">User Management</h1>
+                <p className="text-muted-foreground">Manage system users</p>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => setInviteDialogOpen(true)} variant="outline" className="gap-2">
+                  <Mail className="h-4 w-4" />
+                  Invite by Email
+                </Button>
+                <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Create User
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setInviteDialogOpen(true)}
-                variant="outline"
-                className="gap-2"
-              >
-                <Mail className="h-4 w-4" />
-                Invitar por Email
-              </Button>
-              <Button
-                onClick={() => setCreateDialogOpen(true)}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Crear Usuario
-              </Button>
-            </div>
-          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Usuarios Registrados</CardTitle>
-              <CardDescription>
-                Total: {users?.length || 0} usuarios
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Usuario</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users?.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">
-                        {user.userName}
-                      </TableCell>
-                      <TableCell>{user.email || "—"}</TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleBadge(user.role)}>
-                          {user.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.supabaseUserId ? (
-                          <Badge variant="default">Activo</Badge>
-                        ) : (
-                          <Badge variant="secondary">Pendiente</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(user)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {!users || users.length === 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Registered Users</CardTitle>
+                <CardDescription>Total: {users?.length || 0} users</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="text-center text-muted-foreground"
-                      >
-                        No hay usuarios registrados
-                      </TableCell>
+                      <TableHead>User</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {users?.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.userName}</TableCell>
+                        <TableCell>{user.email || "N/A"}</TableCell>
+                        <TableCell>
+                          <Badge variant={getRoleBadge(user.role)}>{user.role}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {user.supabaseUserId ? (
+                            <Badge variant="default">Active</Badge>
+                          ) : (
+                            <Badge variant="secondary">Pending</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(user)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!users || users.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          No users registered
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
-          {/* Diálogos */}
-          <UserInviteDialog
-            open={inviteDialogOpen}
-            onOpenChange={setInviteDialogOpen}
-          />
+            {/* Dialogs */}
+            <UserInviteDialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen} />
+            <UserCreateDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
 
-          <UserCreateDialog
-            open={createDialogOpen}
-            onOpenChange={setCreateDialogOpen}
-          />
-
-          <AlertDialog
-            open={deleteDialogOpen}
-            onOpenChange={setDeleteDialogOpen}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Eliminar usuario?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  ¿Estás seguro de eliminar al usuario{" "}
-                  <strong>{userToDelete?.userName}</strong>? Esta acción no se
-                  puede deshacer y eliminará el usuario tanto de la base de
-                  datos como de Supabase.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={confirmDelete}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {deleteMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Eliminando...
-                    </>
-                  ) : (
-                    "Eliminar"
-                  )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete user?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete user <strong>{userToDelete?.userName}</strong>? This action cannot be
+                    undone and will remove the user from both the database and Supabase.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={confirmDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         )}
       </DashboardLayout>
     </RouteGuard>
   );
 }
+
