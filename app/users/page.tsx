@@ -36,6 +36,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
 type User = {
   id: string;
@@ -100,12 +101,13 @@ export default function UsersPage() {
 
   return (
     <RouteGuard requireHeadManager>
-      {isLoading ? (
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <div className="container mx-auto py-6 space-y-6">
+      <DashboardLayout>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="container mx-auto py-6 space-y-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
@@ -240,7 +242,8 @@ export default function UsersPage() {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      )}
+        )}
+      </DashboardLayout>
     </RouteGuard>
   );
 }
