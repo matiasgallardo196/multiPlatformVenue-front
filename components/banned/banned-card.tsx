@@ -51,7 +51,7 @@ export function BannedCard({
   readOnly = false,
 }: BannedCardProps) {
   const router = useRouter();
-  const person = banned.incident?.person;
+  const person = banned.person;
   const personName =
     [person?.name, person?.lastName].filter(Boolean).join(" ") ||
     person?.nickname ||

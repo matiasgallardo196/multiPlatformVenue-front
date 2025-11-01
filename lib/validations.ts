@@ -31,7 +31,7 @@ export const updateIncidentSchema = createIncidentSchema.partial();
 // Banned validation schemas
 export const createBannedSchema = z
   .object({
-    incidentId: z.string().min(1, "Incident is required"),
+    personId: z.string().min(1, "Person is required"),
     startingDate: z.string().min(1, "Starting date is required"),
     endingDate: z.string().min(1, "Ending date is required"),
     motive: z.string().optional(),

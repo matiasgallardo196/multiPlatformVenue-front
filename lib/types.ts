@@ -21,7 +21,6 @@ export interface Incident {
   photoBook: string[] | null;
   person?: Person | null;
   place?: Place | null;
-  banned: Banned | null;
 }
 
 export interface Banned {
@@ -35,7 +34,7 @@ export interface Banned {
   } | null;
   motive: string | null;
   isActive: boolean;
-  incident?: Incident;
+  person?: Person;
   bannedPlaces?: {
     bannedId: string;
     placeId: string;
@@ -82,7 +81,7 @@ export interface UpdateIncidentDto {
 }
 
 export interface CreateBannedDto {
-  incidentId: string;
+  personId: string;
   startingDate: string;
   endingDate: string;
   motive?: string;

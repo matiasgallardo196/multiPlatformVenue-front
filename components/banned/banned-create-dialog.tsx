@@ -31,12 +31,12 @@ import { add, intervalToDuration, isValid } from "date-fns";
 
 export function BannedCreateDialog({
   children,
-  incidentId,
+  personId,
   defaultPlaceId,
   redirectOnSuccess,
 }: {
   children: React.ReactNode;
-  incidentId: string;
+  personId: string;
   defaultPlaceId?: string;
   redirectOnSuccess?: boolean;
 }) {
@@ -52,7 +52,7 @@ export function BannedCreateDialog({
     resolver: zodResolver(createBannedSchema),
     mode: "onChange",
     defaultValues: {
-      incidentId,
+      personId,
       startingDate: today,
       endingDate: today,
       motive: "",
@@ -63,7 +63,7 @@ export function BannedCreateDialog({
   const onSubmit = async (values: CreateBannedForm) => {
     try {
       const created = await createBanned.mutateAsync({
-        incidentId: values.incidentId,
+        personId: values.personId,
         startingDate: values.startingDate,
         endingDate: values.endingDate,
         motive: values.motive,
@@ -316,8 +316,8 @@ export function BannedCreateDialog({
 
             {defaultPlaceId && (
               <div className="text-xs text-muted-foreground">
-                This ban will apply by default to the incident's place. You can
-                add more places later in edit.
+                A default place has been pre-selected. You can add more places
+                later in edit.
               </div>
             )}
 

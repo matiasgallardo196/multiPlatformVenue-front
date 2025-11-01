@@ -14,15 +14,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { BannedForm } from "./banned-form";
 import { createBannedSchema, type CreateBannedForm } from "@/lib/validations";
-import { useCreateBanned, useIncidents, usePlaces } from "@/hooks/queries";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { IncidentCombobox } from "@/components/incident/incident-combobox";
+import { useCreateBanned, usePlaces } from "@/hooks/queries";
+import { PersonCombobox } from "@/components/person/person-combobox";
 import {
   Form,
   FormControl,
@@ -44,7 +37,6 @@ export function BannedCreateFullDialog({
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const createBanned = useCreateBanned();
-  const { data: incidents = [] } = useIncidents();
   const { data: places = [] } = usePlaces();
   const router = useRouter();
 
@@ -54,7 +46,7 @@ export function BannedCreateFullDialog({
     resolver: zodResolver(createBannedSchema),
     mode: "onChange",
     defaultValues: {
-      incidentId: "",
+      personId: "",
       startingDate: today,
       endingDate: today,
       motive: "",
@@ -92,12 +84,12 @@ export function BannedCreateFullDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="incidentId"
+              name="personId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Incident</FormLabel>
+                  <FormLabel>Person</FormLabel>
                   <FormControl>
-                    <IncidentCombobox
+                    <PersonCombobox
                       value={field.value}
                       onChange={field.onChange}
                     />

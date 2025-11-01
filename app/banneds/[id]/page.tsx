@@ -19,9 +19,8 @@ import {
   Calendar,
   MapPin,
   FileText,
-  Camera,
   User,
-  Building,
+  Camera,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -77,7 +76,7 @@ export default function BannedDetailPage() {
     );
   }
 
-  const person = banned.incident.person;
+  const person = banned.person;
   const personName =
     [person?.name, person?.lastName].filter(Boolean).join(" ") ||
     person?.nickname ||
@@ -235,23 +234,15 @@ export default function BannedDetailPage() {
                   Edit Ban Details
                 </Button>
               </BannedEditDialog>
-              {banned.incident?.id ? (
+              {person?.id && (
                 <Button
                   className="w-full bg-transparent cursor-pointer"
                   variant="outline"
                   asChild
                 >
-                  <Link href={`/incidents/${banned.incident.id}`}>
-                    View Related Incidents
+                  <Link href={`/persons/${person.id}`}>
+                    View Person Details
                   </Link>
-                </Button>
-              ) : (
-                <Button
-                  className="w-full bg-transparent"
-                  variant="outline"
-                  disabled
-                >
-                  View Related Incidents
                 </Button>
               )}
               <AlertDialog>
@@ -360,45 +351,6 @@ export default function BannedDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Incident Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                Related Incident
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <span className="text-sm font-medium">Location</span>
-                <p className="text-sm">
-                  {banned.incident.place?.name || "Unknown Location"}
-                </p>
-              </div>
-
-              {banned.incident.details && (
-                <div className="space-y-2">
-                  <span className="text-sm font-medium">Incident Details</span>
-                  <p className="text-sm bg-muted p-3 rounded text-pretty">
-                    {banned.incident.details}
-                  </p>
-                </div>
-              )}
-
-              {banned.incident.photoBook &&
-                banned.incident.photoBook.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Camera className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">
-                        Incident Photos
-                      </span>
-                    </div>
-                    <IncidentPhotosGallery urls={banned.incident.photoBook} />
-                  </div>
-                )}
-            </CardContent>
-          </Card>
         </div>
 
         {/* Sidebar */}
@@ -434,72 +386,5 @@ export default function BannedDetailPage() {
         </div>
       </div>
     </DashboardLayout>
-  );
-}
-
-function IncidentPhotosGallery({ urls }: { urls: string[] }) {
-  const [open, setOpen] = useState(false);
-  const [index, setIndex] = useState(0);
-
-  return (
-    <>
-      <div className="flex gap-2 flex-wrap">
-        {urls.map((url, i) => (
-          <button
-            key={i}
-            className="h-12 w-12 rounded overflow-hidden border cursor-zoom-in"
-            onClick={() => {
-              setIndex(i);
-              setOpen(true);
-            }}
-          >
-            <img
-              src={url || "/placeholder.svg"}
-              alt={`Incident photo ${i + 1}`}
-              className="h-full w-full object-cover"
-            />
-          </button>
-        ))}
-      </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
-          className="max-w-5xl p-0"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <DialogTitle className="sr-only">Image preview</DialogTitle>
-          <div className="relative">
-            <img
-              src={urls[index]}
-              alt={`Incident photo ${index + 1}`}
-              className="w-full h-auto rounded"
-            />
-            {urls.length > 1 && (
-              <>
-                <button
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIndex((index - 1 + urls.length) % urls.length);
-                  }}
-                  aria-label="Previous"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIndex((index + 1) % urls.length);
-                  }}
-                  aria-label="Next"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }

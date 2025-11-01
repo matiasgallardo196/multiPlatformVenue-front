@@ -51,7 +51,7 @@ export default function BannedsPage() {
     if (!banneds) return [];
 
     return banneds.filter((banned) => {
-      const person = banned.incident.person;
+      const person = banned.person;
       const personName = [person?.name, person?.lastName, person?.nickname]
         .filter(Boolean)
         .join(" ")
