@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useBanned, usePlaces, useDeleteBanned } from "@/hooks/queries";
 import { useAuth } from "@/hooks/use-auth";
+import type { Place } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -85,14 +86,14 @@ export default function BannedDetailPage() {
 
   // Create place name map
   const placeMap =
-    places?.reduce((acc, place) => {
+    places?.reduce((acc: Record<string, string>, place: Place) => {
       acc[place.id] = place.name || "Unknown Place";
       return acc;
     }, {} as Record<string, string>) || {};
 
   const bannedPlaceNames = banned.bannedPlaces
-    .map((bp) => placeMap[bp.placeId])
-    .filter(Boolean);
+    .map((bp: { placeId: string }) => placeMap[bp.placeId])
+    .filter(Boolean) as string[];
 
   const formatDate = (dateString: string) => {
     try {
@@ -150,7 +151,7 @@ export default function BannedDetailPage() {
                     <AvatarFallback className="bg-primary/10 text-primary text-lg">
                       {personName
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join("")
                         .toUpperCase()
                         .slice(0, 2)}
@@ -186,7 +187,7 @@ export default function BannedDetailPage() {
                   <span className="text-sm font-medium">Additional Photos</span>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {profileImages.slice(1).map((url, index) => (
+                  {profileImages.slice(1).map((url: string, index: number) => (
                     <Dialog key={index}>
                       <DialogTrigger asChild>
                         <Avatar className="h-12 w-12 cursor-zoom-in">
@@ -274,10 +275,11 @@ export default function BannedDetailPage() {
                             title: "Deleted",
                             description: "Ban removed.",
                           });
-                        } catch (e: any) {
+                        } catch (e: unknown) {
+                          const errorMessage = e instanceof Error ? e.message : "Failed to delete ban.";
                           toast({
                             title: "Error",
-                            description: e?.message || "Failed to delete ban.",
+                            description: errorMessage,
                             variant: "destructive",
                           });
                         }
@@ -299,11 +301,15 @@ export default function BannedDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Ban Details */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Ban Details
               </CardTitle>
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-xs text-muted-foreground">Incident N°</span>
+                <span className="text-sm font-semibold">{banned.incidentNumber}</span>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
@@ -340,12 +346,75 @@ export default function BannedDetailPage() {
                 </div>
               </div>
 
-              {banned.motive && (
+              {banned.motive && banned.motive.length > 0 && (
                 <div className="space-y-2">
                   <span className="text-sm font-medium">Motive</span>
+                  <div className="space-y-2">
+                    {banned.motive.map((m: string, idx: number) => (
+                      <p key={idx} className="text-sm bg-muted p-3 rounded text-pretty">
+                        {m}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {banned.peopleInvolved && (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">People Involved</span>
                   <p className="text-sm bg-muted p-3 rounded text-pretty">
-                    {banned.motive}
+                    {banned.peopleInvolved}
                   </p>
+                </div>
+              )}
+
+              {banned.incidentReport && (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">Incident Report</span>
+                  <p className="text-sm bg-muted p-3 rounded text-pretty">
+                    {banned.incidentReport}
+                  </p>
+                </div>
+              )}
+
+              {banned.actionTaken && (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">Action Taken</span>
+                  <p className="text-sm bg-muted p-3 rounded text-pretty">
+                    {banned.actionTaken}
+                  </p>
+                </div>
+              )}
+
+              {banned.policeNotified && (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium">Police Notified</span>
+                    <div className="space-y-3">
+                      {banned.policeNotifiedDate && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Date:</span>
+                          <p className="text-sm">
+                            {new Date(banned.policeNotifiedDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+                      {banned.policeNotifiedTime && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Time:</span>
+                          <p className="text-sm">{banned.policeNotifiedTime}</p>
+                        </div>
+                      )}
+                      {banned.policeNotifiedEvent && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Event:</span>
+                          <p className="text-sm bg-muted p-2 rounded">
+                            {banned.policeNotifiedEvent}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -366,7 +435,7 @@ export default function BannedDetailPage() {
             <CardContent>
               {bannedPlaceNames.length > 0 ? (
                 <div className="space-y-2">
-                  {bannedPlaceNames.map((placeName, index) => (
+                  {bannedPlaceNames.map((placeName: string, index: number) => (
                     <Badge
                       key={index}
                       variant="outline"

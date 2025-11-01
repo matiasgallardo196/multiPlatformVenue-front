@@ -267,12 +267,16 @@ export function BannedCard({
             </div>
 
             {/* Motive */}
-            {banned.motive && (
+            {banned.motive && banned.motive.length > 0 && (
               <div className="space-y-1">
                 <span className="text-sm text-muted-foreground">Motive:</span>
-                <p className="text-sm bg-muted p-2 rounded text-pretty">
-                  {banned.motive}
-                </p>
+                <div className="space-y-1">
+                  {banned.motive.map((m, idx) => (
+                    <p key={idx} className="text-sm bg-muted p-2 rounded text-pretty">
+                      {m}
+                    </p>
+                  ))}
+                </div>
               </div>
             )}
 

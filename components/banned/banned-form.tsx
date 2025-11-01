@@ -15,11 +15,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { UseFormReturn } from "react-hook-form";
 import type { Place } from "@/lib/types";
 import { add, intervalToDuration, isValid } from "date-fns";
+import { MotiveSelect } from "./motive-select";
 
 type BannedFormValues = {
+  incidentNumber: number;
   startingDate: string;
   endingDate: string;
-  motive?: string;
+  motive: string[];
+  peopleInvolved?: string;
+  incidentReport?: string;
+  actionTaken?: string;
+  policeNotified: boolean;
+  policeNotifiedDate?: string;
+  policeNotifiedTime?: string;
+  policeNotifiedEvent?: string;
   placeIds?: string[];
 };
 
@@ -233,14 +242,155 @@ export function BannedForm({
         name="motive"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Motive (optional)</FormLabel>
+            <FormLabel>Motive</FormLabel>
             <FormControl>
-              <Input placeholder="Reason" {...field} />
+              <MotiveSelect
+                value={field.value || []}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={!!form.formState.errors.motive}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
+
+      <FormField
+        control={form.control}
+        name="peopleInvolved"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>People Involved</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Enter people involved"
+                {...field}
+                value={field.value || ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="incidentReport"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Incident Report</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Enter incident report"
+                {...field}
+                value={field.value || ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="actionTaken"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Action Taken</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Enter action taken"
+                {...field}
+                value={field.value || ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Police Notified Section */}
+      <div className="space-y-4 border-t pt-4">
+        <FormField
+          control={form.control}
+          name="policeNotified"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Police Notified</FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {form.watch("policeNotified") && (
+          <div className="space-y-4 pl-7">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="policeNotifiedDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <DateInput
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="policeNotifiedTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="time"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="policeNotifiedEvent"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Event</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter event description"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+      </div>
 
       <FormField
         control={form.control}

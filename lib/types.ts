@@ -25,6 +25,7 @@ export interface Incident {
 
 export interface Banned {
   id: string;
+  incidentNumber: number;
   startingDate: string;
   endingDate: string | null;
   howlong: {
@@ -32,7 +33,14 @@ export interface Banned {
     months: string;
     days: string;
   } | null;
-  motive: string | null;
+  motive: string[];
+  peopleInvolved: string | null;
+  incidentReport: string | null;
+  actionTaken: string | null;
+  policeNotified: boolean;
+  policeNotifiedDate: string | null;
+  policeNotifiedTime: string | null;
+  policeNotifiedEvent: string | null;
   isActive: boolean;
   person?: Person;
   bannedPlaces?: {
@@ -82,16 +90,32 @@ export interface UpdateIncidentDto {
 
 export interface CreateBannedDto {
   personId: string;
+  incidentNumber: number;
   startingDate: string;
   endingDate: string;
-  motive?: string;
+  motive: string[];
+  peopleInvolved?: string;
+  incidentReport?: string;
+  actionTaken?: string;
+  policeNotified: boolean;
+  policeNotifiedDate?: string;
+  policeNotifiedTime?: string;
+  policeNotifiedEvent?: string;
   placeIds?: string[];
 }
 
 export interface UpdateBannedDto {
+  incidentNumber?: number;
   startingDate?: string;
   endingDate?: string | null;
-  motive?: string;
+  motive?: string[];
+  peopleInvolved?: string;
+  incidentReport?: string;
+  actionTaken?: string;
+  policeNotified?: boolean;
+  policeNotifiedDate?: string | null;
+  policeNotifiedTime?: string | null;
+  policeNotifiedEvent?: string | null;
 }
 
 export interface PersonBanStatus {
