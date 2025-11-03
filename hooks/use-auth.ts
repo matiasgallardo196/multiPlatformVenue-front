@@ -11,6 +11,8 @@ export type AuthUser = {
   userName: string;
   role: "manager" | "staff" | "head-manager" | string;
   email: string;
+  placeId: string | null;
+  city: string | null;
 } | null;
 
 export function useAuth() {

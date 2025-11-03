@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,31 @@ export function BannedCard({
   const bannedPlaceNames = (banned.bannedPlaces ?? [])
     .map((bp) => placeMap[bp.placeId])
     .filter(Boolean);
+
+  // Calculate approval status
+  const approvalStatus = useMemo(() => {
+    if (!banned.bannedPlaces || banned.bannedPlaces.length === 0) {
+      return null;
+    }
+    const pendingCount = banned.bannedPlaces.filter(
+      (bp) => bp.status === 'pending'
+    ).length;
+    const approvedCount = banned.bannedPlaces.filter(
+      (bp) => bp.status === 'approved'
+    ).length;
+    const totalCount = banned.bannedPlaces.length;
+
+    if (pendingCount === 0) {
+      return { status: "approved", label: "Approved" };
+    } else if (approvedCount > 0) {
+      return {
+        status: "partial",
+        label: `${approvedCount}/${totalCount} Approved`,
+      };
+    } else {
+      return { status: "pending", label: "Pending" };
+    }
+  }, [banned.bannedPlaces]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -164,6 +190,23 @@ export function BannedCard({
                 >
                   {banned.isActive ? "Active" : "Inactive"}
                 </Badge>
+                <Badge variant="outline" className="text-xs md:text-sm px-2.5 py-1">
+                  Violations: {banned.violationsCount ?? 0}
+                </Badge>
+                {approvalStatus && (
+                  <Badge
+                    variant="outline"
+                    className={`text-xs md:text-sm px-2.5 py-1 ${
+                      approvalStatus.status === "approved"
+                        ? "bg-green-50 border-green-200 text-green-800"
+                        : approvalStatus.status === "partial"
+                        ? "bg-yellow-50 border-yellow-200 text-yellow-800"
+                        : "bg-red-50 border-red-200 text-red-800"
+                    }`}
+                  >
+                    {approvalStatus.label}
+                  </Badge>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button

@@ -14,6 +14,7 @@ export const updatePersonSchema = createPersonSchema.partial();
 // Place validation schemas
 export const createPlaceSchema = z.object({
   name: z.string().min(1, "Place name is required"),
+  city: z.string().min(1, "City is required"),
 });
 
 export const updatePlaceSchema = createPlaceSchema.partial();
@@ -43,7 +44,7 @@ export const createBannedSchema = z
     policeNotifiedDate: z.string().optional(),
     policeNotifiedTime: z.string().optional(),
     policeNotifiedEvent: z.string().optional(),
-    placeIds: z.array(z.string()).optional(),
+    placeIds: z.array(z.string()).min(1, "At least one place is required"),
   })
   .refine(
     (data) => {

@@ -97,10 +97,7 @@ export function BannedCreateFullDialog({
           values.policeNotified && values.policeNotifiedEvent
             ? values.policeNotifiedEvent.trim()
             : undefined,
-        placeIds:
-          values.placeIds && values.placeIds.length > 0
-            ? values.placeIds
-            : undefined,
+        placeIds: values.placeIds,
       });
       toast({ title: "Success", description: "Ban created successfully." });
       if (redirectOnSuccess) {
@@ -108,10 +105,12 @@ export function BannedCreateFullDialog({
       } else {
         setOpen(false);
       }
-    } catch (error) {
+    } catch (error: any) {
+      const msg = (error && error.message) ? String(error.message) : "Failed to create ban.";
+      const isConflict = typeof msg === 'string' && /active ban/i.test(msg);
       toast({
-        title: "Error",
-        description: "Failed to create ban.",
+        title: isConflict ? "Ban already active" : "Error",
+        description: msg,
         variant: "destructive",
       });
     }

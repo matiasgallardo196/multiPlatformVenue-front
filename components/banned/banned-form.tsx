@@ -29,7 +29,7 @@ type BannedFormValues = {
   policeNotifiedDate?: string;
   policeNotifiedTime?: string;
   policeNotifiedEvent?: string;
-  placeIds?: string[];
+  placeIds: string[];
 };
 
 export function BannedForm({

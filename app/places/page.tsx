@@ -54,7 +54,9 @@ export default function PlacesPage() {
 
     return places.filter((place: Place) => {
       const placeName = (place.name || "").toLowerCase();
-      return placeName.includes(searchQuery.toLowerCase());
+      const cityName = (place.city || "").toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return placeName.includes(query) || cityName.includes(query);
     });
   }, [places, searchQuery]);
 
@@ -173,6 +175,11 @@ export default function PlacesPage() {
                                 <h3 className="font-semibold">
                                   {place.name || "Unnamed Place"}
                                 </h3>
+                                {place.city && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {place.city}
+                                  </p>
+                                )}
                               </div>
                             </div>
 

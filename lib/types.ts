@@ -1,5 +1,16 @@
 // Core API types based on the NestJS backend specification
 
+export type BannedPlaceStatus = 'pending' | 'approved' | 'rejected';
+
+export type BannedHistoryAction =
+  | 'created'
+  | 'updated'
+  | 'approved'
+  | 'rejected'
+  | 'place_added'
+  | 'place_removed'
+  | 'dates_changed';
+
 export interface Person {
   id: string;
   name: string | null;
@@ -13,6 +24,7 @@ export interface Person {
 export interface Place {
   id: string;
   name: string | null;
+  city: string;
 }
 
 export interface Incident {
@@ -21,6 +33,17 @@ export interface Incident {
   photoBook: string[] | null;
   person?: Person | null;
   place?: Place | null;
+}
+
+export interface BannedPlace {
+  bannedId: string;
+  placeId: string;
+  status: BannedPlaceStatus;
+  approvedByUserId?: string | null;
+  rejectedByUserId?: string | null;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  place?: Place;
 }
 
 export interface Banned {
@@ -42,11 +65,13 @@ export interface Banned {
   policeNotifiedTime: string | null;
   policeNotifiedEvent: string | null;
   isActive: boolean;
+  createdByUserId: string;
+  lastModifiedByUserId?: string | null;
+  requiresApproval: boolean;
+  violationsCount?: number;
+  violationDates?: string[];
   person?: Person;
-  bannedPlaces?: {
-    bannedId: string;
-    placeId: string;
-  }[];
+  bannedPlaces?: BannedPlace[];
 }
 
 // DTO types for API requests
@@ -68,10 +93,12 @@ export interface UpdatePersonDto {
 
 export interface CreatePlaceDto {
   name: string;
+  city: string;
 }
 
 export interface UpdatePlaceDto {
   name?: string;
+  city?: string;
 }
 
 export interface CreateIncidentDto {
@@ -101,7 +128,7 @@ export interface CreateBannedDto {
   policeNotifiedDate?: string;
   policeNotifiedTime?: string;
   policeNotifiedEvent?: string;
-  placeIds?: string[];
+  placeIds: string[];
 }
 
 export interface UpdateBannedDto {
@@ -122,6 +149,41 @@ export interface PersonBanStatus {
   personId: string;
   isBanned: boolean;
   activeCount: number;
+}
+
+export interface ActiveBanInfo {
+  placeId: string;
+  placeName: string;
+  bannedId: string;
+  startingDate: string;
+  endingDate: string | null;
+  status: BannedPlaceStatus;
+}
+
+export interface CheckActiveBansResponse {
+  personId: string;
+  activeBans: ActiveBanInfo[];
+}
+
+export interface ApproveBannedPlaceDto {
+  placeId: string;
+  approved: boolean;
+}
+
+export interface BannedHistory {
+  id: string;
+  bannedId: string;
+  action: BannedHistoryAction;
+  performedByUserId: string;
+  performedAt: string;
+  details?: any;
+  placeId?: string | null;
+  performedBy?: {
+    id: string;
+    userName: string;
+    role: string;
+  };
+  place?: Place;
 }
 
 export interface CurrentUser {

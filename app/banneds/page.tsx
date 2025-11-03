@@ -50,7 +50,7 @@ export default function BannedsPage() {
   const filteredBanneds = useMemo(() => {
     if (!banneds) return [];
 
-    return banneds.filter((banned) => {
+    const filtered = banneds.filter((banned) => {
       const person = banned.person;
       const personName = [person?.name, person?.lastName, person?.nickname]
         .filter(Boolean)
@@ -78,6 +78,9 @@ export default function BannedsPage() {
 
       return matchesSearch && matchesStatus && matchesPlace && matchesGender;
     });
+
+    // Sort by violationsCount desc
+    return filtered.sort((a, b) => (b.violationsCount ?? 0) - (a.violationsCount ?? 0));
   }, [banneds, searchQuery, statusFilter, selectedPlaces, genderFilter]);
 
   const handlePlaceToggle = (placeId: string) => {

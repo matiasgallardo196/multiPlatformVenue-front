@@ -103,10 +103,7 @@ export function BannedCreateDialog({
           values.policeNotified && values.policeNotifiedEvent
             ? values.policeNotifiedEvent.trim()
             : undefined,
-        placeIds:
-          values.placeIds && values.placeIds.length > 0
-            ? values.placeIds
-            : undefined,
+        placeIds: values.placeIds,
       });
       toast({ title: "Success", description: "Ban created successfully." });
       if (redirectOnSuccess) {
