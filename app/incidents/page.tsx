@@ -220,11 +220,6 @@ export default function IncidentsPage() {
                             <h3 className="font-semibold">
                               Incident #{incident.id.slice(-8)}
                             </h3>
-                            {incident.banned && (
-                              <Badge variant="destructive" className="mt-1">
-                                Has Ban
-                              </Badge>
-                            )}
                           </div>
                         </div>
 

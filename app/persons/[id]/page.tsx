@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { PersonEditDialog } from "@/components/person/person-edit-dialog";
 import { IncidentCreateDialog } from "@/components/incident/incident-create-dialog";
+import { BannedCreateDialog } from "@/components/banned/banned-create-dialog";
 import { useState } from "react";
 import {
   AlertDialog,
@@ -177,6 +178,17 @@ export default function PersonDetailPage() {
                   Create Incident for this Person
                 </Button>
               </IncidentCreateDialog>
+              <BannedCreateDialog
+                personId={person.id}
+                redirectOnSuccess
+              >
+                <Button
+                  className="w-full bg-transparent cursor-pointer"
+                  variant="outline"
+                >
+                  Create Ban for this Person
+                </Button>
+              </BannedCreateDialog>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
