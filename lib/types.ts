@@ -19,6 +19,8 @@ export interface Person {
   imagenProfileUrl: string[] | null;
   gender: "Male" | "Female" | null;
   incidents: Incident[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Place {

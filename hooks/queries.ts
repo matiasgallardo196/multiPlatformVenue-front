@@ -43,10 +43,40 @@ export const queryKeys = {
 };
 
 // Persons Hooks
-export function usePersons() {
+export function usePersons(filters?: {
+  gender?: "all" | "Male" | "Female" | null;
+  search?: string;
+  sortBy?: "newest-first" | "oldest-first" | "name-asc" | "name-desc";
+}) {
+  const queryKey = filters
+    ? [...queryKeys.persons, "filtered", filters]
+    : queryKeys.persons;
+
   return useQuery({
-    queryKey: queryKeys.persons,
-    queryFn: () => api.get<Person[]>("/persons"),
+    queryKey,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      
+      if (filters?.gender && filters.gender !== "all") {
+        if (filters.gender === null) {
+          params.append("gender", "null");
+        } else {
+          params.append("gender", filters.gender);
+        }
+      }
+      
+      if (filters?.search && filters.search.trim()) {
+        params.append("search", filters.search.trim());
+      }
+      
+      if (filters?.sortBy) {
+        params.append("sortBy", filters.sortBy);
+      }
+      
+      const queryString = params.toString();
+      const url = queryString ? `/persons?${queryString}` : "/persons";
+      return api.get<Person[]>(url);
+    },
     retry: 3,
     retryDelay: 1000,
   });
@@ -224,10 +254,22 @@ export function useDeleteIncident() {
 }
 
 // Banneds Hooks
-export function useBanneds() {
+export function useBanneds(sortBy?: string) {
+  const queryKey = sortBy
+    ? [...queryKeys.banneds, "sorted", sortBy]
+    : queryKeys.banneds;
+
   return useQuery({
-    queryKey: queryKeys.banneds,
-    queryFn: () => api.get<Banned[]>("/banneds"),
+    queryKey,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (sortBy) {
+        params.append("sortBy", sortBy);
+      }
+      const queryString = params.toString();
+      const url = queryString ? `/banneds?${queryString}` : "/banneds";
+      return api.get<Banned[]>(url);
+    },
     retry: 3,
     retryDelay: 1000,
   });
