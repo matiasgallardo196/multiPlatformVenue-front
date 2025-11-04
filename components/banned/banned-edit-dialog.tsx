@@ -29,12 +29,19 @@ import { useBanned, usePlaces, useUpdateBanned } from "@/hooks/queries";
 export function BannedEditDialog({
   children,
   id,
+  onOpenChange: externalOnOpenChange,
 }: {
   children: React.ReactNode;
   id: string;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    externalOnOpenChange?.(newOpen);
+  };
   const { data: banned } = useBanned(id);
   const updateBanned = useUpdateBanned();
   const { data: places = [] } = usePlaces();
@@ -96,9 +103,17 @@ export function BannedEditDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] flex flex-col">
+      <DialogContent 
+        className="max-h-[90vh] flex flex-col"
+        onInteractOutside={(e) => {
+          e.stopPropagation();
+        }}
+        onPointerDownOutside={(e) => {
+          e.stopPropagation();
+        }}
+      >
         <DialogHeader className="flex flex-row items-center justify-between gap-4">
           <DialogTitle>Edit Ban</DialogTitle>
           <Form {...form}>

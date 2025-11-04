@@ -102,9 +102,16 @@ export function BannedForm({
       return;
     }
     const current = new Set(selectedPlaceIds);
-    if (checked) current.add(placeId);
-    else current.delete(placeId);
-    form.setValue("placeIds", Array.from(current), { shouldDirty: true });
+    if (checked) {
+      current.add(placeId);
+    } else {
+      // No permitir desmarcar si es el último lugar seleccionado
+      if (current.size <= 1) {
+        return;
+      }
+      current.delete(placeId);
+    }
+    form.setValue("placeIds", Array.from(current), { shouldDirty: true, shouldValidate: true });
   };
 
   return (
@@ -432,6 +439,8 @@ export function BannedForm({
                 {places.map((pl) => {
                   const checked = selectedPlaceIds.includes(pl.id);
                   const isLocked = lockedPlaceId === pl.id;
+                  const isLastPlace = checked && selectedPlaceIds.length === 1;
+                  const isDisabled = isLocked || isLastPlace;
                   return (
                     <label
                       key={pl.id}
@@ -440,9 +449,11 @@ export function BannedForm({
                       <Checkbox
                         checked={checked}
                         onCheckedChange={(c) => togglePlace(pl.id, c)}
-                        disabled={isLocked}
+                        disabled={isDisabled}
                       />
-                      <span>{pl.name || "Unknown"}</span>
+                      <span className={isDisabled ? "text-muted-foreground" : ""}>
+                        {pl.name || "Unknown"}
+                      </span>
                     </label>
                   );
                 })}

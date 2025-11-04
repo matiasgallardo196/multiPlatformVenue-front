@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,8 @@ export function BannedCard({
   actionsAtTopRight = false,
 }: BannedCardProps) {
   const router = useRouter();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const dialogJustClosedRef = useRef(false);
   const person = banned.person;
   const personName =
     [person?.name, person?.lastName].filter(Boolean).join(" ") ||
@@ -116,14 +118,47 @@ export function BannedCard({
     return parts.length > 0 ? parts.join(" ") : "Less than a day";
   };
 
+  // Reset the flag after a short delay when dialog closes
+  useEffect(() => {
+    if (!isDialogOpen && dialogJustClosedRef.current) {
+      const timeout = setTimeout(() => {
+        dialogJustClosedRef.current = false;
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [isDialogOpen]);
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent navigation if dialog is open or just closed
+    if (isDialogOpen || dialogJustClosedRef.current) {
+      return;
+    }
+    const modalOpen = document.querySelector(
+      '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
+    );
+    if (modalOpen) return;
+    router.push(`/banneds/${banned.id}`);
+  };
+
+  const handleCardKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== "Enter") return;
+    // Prevent navigation if dialog is open or just closed
+    if (isDialogOpen || dialogJustClosedRef.current) {
+      return;
+    }
+    const modalOpen = document.querySelector(
+      '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
+    );
+    if (modalOpen) return;
+    router.push(`/banneds/${banned.id}`);
+  };
+
   return (
     <Card
       className="relative overflow-hidden transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-      onClick={() => router.push(`/banneds/${banned.id}`)}
+      onClick={handleCardClick}
       tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") router.push(`/banneds/${banned.id}`);
-      }}
+      onKeyDown={handleCardKeyDown}
     >
       {/* Incident number top-left */}
       <div className="absolute top-2 left-2">
@@ -164,10 +199,25 @@ export function BannedCard({
                   View Details
                 </Link>
               </DropdownMenuItem>
-              <BannedEditDialog id={banned.id}>
+              <BannedEditDialog 
+                id={banned.id}
+                onOpenChange={(open) => {
+                  setIsDialogOpen(open);
+                  if (!open) {
+                    dialogJustClosedRef.current = true;
+                  }
+                }}
+              >
                 <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  onClick={(e) => e.stopPropagation()}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                  }}
                   className="cursor-pointer"
                 >
                   <Edit className="mr-2 h-4 w-4" />
@@ -305,10 +355,25 @@ export function BannedCard({
                         </Link>
                       </DropdownMenuItem>
                       {!readOnly && (
-                        <BannedEditDialog id={banned.id}>
+                        <BannedEditDialog 
+                          id={banned.id}
+                          onOpenChange={(open) => {
+                            setIsDialogOpen(open);
+                            if (!open) {
+                              dialogJustClosedRef.current = true;
+                            }
+                          }}
+                        >
                           <DropdownMenuItem
-                            onSelect={(e) => e.preventDefault()}
-                            onClick={(e) => e.stopPropagation()}
+                            onSelect={(e) => {
+                              e.preventDefault();
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                            }}
                             className="cursor-pointer"
                           >
                             <Edit className="mr-2 h-4 w-4" />

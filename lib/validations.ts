@@ -107,6 +107,7 @@ export const updateBannedSchema = z
     policeNotifiedDate: z.string().nullable().optional(),
     policeNotifiedTime: z.string().nullable().optional(),
     policeNotifiedEvent: z.string().nullable().optional(),
+    placeIds: z.array(z.string()).min(1, "At least one place is required").optional(),
   })
   .refine(
     (data) => {
