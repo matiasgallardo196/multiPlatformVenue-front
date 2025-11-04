@@ -42,6 +42,8 @@ interface BannedCardProps {
   onEdit: (banned: Banned) => void;
   onDelete: (id: string) => void;
   readOnly?: boolean;
+  showApprovalBadge?: boolean;
+  actionsAtTopRight?: boolean;
 }
 
 export function BannedCard({
@@ -50,6 +52,8 @@ export function BannedCard({
   onEdit,
   onDelete,
   readOnly = false,
+  showApprovalBadge = true,
+  actionsAtTopRight = false,
 }: BannedCardProps) {
   const router = useRouter();
   const person = banned.person;
@@ -114,13 +118,93 @@ export function BannedCard({
 
   return (
     <Card
-      className="overflow-hidden transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+      className="relative overflow-hidden transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
       onClick={() => router.push(`/banneds/${banned.id}`)}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Enter") router.push(`/banneds/${banned.id}`);
       }}
     >
+      {/* Incident number top-left */}
+      <div className="absolute top-2 left-2">
+        <Badge variant="outline" className="text-xs md:text-sm px-2 py-0.5">
+          #{banned.incidentNumber}
+        </Badge>
+      </div>
+      {/* Active & Violations top-right */}
+      <div className="absolute top-2 right-2 flex items-center gap-2">
+        <Badge
+          variant={banned.isActive ? "destructive" : "secondary"}
+          className="text-xs md:text-sm px-2.5 py-1"
+        >
+          {banned.isActive ? "Active" : "Inactive"}
+        </Badge>
+        <Badge variant="outline" className="text-xs md:text-sm px-2.5 py-1">
+          Violations: {banned.violationsCount ?? 0}
+        </Badge>
+        {actionsAtTopRight && !readOnly && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link
+                  href={`/banneds/${banned.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </Link>
+              </DropdownMenuItem>
+              <BannedEditDialog id={banned.id}>
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  onClick={(e) => e.stopPropagation()}
+                  className="cursor-pointer"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              </BannedEditDialog>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem
+                    className="text-destructive cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this ban?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      the ban and remove it from the list.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Ban</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onDelete(banned.id)}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
       <CardContent className="p-4 md:p-5">
         <div className="flex items-center gap-8 md:gap-10">
           <div className="flex-shrink-0 flex flex-col items-center gap-3 md:gap-4">
@@ -166,7 +250,7 @@ export function BannedCard({
             )}
           </div>
 
-          <div className="flex-1 space-y-4">
+          <div className="flex-1 min-w-0 space-y-4">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <h3 className="font-semibold text-card-foreground text-xl md:text-2xl">
@@ -184,16 +268,7 @@ export function BannedCard({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <Badge
-                  variant={banned.isActive ? "destructive" : "secondary"}
-                  className="text-xs md:text-sm px-2.5 py-1"
-                >
-                  {banned.isActive ? "Active" : "Inactive"}
-                </Badge>
-                <Badge variant="outline" className="text-xs md:text-sm px-2.5 py-1">
-                  Violations: {banned.violationsCount ?? 0}
-                </Badge>
-                {approvalStatus && (
+                {showApprovalBadge && approvalStatus && (
                   <Badge
                     variant="outline"
                     className={`text-xs md:text-sm px-2.5 py-1 ${
@@ -207,77 +282,79 @@ export function BannedCard({
                     {approvalStatus.label}
                   </Badge>
                 )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 cursor-pointer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild className="cursor-pointer">
-                      <Link
-                        href={`/banneds/${banned.id}`}
+                {!actionsAtTopRight && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 cursor-pointer"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Details
-                      </Link>
-                    </DropdownMenuItem>
-                    {!readOnly && (
-                      <BannedEditDialog id={banned.id}>
-                        <DropdownMenuItem
-                          onSelect={(e) => e.preventDefault()}
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link
+                          href={`/banneds/${banned.id}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="cursor-pointer"
                         >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                      </BannedEditDialog>
-                    )}
-                    {!readOnly && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </Link>
+                      </DropdownMenuItem>
+                      {!readOnly && (
+                        <BannedEditDialog id={banned.id}>
                           <DropdownMenuItem
-                            className="text-destructive cursor-pointer"
-                            onClick={(e) => e.stopPropagation()}
                             onSelect={(e) => e.preventDefault()}
+                            onClick={(e) => e.stopPropagation()}
+                            className="cursor-pointer"
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
                           </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Delete this ban?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will
-                              permanently delete the ban and remove it from the
-                              list.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Keep Ban</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => onDelete(banned.id)}
+                        </BannedEditDialog>
+                      )}
+                      {!readOnly && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem
+                              className="text-destructive cursor-pointer"
+                              onClick={(e) => e.stopPropagation()}
+                              onSelect={(e) => e.preventDefault()}
                             >
+                              <Trash2 className="mr-2 h-4 w-4" />
                               Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete this ban?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will
+                                permanently delete the ban and remove it from the
+                                list.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Keep Ban</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => onDelete(banned.id)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </div>
 
@@ -311,11 +388,14 @@ export function BannedCard({
 
             {/* Motive */}
             {banned.motive && banned.motive.length > 0 && (
-              <div className="space-y-1">
+              <div className="space-y-1 w-full min-w-0">
                 <span className="text-sm text-muted-foreground">Motive:</span>
-                <div className="space-y-1">
+                <div className="space-y-1 w-full min-w-0">
                   {banned.motive.map((m, idx) => (
-                    <p key={idx} className="text-sm bg-muted p-2 rounded text-pretty">
+                    <p
+                      key={idx}
+                      className="text-sm bg-muted p-2 rounded text-pretty break-words whitespace-pre-wrap overflow-hidden max-w-full hyphens-auto"
+                    >
                       {m}
                     </p>
                   ))}

@@ -80,7 +80,7 @@ export interface CreatePersonDto {
   lastName?: string;
   nickname?: string;
   imagenProfileUrl?: string[];
-  gender?: "Male" | "Female";
+  gender: "Male" | "Female";
 }
 
 export interface UpdatePersonDto {

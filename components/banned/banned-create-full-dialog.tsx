@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 
 export function BannedCreateFullDialog({
   children,
@@ -40,8 +41,14 @@ export function BannedCreateFullDialog({
   const createBanned = useCreateBanned();
   const { data: places = [] } = usePlaces();
   const router = useRouter();
+  const { user } = useAuth();
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const tomorrow = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }, []);
 
   const form = useForm<CreateBannedForm>({
     resolver: zodResolver(createBannedSchema),
@@ -51,7 +58,7 @@ export function BannedCreateFullDialog({
       personId: "",
       incidentNumber: undefined as any,
       startingDate: today,
-      endingDate: today,
+      endingDate: tomorrow,
       motive: [],
       peopleInvolved: "",
       incidentReport: "",
@@ -63,6 +70,12 @@ export function BannedCreateFullDialog({
       placeIds: [],
     },
   });
+
+  // Preseleccionar el lugar del usuario si existe
+  const userPlaceId = user?.placeId ?? null;
+  if (userPlaceId && form.getValues("placeIds").length === 0) {
+    form.setValue("placeIds", [userPlaceId], { shouldDirty: false, shouldValidate: true });
+  }
 
   const onSubmit = async (values: CreateBannedForm) => {
     try {
@@ -107,9 +120,14 @@ export function BannedCreateFullDialog({
       }
     } catch (error: any) {
       const msg = (error && error.message) ? String(error.message) : "Failed to create ban.";
-      const isConflict = typeof msg === 'string' && /active ban/i.test(msg);
+      const isActiveConflict = /active ban/i.test(msg);
+      const isIncidentDuplicate = /incident number/i.test(msg);
       toast({
-        title: isConflict ? "Ban already active" : "Error",
+        title: isIncidentDuplicate
+          ? "Incident number already exists"
+          : isActiveConflict
+          ? "Ban already active"
+          : "Error",
         description: msg,
         variant: "destructive",
       });
@@ -169,7 +187,11 @@ export function BannedCreateFullDialog({
               )}
             />
 
-            <BannedForm form={form as any} places={places} />
+            <BannedForm
+              form={form as any}
+              places={places}
+              lockedPlaceId={userPlaceId || undefined}
+            />
             </form>
           </Form>
         </div>

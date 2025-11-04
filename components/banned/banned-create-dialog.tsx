@@ -48,6 +48,11 @@ export function BannedCreateDialog({
   const router = useRouter();
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const tomorrow = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }, []);
 
   const form = useForm<CreateBannedForm>({
     resolver: zodResolver(createBannedSchema),
@@ -57,7 +62,7 @@ export function BannedCreateDialog({
       personId,
       incidentNumber: undefined as any,
       startingDate: today,
-      endingDate: today,
+      endingDate: tomorrow,
       motive: [],
       peopleInvolved: "",
       incidentReport: "",
@@ -112,10 +117,17 @@ export function BannedCreateDialog({
       } else {
         setOpen(false);
       }
-    } catch (error) {
+    } catch (error: any) {
+      const msg = (error && error.message) ? String(error.message) : "Failed to create ban. Please try again.";
+      const isActiveConflict = /active ban/i.test(msg);
+      const isIncidentDuplicate = /incident number/i.test(msg);
       toast({
-        title: "Error",
-        description: "Failed to create ban. Please try again.",
+        title: isIncidentDuplicate
+          ? "Incident number already exists"
+          : isActiveConflict
+          ? "Ban already active"
+          : "Error",
+        description: msg,
         variant: "destructive",
       });
     }
@@ -140,10 +152,11 @@ export function BannedCreateDialog({
     const daysNum = parseInt(durationDays || "0", 10) || 0;
     const hasPositiveDuration = yearsNum + monthsNum + daysNum > 0;
 
-    if (end < start) {
+    // Validation: at least 1 day
+    if (end <= start) {
       form.setError("endingDate" as any, {
         type: "validate",
-        message: "End date must be after start date.",
+        message: "Ban must be at least 1 day long.",
       });
       // Don't update duration fields if end date is before start date
       return;
@@ -233,20 +246,20 @@ export function BannedCreateDialog({
                       value={field.value}
                       onChange={(value) => {
                         field.onChange(value);
-                        // Immediate validation
+                    // Immediate validation: at least 1 day
                         const start = form.getValues("startingDate");
-                        if (
-                          start &&
-                          value &&
-                          new Date(value) < new Date(start)
-                        ) {
-                          form.setError("endingDate", {
-                            type: "validate",
-                            message: "End date must be after start date.",
-                          });
-                        } else {
-                          form.clearErrors("endingDate");
-                        }
+                    if (start && value) {
+                      const s = new Date(start);
+                      const e = new Date(value);
+                      if (e <= s) {
+                        form.setError("endingDate", {
+                          type: "validate",
+                          message: "Ban must be at least 1 day long.",
+                        });
+                      } else {
+                        form.clearErrors("endingDate");
+                      }
+                    }
                       }}
                       onBlur={field.onBlur}
                       name={field.name}
@@ -268,7 +281,16 @@ export function BannedCreateDialog({
                   <FormControl>
                     <MotiveSelect
                       value={field.value || []}
-                      onChange={field.onChange}
+                      onChange={(val) => {
+                        form.setValue("motive", val, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                          shouldTouch: true,
+                        });
+                        if (val && val.length > 0) {
+                          form.clearErrors("motive");
+                        }
+                      }}
                       onBlur={field.onBlur}
                       error={!!form.formState.errors.motive}
                     />

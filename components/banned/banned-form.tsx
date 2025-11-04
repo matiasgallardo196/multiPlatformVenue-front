@@ -35,11 +35,22 @@ type BannedFormValues = {
 export function BannedForm({
   form,
   places,
+  lockedPlaceId,
 }: {
   form: UseFormReturn<BannedFormValues>;
   places: Place[];
+  lockedPlaceId?: string;
 }) {
   const selectedPlaceIds = form.watch("placeIds") || [];
+
+  // Asegurar que lockedPlaceId esté siempre presente en placeIds
+  useEffect(() => {
+    if (!lockedPlaceId) return;
+    if (!selectedPlaceIds.includes(lockedPlaceId)) {
+      const next = Array.from(new Set([lockedPlaceId, ...selectedPlaceIds]));
+      form.setValue("placeIds", next, { shouldDirty: true, shouldValidate: true });
+    }
+  }, [lockedPlaceId, selectedPlaceIds, form]);
 
   // Local duration UI state (not sent to backend)
   const [durationYears, setDurationYears] = useState<string>("");
@@ -60,10 +71,11 @@ export function BannedForm({
     const daysNum = parseInt(durationDays || "0", 10) || 0;
     const hasPositiveDuration = yearsNum + monthsNum + daysNum > 0;
 
-    if (end < start) {
+    // Validation: at least 1 day
+    if (end <= start) {
       form.setError("endingDate" as any, {
         type: "validate",
-        message: "End date must be after start date.",
+        message: "Ban must be at least 1 day long.",
       });
       // Don't update duration fields if end date is before start date
       return;
@@ -85,6 +97,10 @@ export function BannedForm({
   ]);
 
   const togglePlace = (placeId: string, checked: boolean | string) => {
+    // No permitir desmarcar el lugar bloqueado
+    if (lockedPlaceId && placeId === lockedPlaceId && !checked) {
+      return;
+    }
     const current = new Set(selectedPlaceIds);
     if (checked) current.add(placeId);
     else current.delete(placeId);
@@ -125,16 +141,20 @@ export function BannedForm({
                   value={field.value}
                   onChange={(value) => {
                     field.onChange(value);
-                    // Immediate validation
+                // Immediate validation: at least 1 day
                     const start = form.getValues("startingDate");
-                    if (start && value && new Date(value) < new Date(start)) {
-                      form.setError("endingDate", {
-                        type: "validate",
-                        message: "End date must be after start date.",
-                      });
-                    } else {
-                      form.clearErrors("endingDate");
-                    }
+                if (start && value) {
+                  const s = new Date(start);
+                  const e = new Date(value);
+                  if (e <= s) {
+                    form.setError("endingDate", {
+                      type: "validate",
+                      message: "Ban must be at least 1 day long.",
+                    });
+                  } else {
+                    form.clearErrors("endingDate");
+                  }
+                }
                   }}
                   onBlur={field.onBlur}
                   name={field.name}
@@ -246,7 +266,16 @@ export function BannedForm({
             <FormControl>
               <MotiveSelect
                 value={field.value || []}
-                onChange={field.onChange}
+                onChange={(val) => {
+                  form.setValue("motive", val, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                    shouldTouch: true,
+                  });
+                  if (val && val.length > 0) {
+                    form.clearErrors("motive");
+                  }
+                }}
                 onBlur={field.onBlur}
                 error={!!form.formState.errors.motive}
               />
@@ -402,6 +431,7 @@ export function BannedForm({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {places.map((pl) => {
                   const checked = selectedPlaceIds.includes(pl.id);
+                  const isLocked = lockedPlaceId === pl.id;
                   return (
                     <label
                       key={pl.id}
@@ -410,6 +440,7 @@ export function BannedForm({
                       <Checkbox
                         checked={checked}
                         onCheckedChange={(c) => togglePlace(pl.id, c)}
+                        disabled={isLocked}
                       />
                       <span>{pl.name || "Unknown"}</span>
                     </label>

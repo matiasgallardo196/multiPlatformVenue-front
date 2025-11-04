@@ -58,8 +58,10 @@ export default function BannedsPage() {
         .toLowerCase();
 
       // Search filter
-      const matchesSearch =
-        !searchQuery || personName.includes(searchQuery.toLowerCase());
+      const q = (searchQuery || "").toLowerCase();
+      const numQ = q.replace(/[^0-9]/g, "");
+      const matchesIncident = numQ.length > 0 && String(banned.incidentNumber).includes(numQ);
+      const matchesSearch = !q || personName.includes(q) || matchesIncident;
 
       // Status filter
       const matchesStatus =
@@ -203,6 +205,8 @@ export default function BannedsPage() {
                     onEdit={handleEdit}
                     onDelete={(id) => handleDelete(id)}
                     readOnly={isReadOnly}
+                    showApprovalBadge={false}
+                    actionsAtTopRight={true}
                   />
                 ))}
               </div>

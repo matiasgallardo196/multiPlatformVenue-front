@@ -6,7 +6,7 @@ export const createPersonSchema = z.object({
   lastName: z.string().min(1, "Last name is required").optional(),
   nickname: z.string().optional(),
   imagenProfileUrl: z.array(z.string().url("Invalid URL")).optional(),
-  gender: z.enum(["Male", "Female"]).optional(),
+  gender: z.enum(["Male", "Female"], { required_error: "Gender is required" }),
 });
 
 export const updatePersonSchema = createPersonSchema.partial();
@@ -58,6 +58,16 @@ export const createBannedSchema = z
     }
   )
   .superRefine((data, ctx) => {
+    // Debe durar más de 1 día
+    if (data.startingDate && data.endingDate) {
+      if (!(data.endingDate > data.startingDate)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Ban must be at least 1 day long.",
+          path: ["endingDate"],
+        });
+      }
+    }
     // Only validate police notification fields if policeNotified is true
     if (data.policeNotified) {
       if (!data.policeNotifiedDate || data.policeNotifiedDate.trim().length === 0) {
