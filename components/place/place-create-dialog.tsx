@@ -35,12 +35,13 @@ export function PlaceCreateDialog({ children }: { children: React.ReactNode }) {
     resolver: zodResolver(createPlaceSchema),
     defaultValues: {
       name: "",
+      city: "",
     },
   });
 
   const onSubmit = async (values: CreatePlaceForm) => {
     try {
-      await createPlace.mutateAsync({ name: values.name });
+      await createPlace.mutateAsync({ name: values.name, city: values.city });
       toast({ title: "Success", description: "Place created successfully." });
       form.reset();
       setOpen(false);
@@ -71,6 +72,20 @@ export function PlaceCreateDialog({ children }: { children: React.ReactNode }) {
                   <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Place name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input placeholder="City name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

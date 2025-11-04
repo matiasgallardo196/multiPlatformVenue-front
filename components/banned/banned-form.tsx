@@ -15,22 +15,42 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { UseFormReturn } from "react-hook-form";
 import type { Place } from "@/lib/types";
 import { add, intervalToDuration, isValid } from "date-fns";
+import { MotiveSelect } from "./motive-select";
 
 type BannedFormValues = {
+  incidentNumber: number;
   startingDate: string;
   endingDate: string;
-  motive?: string;
-  placeIds?: string[];
+  motive: string[];
+  peopleInvolved?: string;
+  incidentReport?: string;
+  actionTaken?: string;
+  policeNotified: boolean;
+  policeNotifiedDate?: string;
+  policeNotifiedTime?: string;
+  policeNotifiedEvent?: string;
+  placeIds: string[];
 };
 
 export function BannedForm({
   form,
   places,
+  lockedPlaceId,
 }: {
   form: UseFormReturn<BannedFormValues>;
   places: Place[];
+  lockedPlaceId?: string;
 }) {
   const selectedPlaceIds = form.watch("placeIds") || [];
+
+  // Asegurar que lockedPlaceId esté siempre presente en placeIds
+  useEffect(() => {
+    if (!lockedPlaceId) return;
+    if (!selectedPlaceIds.includes(lockedPlaceId)) {
+      const next = Array.from(new Set([lockedPlaceId, ...selectedPlaceIds]));
+      form.setValue("placeIds", next, { shouldDirty: true, shouldValidate: true });
+    }
+  }, [lockedPlaceId, selectedPlaceIds, form]);
 
   // Local duration UI state (not sent to backend)
   const [durationYears, setDurationYears] = useState<string>("");
@@ -51,10 +71,11 @@ export function BannedForm({
     const daysNum = parseInt(durationDays || "0", 10) || 0;
     const hasPositiveDuration = yearsNum + monthsNum + daysNum > 0;
 
-    if (end < start) {
+    // Validation: at least 1 day
+    if (end <= start) {
       form.setError("endingDate" as any, {
         type: "validate",
-        message: "End date must be after start date.",
+        message: "Ban must be at least 1 day long.",
       });
       // Don't update duration fields if end date is before start date
       return;
@@ -76,10 +97,21 @@ export function BannedForm({
   ]);
 
   const togglePlace = (placeId: string, checked: boolean | string) => {
+    // No permitir desmarcar el lugar bloqueado
+    if (lockedPlaceId && placeId === lockedPlaceId && !checked) {
+      return;
+    }
     const current = new Set(selectedPlaceIds);
-    if (checked) current.add(placeId);
-    else current.delete(placeId);
-    form.setValue("placeIds", Array.from(current), { shouldDirty: true });
+    if (checked) {
+      current.add(placeId);
+    } else {
+      // No permitir desmarcar si es el último lugar seleccionado
+      if (current.size <= 1) {
+        return;
+      }
+      current.delete(placeId);
+    }
+    form.setValue("placeIds", Array.from(current), { shouldDirty: true, shouldValidate: true });
   };
 
   return (
@@ -116,16 +148,20 @@ export function BannedForm({
                   value={field.value}
                   onChange={(value) => {
                     field.onChange(value);
-                    // Immediate validation
+                // Immediate validation: at least 1 day
                     const start = form.getValues("startingDate");
-                    if (start && value && new Date(value) < new Date(start)) {
-                      form.setError("endingDate", {
-                        type: "validate",
-                        message: "End date must be after start date.",
-                      });
-                    } else {
-                      form.clearErrors("endingDate");
-                    }
+                if (start && value) {
+                  const s = new Date(start);
+                  const e = new Date(value);
+                  if (e <= s) {
+                    form.setError("endingDate", {
+                      type: "validate",
+                      message: "Ban must be at least 1 day long.",
+                    });
+                  } else {
+                    form.clearErrors("endingDate");
+                  }
+                }
                   }}
                   onBlur={field.onBlur}
                   name={field.name}
@@ -233,14 +269,164 @@ export function BannedForm({
         name="motive"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Motive (optional)</FormLabel>
+            <FormLabel>Motive</FormLabel>
             <FormControl>
-              <Input placeholder="Reason" {...field} />
+              <MotiveSelect
+                value={field.value || []}
+                onChange={(val) => {
+                  form.setValue("motive", val, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                    shouldTouch: true,
+                  });
+                  if (val && val.length > 0) {
+                    form.clearErrors("motive");
+                  }
+                }}
+                onBlur={field.onBlur}
+                error={!!form.formState.errors.motive}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
+
+      <FormField
+        control={form.control}
+        name="peopleInvolved"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>People Involved</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Enter people involved"
+                {...field}
+                value={field.value || ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="incidentReport"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Incident Report</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Enter incident report"
+                {...field}
+                value={field.value || ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="actionTaken"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Action Taken</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Enter action taken"
+                {...field}
+                value={field.value || ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Police Notified Section */}
+      <div className="space-y-4 border-t pt-4">
+        <FormField
+          control={form.control}
+          name="policeNotified"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Police Notified</FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {form.watch("policeNotified") && (
+          <div className="space-y-4 pl-7">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="policeNotifiedDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <DateInput
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="policeNotifiedTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Time</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="time"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="policeNotifiedEvent"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Event</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter event description"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+      </div>
 
       <FormField
         control={form.control}
@@ -252,6 +438,9 @@ export function BannedForm({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {places.map((pl) => {
                   const checked = selectedPlaceIds.includes(pl.id);
+                  const isLocked = lockedPlaceId === pl.id;
+                  const isLastPlace = checked && selectedPlaceIds.length === 1;
+                  const isDisabled = isLocked || isLastPlace;
                   return (
                     <label
                       key={pl.id}
@@ -260,8 +449,11 @@ export function BannedForm({
                       <Checkbox
                         checked={checked}
                         onCheckedChange={(c) => togglePlace(pl.id, c)}
+                        disabled={isDisabled}
                       />
-                      <span>{pl.name || "Unknown"}</span>
+                      <span className={isDisabled ? "text-muted-foreground" : ""}>
+                        {pl.name || "Unknown"}
+                      </span>
                     </label>
                   );
                 })}

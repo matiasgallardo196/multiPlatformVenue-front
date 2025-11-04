@@ -17,6 +17,9 @@ import type {
   CreateBannedDto,
   UpdateBannedDto,
   PersonBanStatus,
+  ApproveBannedPlaceDto,
+  BannedHistory,
+  CheckActiveBansResponse,
 } from "@/lib/types";
 
 // Query Keys
@@ -33,14 +36,47 @@ export const queryKeys = {
   personBans: (personId: string) => ["banneds", "person", personId] as const,
   personBanStatus: (personId: string) =>
     ["banneds", "person", personId, "active"] as const,
+  pendingBanneds: ["banneds", "pending"] as const,
+  approvalQueueBanneds: ["banneds", "approval-queue"] as const,
+  bannedHistory: (bannedId: string) => ["banneds", bannedId, "history"] as const,
   personSearch: (query: string) => ["persons", "search", query] as const,
 };
 
 // Persons Hooks
-export function usePersons() {
+export function usePersons(filters?: {
+  gender?: "all" | "Male" | "Female" | null;
+  search?: string;
+  sortBy?: "newest-first" | "oldest-first" | "name-asc" | "name-desc";
+}) {
+  const queryKey = filters
+    ? [...queryKeys.persons, "filtered", filters]
+    : queryKeys.persons;
+
   return useQuery({
-    queryKey: queryKeys.persons,
-    queryFn: () => api.get<Person[]>("/persons"),
+    queryKey,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      
+      if (filters?.gender && filters.gender !== "all") {
+        if (filters.gender === null) {
+          params.append("gender", "null");
+        } else {
+          params.append("gender", filters.gender);
+        }
+      }
+      
+      if (filters?.search && filters.search.trim()) {
+        params.append("search", filters.search.trim());
+      }
+      
+      if (filters?.sortBy) {
+        params.append("sortBy", filters.sortBy);
+      }
+      
+      const queryString = params.toString();
+      const url = queryString ? `/persons?${queryString}` : "/persons";
+      return api.get<Person[]>(url);
+    },
     retry: 3,
     retryDelay: 1000,
   });
@@ -218,10 +254,22 @@ export function useDeleteIncident() {
 }
 
 // Banneds Hooks
-export function useBanneds() {
+export function useBanneds(sortBy?: string) {
+  const queryKey = sortBy
+    ? [...queryKeys.banneds, "sorted", sortBy]
+    : queryKeys.banneds;
+
   return useQuery({
-    queryKey: queryKeys.banneds,
-    queryFn: () => api.get<Banned[]>("/banneds"),
+    queryKey,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (sortBy) {
+        params.append("sortBy", sortBy);
+      }
+      const queryString = params.toString();
+      const url = queryString ? `/banneds?${queryString}` : "/banneds";
+      return api.get<Banned[]>(url);
+    },
     retry: 3,
     retryDelay: 1000,
   });
@@ -232,6 +280,20 @@ export function useBanned(id: string) {
     queryKey: queryKeys.banned(id),
     queryFn: () => api.get<Banned>(`/banneds/${id}`),
     enabled: !!id,
+  });
+}
+
+export function useIncrementBannedViolation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (bannedId: string) => api.post(`/banneds/${bannedId}/violations/increment`, {}),
+    onSuccess: (data: Banned) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.banneds });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.banned(data.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.bannedHistory(data.id) });
+      }
+    },
   });
 }
 
@@ -249,6 +311,13 @@ export function usePersonBanStatus(personId: string) {
     queryFn: () =>
       api.get<PersonBanStatus>(`/banneds/person/${personId}/active`),
     enabled: !!personId,
+  });
+}
+
+export function useCheckActiveBans() {
+  return useMutation({
+    mutationFn: (data: { personId: string; placeIds: string[] }) =>
+      api.post<CheckActiveBansResponse>("/banneds/check-active", data),
   });
 }
 
@@ -286,6 +355,55 @@ export function useDeleteBanned() {
     },
   });
 }
+
+export function usePendingBanneds() {
+  return useQuery({
+    queryKey: queryKeys.pendingBanneds,
+    queryFn: () => api.get<Banned[]>("/banneds/pending"),
+    retry: 3,
+    retryDelay: 1000,
+  });
+}
+
+export function useApprovalQueueBanneds() {
+  return useQuery({
+    queryKey: queryKeys.approvalQueueBanneds,
+    queryFn: () => api.get<Banned[]>("/banneds/approval-queue"),
+    retry: 3,
+    retryDelay: 1000,
+  });
+}
+
+export function useApproveBannedPlace() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      bannedId,
+      data,
+    }: {
+      bannedId: string;
+      data: ApproveBannedPlaceDto;
+    }) => api.post<Banned>(`/banneds/${bannedId}/approve`, data),
+    onSuccess: (_, { bannedId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.banneds });
+      queryClient.invalidateQueries({ queryKey: queryKeys.banned(bannedId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.approvalQueueBanneds });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pendingBanneds });
+      queryClient.invalidateQueries({ queryKey: queryKeys.bannedHistory(bannedId) });
+    },
+  });
+}
+
+export function useBannedHistory(bannedId: string) {
+  return useQuery({
+    queryKey: queryKeys.bannedHistory(bannedId),
+    queryFn: () => api.get<BannedHistory[]>(`/banneds/${bannedId}/history`),
+    enabled: !!bannedId,
+    retry: 3,
+    retryDelay: 1000,
+  });
+}
 // Auth Hooks
 export async function fetchAuthMe() {
   const userData = await api.get<any>("/auth/me");
@@ -294,6 +412,8 @@ export async function fetchAuthMe() {
     userName: userData.userName as string,
     role: userData.role as string,
     email: userData.email as string,
+    placeId: userData.placeId as string | null,
+    city: userData.city as string | null,
   } satisfies NonNullable<AuthUser>;
 }
 

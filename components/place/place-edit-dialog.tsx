@@ -42,18 +42,25 @@ export function PlaceEditDialog({
     resolver: zodResolver(updatePlaceSchema),
     defaultValues: {
       name: "",
+      city: "",
     },
   });
 
   useEffect(() => {
     if (place) {
-      form.reset({ name: place.name || "" });
+      form.reset({ name: place.name || "", city: place.city || "" });
     }
   }, [place, form]);
 
   const onSubmit = async (values: UpdatePlaceForm) => {
     try {
-      await updatePlace.mutateAsync({ id, data: { name: values.name } });
+      await updatePlace.mutateAsync({
+        id,
+        data: {
+          name: values.name,
+          city: values.city,
+        },
+      });
       toast({ title: "Success", description: "Place updated successfully." });
       setOpen(false);
     } catch (error) {
@@ -83,6 +90,20 @@ export function PlaceEditDialog({
                   <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Place name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>City</FormLabel>
+                  <FormControl>
+                    <Input placeholder="City name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -28,15 +28,16 @@ import { createBannedSchema, type CreateBannedForm } from "@/lib/validations";
 import { useCreateBanned } from "@/hooks/queries";
 import { useRouter } from "next/navigation";
 import { add, intervalToDuration, isValid } from "date-fns";
+import { MotiveSelect } from "./motive-select";
 
 export function BannedCreateDialog({
   children,
-  incidentId,
+  personId,
   defaultPlaceId,
   redirectOnSuccess,
 }: {
   children: React.ReactNode;
-  incidentId: string;
+  personId: string;
   defaultPlaceId?: string;
   redirectOnSuccess?: boolean;
 }) {
@@ -47,15 +48,29 @@ export function BannedCreateDialog({
   const router = useRouter();
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const tomorrow = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }, []);
 
   const form = useForm<CreateBannedForm>({
     resolver: zodResolver(createBannedSchema),
-    mode: "onChange",
+    mode: "onBlur",
+    reValidateMode: "onChange",
     defaultValues: {
-      incidentId,
+      personId,
+      incidentNumber: undefined as any,
       startingDate: today,
-      endingDate: today,
-      motive: "",
+      endingDate: tomorrow,
+      motive: [],
+      peopleInvolved: "",
+      incidentReport: "",
+      actionTaken: "",
+      policeNotified: false,
+      policeNotifiedDate: "",
+      policeNotifiedTime: "",
+      policeNotifiedEvent: "",
       placeIds: defaultPlaceId ? [defaultPlaceId] : [],
     },
   });
@@ -63,14 +78,37 @@ export function BannedCreateDialog({
   const onSubmit = async (values: CreateBannedForm) => {
     try {
       const created = await createBanned.mutateAsync({
-        incidentId: values.incidentId,
+        personId: values.personId,
+        incidentNumber: values.incidentNumber,
         startingDate: values.startingDate,
         endingDate: values.endingDate,
         motive: values.motive,
-        placeIds:
-          values.placeIds && values.placeIds.length > 0
-            ? values.placeIds
+        peopleInvolved:
+          values.peopleInvolved && values.peopleInvolved.trim().length > 0
+            ? values.peopleInvolved.trim()
             : undefined,
+        incidentReport:
+          values.incidentReport && values.incidentReport.trim().length > 0
+            ? values.incidentReport.trim()
+            : undefined,
+        actionTaken:
+          values.actionTaken && values.actionTaken.trim().length > 0
+            ? values.actionTaken.trim()
+            : undefined,
+        policeNotified: values.policeNotified,
+        policeNotifiedDate:
+          values.policeNotified && values.policeNotifiedDate
+            ? values.policeNotifiedDate
+            : undefined,
+        policeNotifiedTime:
+          values.policeNotified && values.policeNotifiedTime
+            ? values.policeNotifiedTime
+            : undefined,
+        policeNotifiedEvent:
+          values.policeNotified && values.policeNotifiedEvent
+            ? values.policeNotifiedEvent.trim()
+            : undefined,
+        placeIds: values.placeIds,
       });
       toast({ title: "Success", description: "Ban created successfully." });
       if (redirectOnSuccess) {
@@ -79,10 +117,17 @@ export function BannedCreateDialog({
       } else {
         setOpen(false);
       }
-    } catch (error) {
+    } catch (error: any) {
+      const msg = (error && error.message) ? String(error.message) : "Failed to create ban. Please try again.";
+      const isActiveConflict = /active ban/i.test(msg);
+      const isIncidentDuplicate = /incident number/i.test(msg);
       toast({
-        title: "Error",
-        description: "Failed to create ban. Please try again.",
+        title: isIncidentDuplicate
+          ? "Incident number already exists"
+          : isActiveConflict
+          ? "Ban already active"
+          : "Error",
+        description: msg,
         variant: "destructive",
       });
     }
@@ -107,10 +152,11 @@ export function BannedCreateDialog({
     const daysNum = parseInt(durationDays || "0", 10) || 0;
     const hasPositiveDuration = yearsNum + monthsNum + daysNum > 0;
 
-    if (end < start) {
+    // Validation: at least 1 day
+    if (end <= start) {
       form.setError("endingDate" as any, {
         type: "validate",
-        message: "End date must be after start date.",
+        message: "Ban must be at least 1 day long.",
       });
       // Don't update duration fields if end date is before start date
       return;
@@ -134,13 +180,40 @@ export function BannedCreateDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex flex-row items-center justify-between gap-4">
           <DialogTitle>Create Ban</DialogTitle>
+          <Form {...form}>
+            <FormField
+              control={form.control}
+              name="incidentNumber"
+              render={({ field }) => (
+                <FormItem className="w-48">
+                  <FormLabel className="text-sm">Incident N°</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Enter incident number"
+                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === "" ? undefined : Number(value));
+                      }}
+                      className="h-9"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+          </Form>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="overflow-y-auto flex-1 min-h-0 pr-2 -mr-2 custom-scrollbar">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
             <FormField
               control={form.control}
               name="startingDate"
@@ -173,20 +246,20 @@ export function BannedCreateDialog({
                       value={field.value}
                       onChange={(value) => {
                         field.onChange(value);
-                        // Immediate validation
+                    // Immediate validation: at least 1 day
                         const start = form.getValues("startingDate");
-                        if (
-                          start &&
-                          value &&
-                          new Date(value) < new Date(start)
-                        ) {
-                          form.setError("endingDate", {
-                            type: "validate",
-                            message: "End date must be after start date.",
-                          });
-                        } else {
-                          form.clearErrors("endingDate");
-                        }
+                    if (start && value) {
+                      const s = new Date(start);
+                      const e = new Date(value);
+                      if (e <= s) {
+                        form.setError("endingDate", {
+                          type: "validate",
+                          message: "Ban must be at least 1 day long.",
+                        });
+                      } else {
+                        form.clearErrors("endingDate");
+                      }
+                    }
                       }}
                       onBlur={field.onBlur}
                       name={field.name}
@@ -204,9 +277,77 @@ export function BannedCreateDialog({
               name="motive"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Motive (optional)</FormLabel>
+                  <FormLabel>Motive</FormLabel>
                   <FormControl>
-                    <Input placeholder="Reason" {...field} />
+                    <MotiveSelect
+                      value={field.value || []}
+                      onChange={(val) => {
+                        form.setValue("motive", val, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                          shouldTouch: true,
+                        });
+                        if (val && val.length > 0) {
+                          form.clearErrors("motive");
+                        }
+                      }}
+                      onBlur={field.onBlur}
+                      error={!!form.formState.errors.motive}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="peopleInvolved"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>People Involved</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter people involved"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="incidentReport"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Incident Report</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter incident report"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="actionTaken"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Action Taken</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter action taken"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -316,37 +457,39 @@ export function BannedCreateDialog({
 
             {defaultPlaceId && (
               <div className="text-xs text-muted-foreground">
-                This ban will apply by default to the incident's place. You can
-                add more places later in edit.
+                A default place has been pre-selected. You can add more places
+                later in edit.
               </div>
             )}
+            </form>
+          </Form>
+        </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setOpen(false)}
-                disabled={createBanned.isPending || navigating}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={
-                  createBanned.isPending ||
-                  navigating ||
-                  !form.formState.isValid
-                }
-              >
-                {createBanned.isPending
-                  ? "Saving..."
-                  : navigating
-                  ? "Navigating..."
-                  : "Save"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            disabled={createBanned.isPending || navigating}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={
+              createBanned.isPending ||
+              navigating ||
+              !form.formState.isValid
+            }
+          >
+            {createBanned.isPending
+              ? "Saving..."
+              : navigating
+              ? "Navigating..."
+              : "Save"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

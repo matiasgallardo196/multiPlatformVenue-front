@@ -129,7 +129,6 @@ export default function IncidentDetailPage() {
               </span>
             </div>
 
-            {incident.banned && <Badge variant="destructive">Has Ban</Badge>}
           </CardContent>
         </Card>
 
@@ -147,9 +146,9 @@ export default function IncidentDetailPage() {
                 </Button>
               </IncidentEditDialog>
 
-              {!incident.banned && (
+              {incident.person?.id && (
                 <BannedCreateDialog
-                  incidentId={incident.id}
+                  personId={incident.person.id}
                   defaultPlaceId={incident.place?.id}
                   redirectOnSuccess
                 >

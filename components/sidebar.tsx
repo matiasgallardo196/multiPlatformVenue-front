@@ -12,6 +12,8 @@ import {
   UserX,
   Menu,
   X,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -24,6 +26,8 @@ import { User as UserIcon } from "lucide-react";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["manager", "staff", "head-manager"] },
   { name: "Banned", href: "/banneds", icon: UserX, roles: ["manager", "staff", "head-manager"] },
+  { name: "Pending Bans", href: "/banneds/pending", icon: Clock, roles: ["manager"] },
+  { name: "Approval Queue", href: "/banneds/approval-queue", icon: CheckCircle2, roles: ["head-manager"] },
   { name: "Persons", href: "/persons", icon: Users, roles: ["manager", "staff", "head-manager"] },
   { name: "Places", href: "/places", icon: MapPin, roles: ["manager", "head-manager"] },
   { name: "Incidents", href: "/incidents", icon: AlertTriangle, roles: ["manager", "staff", "head-manager"] },
