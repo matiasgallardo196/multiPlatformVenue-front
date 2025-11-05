@@ -28,7 +28,7 @@ import { useRouter } from "next/navigation";
 import { PersonEditDialog } from "@/components/person/person-edit-dialog";
 import { IncidentCreateDialog } from "@/components/incident/incident-create-dialog";
 import { BannedCreateDialog } from "@/components/banned/banned-create-dialog";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,6 +53,38 @@ export default function PersonDetailPage() {
   const router = useRouter();
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+
+  // Calcular estados de bans basado en bannedPlaces
+  const { hasActiveBans, hasPendingBans, banDisplayStatus } = useMemo(() => {
+    if (!bans || bans.length === 0) {
+      return { hasActiveBans: false, hasPendingBans: false, banDisplayStatus: "None" as const };
+    }
+
+    const now = new Date();
+    let hasActive = false;
+    let hasPending = false;
+
+    for (const ban of bans) {
+      const startingDate = ban.startingDate ? new Date(ban.startingDate) : null;
+      const endingDate = ban.endingDate ? new Date(ban.endingDate) : null;
+      const isInValidPeriod = startingDate && startingDate <= now && (!endingDate || endingDate >= now);
+
+      if (!ban.bannedPlaces || ban.bannedPlaces.length === 0) continue;
+
+      const hasApprovedPlaces = ban.bannedPlaces.some((bp: any) => bp.status === 'approved');
+      const hasPendingPlaces = ban.bannedPlaces.some((bp: any) => bp.status === 'pending');
+
+      if (hasApprovedPlaces && isInValidPeriod) {
+        hasActive = true;
+      }
+      if (hasPendingPlaces && !hasApprovedPlaces) {
+        hasPending = true;
+      }
+    }
+
+    const status: "Active" | "Pending" | "None" = hasActive ? "Active" : hasPending ? "Pending" : "None";
+    return { hasActiveBans: hasActive, hasPendingBans: hasPending, banDisplayStatus: status };
+  }, [bans]);
 
   const getName = () => {
     if (!person) return "";
@@ -137,7 +169,7 @@ export default function PersonDetailPage() {
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{getName()}</span>
-                {banStatus?.isBanned && (
+                {hasActiveBans && (
                   <Badge variant="destructive">Banned</Badge>
                 )}
               </div>
@@ -267,9 +299,9 @@ export default function PersonDetailPage() {
             <div className="text-sm text-muted-foreground">Bans</div>
             <div className="flex items-center gap-2">
               <Badge
-                variant={banStatus?.isBanned ? "destructive" : "secondary"}
+                variant={banDisplayStatus === "Active" ? "destructive" : banDisplayStatus === "Pending" ? "default" : "secondary"}
               >
-                {banStatus?.isBanned ? "Active" : "None"}
+                {banDisplayStatus}
               </Badge>
             </div>
             {bans && bans.length > 0 && (
@@ -277,7 +309,7 @@ export default function PersonDetailPage() {
                 {bans.slice(0, 5).map((b: any) => (
                   <li key={b.id} className="text-sm">
                     <Link className="underline" href={`/banneds/${b.id}`}>
-                      Ban #{b.id.slice(-8)}
+                      Ban #{typeof b.incidentNumber === "number" ? b.incidentNumber : b.id.slice(-8)}
                     </Link>
                     {b.bannedPlaces?.length ? (
                       <span className="text-muted-foreground">

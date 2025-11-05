@@ -149,7 +149,15 @@ export function MotiveSelect({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-3" align="start">
-          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+          <div
+            className="space-y-3 max-h-[400px] overflow-y-auto overscroll-contain"
+            onWheel={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.scrollTop += e.deltaY;
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
             {BAN_MOTIVES.map((motive) => {
               const isChecked =
                 motive === OTHER_MOTIVE

@@ -356,19 +356,41 @@ export function useDeleteBanned() {
   });
 }
 
-export function usePendingBanneds() {
+export function usePendingBanneds(sortBy?: string) {
+  const queryKey = sortBy
+    ? [...queryKeys.pendingBanneds, 'sorted', sortBy]
+    : queryKeys.pendingBanneds;
+
   return useQuery({
-    queryKey: queryKeys.pendingBanneds,
-    queryFn: () => api.get<Banned[]>("/banneds/pending"),
+    queryKey,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (sortBy) params.append('sortBy', sortBy);
+      const queryString = params.toString();
+      const url = queryString ? `/banneds/pending?${queryString}` : "/banneds/pending";
+      return api.get<Banned[]>(url);
+    },
     retry: 3,
     retryDelay: 1000,
   });
 }
 
-export function useApprovalQueueBanneds() {
+export function useApprovalQueueBanneds(sortBy?: string) {
+  const queryKey = sortBy
+    ? [...queryKeys.approvalQueueBanneds, 'sorted', sortBy]
+    : queryKeys.approvalQueueBanneds;
+
   return useQuery({
-    queryKey: queryKeys.approvalQueueBanneds,
-    queryFn: () => api.get<Banned[]>("/banneds/approval-queue"),
+    queryKey,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (sortBy) params.append('sortBy', sortBy);
+      const queryString = params.toString();
+      const url = queryString
+        ? `/banneds/approval-queue?${queryString}`
+        : "/banneds/approval-queue";
+      return api.get<Banned[]>(url);
+    },
     retry: 3,
     retryDelay: 1000,
   });
