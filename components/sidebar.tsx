@@ -92,7 +92,14 @@ export function Sidebar() {
               </div>
             )}
             {visibleNavigation.map((item) => {
-              const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+              const candidates = visibleNavigation.filter((nav) => {
+                if (pathname === nav.href) return true;
+                if (nav.href === "/") return false;
+                // match only segment-prefixed (avoid marking parent when a more specific match exists)
+                return pathname.startsWith(nav.href + "/");
+              });
+              const bestMatch = candidates.sort((a, b) => b.href.length - a.href.length)[0];
+              const isActive = bestMatch ? bestMatch.href === item.href : pathname === item.href;
               return (
                 <Link
                   key={item.name}
