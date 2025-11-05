@@ -1,3 +1,5 @@
+import { createClient } from "./supabase/client";
+
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME as string;
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
@@ -12,9 +14,19 @@ type SignatureResponse = {
 export async function getUploadSignature(
   folder?: string
 ): Promise<SignatureResponse> {
+  // Obtener el token de Supabase
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
   const res = await fetch(`${API_BASE_URL}/cloudinary/signature`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     credentials: "include",
     body: JSON.stringify({ folder }),
   });
