@@ -23,9 +23,14 @@ import type { Banned } from "@/lib/types";
 import { format, differenceInCalendarDays } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { useBulkApproveBanneds } from "@/hooks/queries";
 
 export default function ApprovalQueuePage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedBannedId, setSelectedBannedId] = useState<string | null>(null);
   // Filtros y orden (sin estado de activo/inactivo)
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,6 +38,7 @@ export default function ApprovalQueuePage() {
   const [genderFilter, setGenderFilter] = useState<"all" | "Male" | "Female">(
     "all"
   );
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<
     | "violations-desc"
     | "violations-asc"
@@ -48,8 +54,20 @@ export default function ApprovalQueuePage() {
     data: banneds,
     isLoading: bannedsLoading,
     error: bannedsError,
-  } = useApprovalQueueBanneds(sortBy);
+  } = useApprovalQueueBanneds(sortBy, selectedCreatorId);
   const { data: places, isLoading: placesLoading } = usePlaces();
+
+  // Lista de creadores (empleados) deducida de los datos cargados
+  const creators = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    (banneds || []).forEach((b: any) => {
+      const id = b.createdBy?.id || b.createdByUserId;
+      if (!id) return;
+      const name = b.createdBy?.userName || (b.createdByUserId ? `ID: ${String(b.createdByUserId).slice(0, 8)}...` : "Unknown");
+      if (!map.has(id)) map.set(id, { id, name });
+    });
+    return Array.from(map.values()).sort((a, z) => a.name.localeCompare(z.name));
+  }, [banneds]);
 
   // Helper functions (before any conditional returns)
   const getPendingPlacesForPlace = (banned: Banned) => {
@@ -114,6 +132,7 @@ export default function ApprovalQueuePage() {
     setSearchQuery("");
     setSelectedPlaces([]);
     setGenderFilter("all");
+    setSelectedCreatorId(null);
   };
 
   // Filtrado en cliente (ordenado en backend) - MUST be before any conditional returns
@@ -137,10 +156,12 @@ export default function ApprovalQueuePage() {
         banned.bannedPlaces?.some((bp) => selectedPlaces.includes(bp.placeId));
 
       const matchesGender = genderFilter === "all" || person?.gender === genderFilter;
+      const creatorId = (banned as any).createdBy?.id || (banned as any).createdByUserId || null;
+      const matchesCreator = !selectedCreatorId || (creatorId && creatorId === selectedCreatorId);
 
-      return matchesSearch && matchesPlace && matchesGender;
+      return matchesSearch && matchesPlace && matchesGender && matchesCreator;
     });
-  }, [banneds, searchQuery, selectedPlaces, genderFilter]);
+  }, [banneds, searchQuery, selectedPlaces, genderFilter, selectedCreatorId]);
 
   const isLoading = bannedsLoading || placesLoading;
 
@@ -187,14 +208,14 @@ export default function ApprovalQueuePage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre/apodo o número de incidente..."
+              placeholder="Search by name/nickname or incident number..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
 
-          {/* Filtros, Orden y Conteo */}
+          {/* Filtros y Orden */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
@@ -231,6 +252,22 @@ export default function ApprovalQueuePage() {
                 </SelectContent>
               </Select>
 
+              {/* Creador */}
+              <Select
+                value={selectedCreatorId ?? "__all__"}
+                onValueChange={(value: string) => setSelectedCreatorId(value === "__all__" ? null : value)}
+              >
+                <SelectTrigger className="w-56 h-9">
+                  <SelectValue placeholder="Creator" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All creators</SelectItem>
+                  {creators.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               {/* Orden */}
               <div className="flex items-center gap-2">
                 <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
@@ -256,7 +293,7 @@ export default function ApprovalQueuePage() {
               </div>
 
               {/* Limpiar filtros */}
-              {(searchQuery || selectedPlaces.length > 0 || genderFilter !== "all") && (
+              {(searchQuery || selectedPlaces.length > 0 || genderFilter !== "all" || selectedCreatorId) && (
                 <button
                   type="button"
                   onClick={handleClearFilters}
@@ -267,14 +304,25 @@ export default function ApprovalQueuePage() {
                 </button>
               )}
             </div>
-
-            {/* Conteo */}
-            {!isLoading && filteredBanneds.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                Showing {filteredBanneds.length} of {banneds?.length || 0} pending approvals
-              </p>
-            )}
           </div>
+
+          {/* Conteo + Acción masiva (fila fija bajo filtros) */}
+          {!isLoading && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {banneds?.length
+                  ? `Showing ${filteredBanneds.length} of ${banneds.length} pending approvals`
+                  : `Showing 0 of 0 pending approvals`}
+              </p>
+              <BulkApproveButton
+                disabled={filteredBanneds.length === 0}
+                count={filteredBanneds.length}
+                selectedCreatorId={selectedCreatorId}
+                bannedIds={filteredBanneds.map((b) => b.id)}
+                genderFilter={genderFilter}
+              />
+            </div>
+          )}
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -288,13 +336,6 @@ export default function ApprovalQueuePage() {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Showing {banneds.length} ban{banneds.length !== 1 ? "s" : ""}{" "}
-                  pending approval
-                </p>
-              </div>
-
               <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   {filteredBanneds.map((banned) => {
@@ -401,6 +442,85 @@ export default function ApprovalQueuePage() {
         )}
       </DashboardLayout>
     </RouteGuard>
+  );
+}
+
+function BulkApproveButton({ disabled, count, selectedCreatorId, bannedIds, genderFilter }: { disabled: boolean; count: number; selectedCreatorId: string | null; bannedIds: string[]; genderFilter: 'all' | 'Male' | 'Female' }) {
+  const [open, setOpen] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const { toast } = useToast();
+  const bulkApprove = useBulkApproveBanneds();
+
+  const onConfirm = async () => {
+    try {
+      const payload: any = {};
+      if (selectedCreatorId) payload.createdBy = selectedCreatorId;
+      if (genderFilter !== 'all') payload.gender = genderFilter;
+      const res = await bulkApprove.mutateAsync(payload);
+      toast({ title: "Bulk approval completed", description: `Approved: ${res.approvedCount} • Failed: ${res.failedCount}` });
+      setOpen(false);
+      setConfirmed(false);
+    } catch (e: any) {
+      toast({ title: "Bulk approval error", description: e?.message || "Please try again", variant: "destructive" });
+    }
+  };
+
+  return (
+    <>
+      <Button
+        aria-label="Approve all filtered"
+        variant="default"
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+      >
+        Approve all
+      </Button>
+      <Dialog open={open} onOpenChange={(newOpen) => {
+        if (!bulkApprove.isPending) {
+          setOpen(newOpen);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve all filtered bans</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {bulkApprove.isPending ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Processing bulk approval. Please wait...</span>
+              </div>
+            ) : (
+              <>
+                <p>{`This will approve ${count} records matching the current filters.`}</p>
+                {selectedCreatorId && (
+                  <p className="text-sm text-muted-foreground">Filtered by selected creator.</p>
+                )}
+              </>
+            )}
+            {!bulkApprove.isPending && (
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
+                I understand this is a bulk action
+              </label>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={bulkApprove.isPending}>Cancel</Button>
+            <Button onClick={onConfirm} disabled={!confirmed || bulkApprove.isPending}>
+              {bulkApprove.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
