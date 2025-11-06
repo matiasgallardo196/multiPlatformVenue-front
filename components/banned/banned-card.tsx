@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BannedCardProps {
   banned: Banned;
@@ -451,20 +452,28 @@ export function BannedCard({
               <span className="font-medium">{getDurationText()}</span>
             </div>
 
-            {/* Motive */}
+            {/* Motive (Tooltip like approval-queue) */}
             {banned.motive && banned.motive.length > 0 && (
-              <div className="space-y-1 w-full min-w-0">
-                <span className="text-sm text-muted-foreground">Motive:</span>
-                <div className="space-y-1 w-full min-w-0">
-                  {banned.motive.map((m, idx) => (
-                    <p
-                      key={idx}
-                      className="text-sm bg-muted p-2 rounded text-pretty break-words whitespace-pre-wrap overflow-hidden max-w-full hyphens-auto"
+              <div className="flex items-center gap-2 flex-wrap text-sm">
+                <span className="text-muted-foreground">Motives:</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="underline decoration-dotted cursor-help text-muted-foreground"
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
                     >
-                      {m}
-                    </p>
-                  ))}
-                </div>
+                      View
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={6}>
+                    <div className="text-left whitespace-pre-wrap max-w-xs">
+                      {banned.motive.map((m, idx) => (
+                        <div key={idx}>• {m}</div>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             )}
 

@@ -375,16 +375,17 @@ export function usePendingBanneds(sortBy?: string) {
   });
 }
 
-export function useApprovalQueueBanneds(sortBy?: string) {
+export function useApprovalQueueBanneds(sortBy?: string, createdBy?: string | null) {
   const queryKey = sortBy
-    ? [...queryKeys.approvalQueueBanneds, 'sorted', sortBy]
-    : queryKeys.approvalQueueBanneds;
+    ? [...queryKeys.approvalQueueBanneds, 'sorted', sortBy, createdBy || 'all']
+    : [...queryKeys.approvalQueueBanneds, createdBy || 'all'];
 
   return useQuery({
     queryKey,
     queryFn: async () => {
       const params = new URLSearchParams();
       if (sortBy) params.append('sortBy', sortBy);
+      if (createdBy) params.append('createdBy', createdBy);
       const queryString = params.toString();
       const url = queryString
         ? `/banneds/approval-queue?${queryString}`
@@ -413,6 +414,22 @@ export function useApproveBannedPlace() {
       queryClient.invalidateQueries({ queryKey: queryKeys.approvalQueueBanneds });
       queryClient.invalidateQueries({ queryKey: queryKeys.pendingBanneds });
       queryClient.invalidateQueries({ queryKey: queryKeys.bannedHistory(bannedId) });
+    },
+  });
+}
+
+// Bulk approve banneds pending for head-manager's place with optional filters
+export function useBulkApproveBanneds() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { createdBy?: string; gender?: 'Male' | 'Female'; bannedIds?: string[]; placeIds?: string[]; maxBatchSize?: number }) => {
+      return api.post<{ approvedCount: number; failedCount: number; failures?: Array<{ id: string; reason: string }> }>(
+        "/banneds/approve/bulk",
+        payload,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.approvalQueueBanneds });
     },
   });
 }
