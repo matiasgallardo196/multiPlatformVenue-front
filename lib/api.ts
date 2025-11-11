@@ -1,7 +1,12 @@
 // Simple API client for the admin dashboard
 import { createClient } from "./supabase/client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+// En cliente siempre usamos el proxy "/api" (Next rewrites → BACKEND_API_URL)
+// En servidor permitimos URL absoluta si está definida
+const isServer = typeof window === "undefined";
+const API_BASE_URL = isServer
+  ? process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "/api"
+  : "/api";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public data?: any) {

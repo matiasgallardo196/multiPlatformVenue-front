@@ -63,5 +63,5 @@ export function useAuth() {
 
   const effectiveLoading = loading || (hasSession && (meLoading || meFetching));
 
-  return { user, loading: effectiveLoading, isManager, isHeadManager, isReadOnly };
+  return { user, loading: effectiveLoading, isManager, isHeadManager, isReadOnly, hasSession };
 }

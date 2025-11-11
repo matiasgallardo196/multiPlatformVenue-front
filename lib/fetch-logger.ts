@@ -101,6 +101,15 @@ if (typeof window !== "undefined" && typeof fetch === "function" && ENABLED) {
         // eslint-disable-next-line no-console
         console.groupEnd();
 
+        // Simple métricas locales para depurar nº de requests y última latencia
+        try {
+          const w: any = window as any;
+          w.__API_REQUEST_COUNT__ = (w.__API_REQUEST_COUNT__ || 0) + 1;
+          w.__API_LAST_REQUEST_MS__ = ms;
+        } catch {
+          // ignore metrics errors
+        }
+
         return res;
       } catch (e) {
         // eslint-disable-next-line no-console
