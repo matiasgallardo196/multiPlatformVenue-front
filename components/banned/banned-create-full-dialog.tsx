@@ -39,7 +39,7 @@ export function BannedCreateFullDialog({
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const createBanned = useCreateBanned();
-  const { data: places = [] } = usePlaces();
+  const { data: places = [] } = usePlaces({ enabled: open });
   const router = useRouter();
   const { user } = useAuth();
 

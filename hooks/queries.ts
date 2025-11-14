@@ -296,11 +296,11 @@ export function useBanneds(sortBy?: string, options?: { enabled?: boolean; stale
   });
 }
 
-export function useBanned(id: string) {
+export function useBanned(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.banned(id),
     queryFn: () => api.get<Banned>(`/banneds/${id}`),
-    enabled: !!id,
+    enabled: options?.enabled !== undefined ? options.enabled && !!id : !!id,
   });
 }
 
@@ -470,11 +470,11 @@ export function useBulkApproveBanneds() {
   });
 }
 
-export function useBannedHistory(bannedId: string) {
+export function useBannedHistory(bannedId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.bannedHistory(bannedId),
     queryFn: () => api.get<BannedHistory[]>(`/banneds/${bannedId}/history`),
-    enabled: !!bannedId,
+    enabled: options?.enabled !== undefined ? options.enabled && !!bannedId : !!bannedId,
     retry: 3,
     retryDelay: 1000,
   });
