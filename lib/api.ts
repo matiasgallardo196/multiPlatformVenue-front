@@ -45,6 +45,81 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     const ms = Math.round(end - start);
     console.log("[api] ←", response.status, options.method || "GET", url, `${ms}ms`);
 
+    // Si recibimos un 401, intentar refrescar el token y reintentar una vez
+    if (response.status === 401 && token) {
+      console.log("[api] 401 received, attempting token refresh...");
+      const { data: { session: refreshedSession }, error: refreshError } = 
+        await supabase.auth.refreshSession();
+      
+      if (!refreshError && refreshedSession?.access_token) {
+        console.log("[api] Token refreshed, retrying request...");
+        
+        // Reintentar la petición con el nuevo token
+        const retryConfig: RequestInit = {
+          ...config,
+          headers: {
+            ...config.headers,
+            Authorization: `Bearer ${refreshedSession.access_token}`,
+          },
+        };
+        
+        const retryResponse = await fetch(url, retryConfig);
+        const retryEnd = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+        const retryMs = Math.round(retryEnd - start);
+        console.log("[api] ←", retryResponse.status, options.method || "GET", url, `${retryMs}ms (retry)`);
+        
+        if (!retryResponse.ok) {
+          // Manejar el error de la petición reintentada
+          let parsed: any = null;
+          let rawText = "";
+          try {
+            const ct = retryResponse.headers.get("content-type") || "";
+            if (ct.includes("application/json")) {
+              parsed = await retryResponse.json();
+            } else {
+              rawText = await retryResponse.text();
+            }
+          } catch {
+            // ignore parse errors
+          }
+
+          const serverMessage =
+            parsed?.message || parsed?.error || rawText || retryResponse.statusText;
+          console.log("[api] ✖ error: ", parsed || rawText || retryResponse.statusText);
+          throw new ApiError(
+            retryResponse.status,
+            String(serverMessage),
+            parsed || rawText
+          );
+        }
+
+        // Si la petición reintentada fue exitosa, continuar con el procesamiento normal
+        const retryContentLength = retryResponse.headers.get("content-length");
+        if (retryResponse.status === 204 || retryContentLength === "0") {
+          return null as unknown as any;
+        }
+
+        const retryContentType = retryResponse.headers.get("content-type") || "";
+        if (!retryContentType.includes("application/json")) {
+          const text = await retryResponse.text();
+          console.log("[api] non-JSON response:", text);
+          return text as unknown as any;
+        }
+
+        try {
+          const data = await retryResponse.json();
+          console.log("[api] response data:", data);
+          return data;
+        } catch (e) {
+          console.log("[api] Failed to parse JSON response, returning null");
+          return null as unknown as any;
+        }
+      } else {
+        console.log("[api] Failed to refresh token:", refreshError);
+        // Si no se pudo refrescar el token, continuar con el manejo de error normal
+      }
+    }
+
     if (!response.ok) {
       // Try to parse JSON error first for clearer messages
       let parsed: any = null;
