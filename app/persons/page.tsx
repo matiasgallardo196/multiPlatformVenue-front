@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,15 @@ export default function PersonsPage() {
   const [sortBy, setSortBy] = useState<
     "newest-first" | "oldest-first" | "name-asc" | "name-desc"
   >("newest-first");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+
+  // Debounce de búsqueda para no disparar por cada tecla
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
 
   // Construir filtros para el hook
   const filters = useMemo(() => {
@@ -72,24 +81,34 @@ export default function PersonsPage() {
       gender?: "all" | "Male" | "Female";
       search?: string;
       sortBy?: "newest-first" | "oldest-first" | "name-asc" | "name-desc";
+      page?: number;
+      limit?: number;
     } = {};
 
     if (genderFilter !== "all") {
       filterObj.gender = genderFilter;
     }
 
-    if (searchQuery.trim()) {
-      filterObj.search = searchQuery;
+    if (debouncedSearch.trim()) {
+      filterObj.search = debouncedSearch;
     }
 
     if (sortBy) {
       filterObj.sortBy = sortBy;
     }
 
-    return Object.keys(filterObj).length > 0 ? filterObj : undefined;
-  }, [genderFilter, searchQuery, sortBy]);
+    filterObj.page = page;
+    filterObj.limit = limit;
 
-  const { data: persons, isLoading, error } = usePersons(filters);
+    return Object.keys(filterObj).length > 0 ? filterObj : undefined;
+  }, [genderFilter, debouncedSearch, sortBy, page, limit]);
+
+  const { data: personsPage, isLoading, error } = usePersons(filters);
+
+  // Resetear a página 1 cuando cambian búsqueda/filtros/sort
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, genderFilter, sortBy]);
 
   const hasActiveFilters = searchQuery || genderFilter !== "all";
 
@@ -99,7 +118,11 @@ export default function PersonsPage() {
   };
 
   // El ordenamiento se hace en el backend, solo usar directamente los datos
-  const sortedPersons = persons || [];
+  const items = personsPage?.items || [];
+  const total = personsPage?.total ?? 0;
+  const currentPage = personsPage?.page ?? page;
+  const currentLimit = personsPage?.limit ?? limit;
+  const hasNext = personsPage?.hasNext ?? false;
 
   const handleDelete = async (id: string) => {
     try {
@@ -252,9 +275,9 @@ export default function PersonsPage() {
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="ml-2">Loading persons...</span>
             </div>
-          ) : sortedPersons.length === 0 ? (
+          ) : items.length === 0 ? (
             <div className="text-center py-8">
-              {persons?.length === 0 ? (
+              {total === 0 ? (
                 <>
                   <User className="mx-auto h-12 w-12 text-muted-foreground" />
                   <h3 className="mt-2 text-sm font-semibold">No persons</h3>
@@ -282,14 +305,50 @@ export default function PersonsPage() {
             <>
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Showing {sortedPersons.length} of {sortedPersons.length}{" "}
-                  persons
+                  Showing {(currentPage - 1) * currentLimit + 1}
+                  {"-"}
+                  {Math.min(currentPage * currentLimit, total)} of {total} persons
                 </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Per page:</span>
+                  <Select
+                    value={String(currentLimit)}
+                    onValueChange={(v) => setLimit(Number(v))}
+                  >
+                    <SelectTrigger className="w-24 h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                    >
+                      Prev
+                    </Button>
+                    <span className="text-sm">Page {currentPage}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => p + 1)}
+                      disabled={!hasNext}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
               </div>
 
               <div className="max-h-[calc(100vh-400px)] overflow-y-auto border rounded-lg p-4">
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {sortedPersons.map((person) => (
+                  {items.map((person) => (
                     <Card
                       key={person.id}
                       className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"

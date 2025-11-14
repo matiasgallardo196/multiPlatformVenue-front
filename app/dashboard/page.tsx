@@ -9,45 +9,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  useBanneds,
-  usePersons,
-  usePlaces,
-  useIncidents,
-} from "@/hooks/queries";
+import { useDashboardSummary } from "@/hooks/queries";
 import { Users, MapPin, AlertTriangle, UserX } from "lucide-react";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { BannedCreateFullDialog } from "@/components/banned/banned-create-full-dialog";
-import { IncidentCreateDialog } from "@/components/incident/incident-create-dialog";
-import { PersonCreateDialog } from "@/components/person/person-create-dialog";
+import dynamic from "next/dynamic";
+const BannedCreateFullDialog = dynamic(
+  () => import("@/components/banned/banned-create-full-dialog").then(m => m.BannedCreateFullDialog),
+  { ssr: false }
+);
+const IncidentCreateDialog = dynamic(
+  () => import("@/components/incident/incident-create-dialog").then(m => m.IncidentCreateDialog),
+  { ssr: false }
+);
+const PersonCreateDialog = dynamic(
+  () => import("@/components/person/person-create-dialog").then(m => m.PersonCreateDialog),
+  { ssr: false }
+);
 import { RouteGuard } from "@/components/auth/route-guard";
 
 export default function DashboardPage() {
-  const { isReadOnly } = useAuth();
-  const { data: persons, isLoading: personsLoading } = usePersons();
-  const { data: places, isLoading: placesLoading } = usePlaces();
-  const { data: incidents, isLoading: incidentsLoading } = useIncidents();
-  const { data: banneds, isLoading: bannedsLoading } = useBanneds();
+  const { isReadOnly, user, loading } = useAuth();
+  const enabled = !!user && !loading;
+  const { data: summary, isLoading: summaryLoading } = useDashboardSummary(enabled);
 
   const stats = useMemo(() => {
-    const activeBans = Array.isArray(banneds)
-      ? banneds.filter((banned) => banned.isActive).length
-      : 0;
-    const totalPersons = Array.isArray(persons) ? persons.length : 0;
-    const totalPlaces = Array.isArray(places) ? places.length : 0;
-    const totalIncidents = Array.isArray(incidents) ? incidents.length : 0;
-
     return {
-      totalPersons,
-      activeBans,
-      totalPlaces,
-      totalIncidents,
+      totalPersons: summary?.totals.totalPersons ?? 0,
+      activeBans: summary?.totals.activeBans ?? 0,
+      totalPlaces: summary?.totals.totalPlaces ?? 0,
+      totalIncidents: summary?.totals.totalIncidents ?? 0,
     };
-  }, [persons, places, incidents, banneds]);
+  }, [summary]);
 
-  const isLoading =
-    personsLoading || placesLoading || incidentsLoading || bannedsLoading;
+  const isLoading = summaryLoading;
 
   return (
     <RouteGuard>

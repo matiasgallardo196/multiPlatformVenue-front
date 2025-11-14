@@ -64,9 +64,9 @@ export function BannedDetailModal({
   open,
   onOpenChange,
 }: BannedDetailModalProps) {
-  const { data: banned, isLoading: bannedLoading } = useBanned(bannedId);
-  const { data: history, isLoading: historyLoading } = useBannedHistory(bannedId);
-  const { data: places } = usePlaces();
+  const { data: banned, isLoading: bannedLoading } = useBanned(bannedId, { enabled: open });
+  const { data: history, isLoading: historyLoading } = useBannedHistory(bannedId, { enabled: open });
+  const { data: places } = usePlaces({ enabled: open });
 
   const isLoading = bannedLoading || historyLoading;
 

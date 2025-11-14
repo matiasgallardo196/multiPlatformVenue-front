@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,12 +49,32 @@ export default function ApprovalQueuePage() {
     | "person-name-asc"
     | "person-name-desc"
   >("violations-desc");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+
+  // Debounce de búsqueda para no disparar por cada tecla
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+
+  // Resetear página cuando cambian filtros/sort/búsqueda
+  useEffect(() => {
+    setPage(1);
+  }, [sortBy, selectedCreatorId, genderFilter, selectedPlaces, debouncedSearch]);
 
   const {
-    data: banneds,
+    data: bannedsPage,
     isLoading: bannedsLoading,
     error: bannedsError,
-  } = useApprovalQueueBanneds(sortBy, selectedCreatorId);
+  } = useApprovalQueueBanneds(sortBy, selectedCreatorId, { page, limit, search: debouncedSearch });
+
+  const banneds = bannedsPage?.items || [];
+  const total = bannedsPage?.total ?? 0;
+  const currentPage = bannedsPage?.page ?? page;
+  const currentLimit = bannedsPage?.limit ?? limit;
+  const hasNext = bannedsPage?.hasNext ?? false;
   const { data: places, isLoading: placesLoading } = usePlaces();
 
   // Lista de creadores (empleados) deducida de los datos cargados
@@ -135,21 +155,13 @@ export default function ApprovalQueuePage() {
     setSelectedCreatorId(null);
   };
 
-  // Filtrado en cliente (ordenado en backend) - MUST be before any conditional returns
+  // Filtrado en cliente solo para filtros no implementados en backend (gender, place, creator)
+  // La búsqueda ahora se hace en el servidor
   const filteredBanneds = useMemo(() => {
     if (!banneds) return [] as Banned[];
 
     return banneds.filter((banned: Banned) => {
       const person = banned.person;
-      const personName = [person?.name, person?.lastName, person?.nickname]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      const q = (searchQuery || "").toLowerCase();
-      const numQ = q.replace(/[^0-9]/g, "");
-      const matchesIncident = numQ.length > 0 && String(banned.incidentNumber).includes(numQ);
-      const matchesSearch = !q || personName.includes(q) || matchesIncident;
 
       const matchesPlace =
         selectedPlaces.length === 0 ||
@@ -159,9 +171,9 @@ export default function ApprovalQueuePage() {
       const creatorId = (banned as any).createdBy?.id || (banned as any).createdByUserId || null;
       const matchesCreator = !selectedCreatorId || (creatorId && creatorId === selectedCreatorId);
 
-      return matchesSearch && matchesPlace && matchesGender && matchesCreator;
+      return matchesPlace && matchesGender && matchesCreator;
     });
-  }, [banneds, searchQuery, selectedPlaces, genderFilter, selectedCreatorId]);
+  }, [banneds, selectedPlaces, genderFilter, selectedCreatorId]);
 
   const isLoading = bannedsLoading || placesLoading;
 
@@ -306,21 +318,58 @@ export default function ApprovalQueuePage() {
             </div>
           </div>
 
-          {/* Conteo + Acción masiva (fila fija bajo filtros) */}
+          {/* Conteo + Acción masiva + Paginación */}
           {!isLoading && (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <p className="text-sm text-muted-foreground">
-                {banneds?.length
-                  ? `Showing ${filteredBanneds.length} of ${banneds.length} pending approvals`
-                  : `Showing 0 of 0 pending approvals`}
+                Showing {(currentPage - 1) * currentLimit + 1}
+                {"-"}
+                {Math.min(currentPage * currentLimit, total)} of {total} pending approvals
               </p>
-              <BulkApproveButton
-                disabled={filteredBanneds.length === 0}
-                count={filteredBanneds.length}
-                selectedCreatorId={selectedCreatorId}
-                bannedIds={filteredBanneds.map((b) => b.id)}
-                genderFilter={genderFilter}
-              />
+              <div className="flex items-center gap-3">
+                <BulkApproveButton
+                  disabled={filteredBanneds.length === 0}
+                  count={filteredBanneds.length}
+                  selectedCreatorId={selectedCreatorId}
+                  bannedIds={filteredBanneds.map((b) => b.id)}
+                  genderFilter={genderFilter}
+                />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Per page:</span>
+                  <Select
+                    value={String(currentLimit)}
+                    onValueChange={(v) => setLimit(Number(v))}
+                  >
+                    <SelectTrigger className="w-24 h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                    >
+                      Prev
+                    </Button>
+                    <span className="text-sm">Page {currentPage}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => p + 1)}
+                      disabled={!hasNext}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           {isLoading ? (
@@ -328,7 +377,7 @@ export default function ApprovalQueuePage() {
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="ml-2">Loading approval queue...</span>
             </div>
-          ) : !banneds || banneds.length === 0 ? (
+          ) : total === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
                 No pending approvals. All bans for your place have been reviewed.

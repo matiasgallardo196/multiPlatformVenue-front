@@ -33,7 +33,7 @@ export function PersonCombobox({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  const { data: allPersons = [], isLoading } = usePersons();
+  const { data: allPersons = [], isLoading } = usePersons(undefined, { enabled: open });
 
   const filteredPersons = useMemo<Person[]>(() => {
     const list: Person[] = (allPersons || []) as Person[];

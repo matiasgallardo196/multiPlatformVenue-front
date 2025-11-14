@@ -32,8 +32,8 @@ export function IncidentCreateDialog({
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const createIncident = useCreateIncident();
-  const { data: persons = [] } = usePersons();
-  const { data: places = [] } = usePlaces();
+  const { data: persons = [] } = usePersons(undefined, { enabled: open });
+  const { data: places = [] } = usePlaces({ enabled: open });
   const router = useRouter();
 
   const form = useForm<CreateIncidentForm>({

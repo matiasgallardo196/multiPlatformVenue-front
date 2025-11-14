@@ -40,14 +40,20 @@ export const queryKeys = {
   approvalQueueBanneds: ["banneds", "approval-queue"] as const,
   bannedHistory: (bannedId: string) => ["banneds", bannedId, "history"] as const,
   personSearch: (query: string) => ["persons", "search", query] as const,
+  dashboardSummary: ["dashboard", "summary"] as const,
 };
 
 // Persons Hooks
-export function usePersons(filters?: {
-  gender?: "all" | "Male" | "Female" | null;
-  search?: string;
-  sortBy?: "newest-first" | "oldest-first" | "name-asc" | "name-desc";
-}) {
+export function usePersons(
+  filters?: {
+    gender?: "all" | "Male" | "Female" | null;
+    search?: string;
+    sortBy?: "newest-first" | "oldest-first" | "name-asc" | "name-desc";
+    page?: number;
+    limit?: number;
+  },
+  options?: { enabled?: boolean; staleTimeMs?: number },
+) {
   const queryKey = filters
     ? [...queryKeys.persons, "filtered", filters]
     : queryKeys.persons;
@@ -73,12 +79,21 @@ export function usePersons(filters?: {
         params.append("sortBy", filters.sortBy);
       }
       
+      if (typeof filters?.page === "number" && filters.page > 0) {
+        params.append("page", String(filters.page));
+      }
+      if (typeof filters?.limit === "number" && filters.limit > 0) {
+        params.append("limit", String(filters.limit));
+      }
+
       const queryString = params.toString();
       const url = queryString ? `/persons?${queryString}` : "/persons";
-      return api.get<Person[]>(url);
+      return api.get<{ items: Person[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
     },
     retry: 3,
     retryDelay: 1000,
+    enabled: options?.enabled ?? true,
+    staleTime: options?.staleTimeMs ?? 2 * 60 * 1000,
   });
 }
 
@@ -147,12 +162,14 @@ export function useDeletePerson() {
 }
 
 // Places Hooks
-export function usePlaces() {
+export function usePlaces(options?: { enabled?: boolean; staleTimeMs?: number }) {
   return useQuery({
     queryKey: queryKeys.places,
     queryFn: () => api.get<Place[]>("/places"),
     retry: 3,
     retryDelay: 1000,
+    enabled: options?.enabled ?? true,
+    staleTime: options?.staleTimeMs ?? 2 * 60 * 1000,
   });
 }
 
@@ -200,12 +217,14 @@ export function useDeletePlace() {
 }
 
 // Incidents Hooks
-export function useIncidents() {
+export function useIncidents(options?: { enabled?: boolean; staleTimeMs?: number }) {
   return useQuery({
     queryKey: queryKeys.incidents,
     queryFn: () => api.get<Incident[]>("/incidents"),
     retry: 3,
     retryDelay: 1000,
+    enabled: options?.enabled ?? true,
+    staleTime: options?.staleTimeMs ?? 2 * 60 * 1000,
   });
 }
 
@@ -254,7 +273,7 @@ export function useDeleteIncident() {
 }
 
 // Banneds Hooks
-export function useBanneds(sortBy?: string) {
+export function useBanneds(sortBy?: string, options?: { enabled?: boolean; staleTimeMs?: number }) {
   const queryKey = sortBy
     ? [...queryKeys.banneds, "sorted", sortBy]
     : queryKeys.banneds;
@@ -272,14 +291,16 @@ export function useBanneds(sortBy?: string) {
     },
     retry: 3,
     retryDelay: 1000,
+    enabled: options?.enabled ?? true,
+    staleTime: options?.staleTimeMs ?? 2 * 60 * 1000,
   });
 }
 
-export function useBanned(id: string) {
+export function useBanned(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.banned(id),
     queryFn: () => api.get<Banned>(`/banneds/${id}`),
-    enabled: !!id,
+    enabled: options?.enabled !== undefined ? options.enabled && !!id : !!id,
   });
 }
 
@@ -375,10 +396,14 @@ export function usePendingBanneds(sortBy?: string) {
   });
 }
 
-export function useApprovalQueueBanneds(sortBy?: string, createdBy?: string | null) {
+export function useApprovalQueueBanneds(
+  sortBy?: string,
+  createdBy?: string | null,
+  options?: { page?: number; limit?: number; search?: string; enabled?: boolean; staleTimeMs?: number },
+) {
   const queryKey = sortBy
-    ? [...queryKeys.approvalQueueBanneds, 'sorted', sortBy, createdBy || 'all']
-    : [...queryKeys.approvalQueueBanneds, createdBy || 'all'];
+    ? [...queryKeys.approvalQueueBanneds, 'sorted', sortBy, createdBy || 'all', options?.page || 1, options?.limit || 20, options?.search || '']
+    : [...queryKeys.approvalQueueBanneds, createdBy || 'all', options?.page || 1, options?.limit || 20, options?.search || ''];
 
   return useQuery({
     queryKey,
@@ -386,14 +411,25 @@ export function useApprovalQueueBanneds(sortBy?: string, createdBy?: string | nu
       const params = new URLSearchParams();
       if (sortBy) params.append('sortBy', sortBy);
       if (createdBy) params.append('createdBy', createdBy);
+      if (options?.search && options.search.trim()) {
+        params.append('search', options.search.trim());
+      }
+      if (typeof options?.page === 'number' && options.page > 0) {
+        params.append('page', String(options.page));
+      }
+      if (typeof options?.limit === 'number' && options.limit > 0) {
+        params.append('limit', String(options.limit));
+      }
       const queryString = params.toString();
       const url = queryString
         ? `/banneds/approval-queue?${queryString}`
         : "/banneds/approval-queue";
-      return api.get<Banned[]>(url);
+      return api.get<{ items: Banned[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
     },
     retry: 3,
     retryDelay: 1000,
+    enabled: options?.enabled ?? true,
+    staleTime: options?.staleTimeMs ?? 2 * 60 * 1000,
   });
 }
 
@@ -434,11 +470,11 @@ export function useBulkApproveBanneds() {
   });
 }
 
-export function useBannedHistory(bannedId: string) {
+export function useBannedHistory(bannedId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.bannedHistory(bannedId),
     queryFn: () => api.get<BannedHistory[]>(`/banneds/${bannedId}/history`),
-    enabled: !!bannedId,
+    enabled: options?.enabled !== undefined ? options.enabled && !!bannedId : !!bannedId,
     retry: 3,
     retryDelay: 1000,
   });
@@ -466,5 +502,16 @@ export function useAuthMe(enabled: boolean) {
     retry: 1,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+  });
+}
+
+export function useDashboardSummary(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.dashboardSummary,
+    queryFn: () => api.get<{ totals: { totalPersons: number; activeBans: number; totalPlaces: number; totalIncidents: number } }>("/dashboard/summary"),
+    enabled,
+    staleTime: 10 * 1000, // 10 segundos para forzar actualizaciones más frecuentes
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 }
