@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, useMemo, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthMe } from "@/hooks/queries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>(null);
   const [loading, setLoading] = useState(true);
   const [hasSession, setHasSession] = useState(false);
+  const hasSessionRef = useRef(false); // Para evitar actualizaciones innecesarias
   const supabase = createClient();
   const queryClient = useQueryClient();
 
@@ -37,7 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
 
       const loggedIn = !!session?.user;
-      setHasSession(loggedIn);
+      // Solo actualizar si el valor realmente cambió
+      if (hasSessionRef.current !== loggedIn) {
+        hasSessionRef.current = loggedIn;
+        setHasSession(loggedIn);
+      }
       if (!loggedIn) setUser(null);
 
       setLoading(false);
@@ -52,7 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
 
       const loggedIn = !!session?.user;
-      setHasSession(loggedIn);
+      
+      // No actualizar hasSession cuando solo se refresca el token
+      // Esto evita refetches innecesarios de useAuthMe
+      if (event === "TOKEN_REFRESHED") {
+        return;
+      }
+      
+      // Solo actualizar si el valor realmente cambió
+      if (hasSessionRef.current !== loggedIn) {
+        hasSessionRef.current = loggedIn;
+        setHasSession(loggedIn);
+      }
       
       if (!loggedIn) {
         setUser(null);
@@ -64,7 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => {
           supabase.auth.getSession().then(({ data: { session } }) => {
             if (mounted) {
-              setHasSession(!!session?.user);
+              const newLoggedIn = !!session?.user;
+              if (hasSessionRef.current !== newLoggedIn) {
+                hasSessionRef.current = newLoggedIn;
+                setHasSession(newLoggedIn);
+              }
             }
           });
         }, 100);

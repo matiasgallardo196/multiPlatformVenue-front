@@ -497,11 +497,13 @@ export function useAuthMe(enabled: boolean) {
     queryKey: queryKeys.authMe,
     queryFn: fetchAuthMe,
     enabled,
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: Infinity, // Nunca considerar los datos como stale - solo se actualizarán cuando se invalide explícitamente
+    gcTime: 10 * 60 * 1000, // 10 minutos
     retry: 1,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    refetchOnReconnect: false, // No refetchear al reconectar
+    refetchInterval: false, // No refetchear automáticamente
   });
 }
 
