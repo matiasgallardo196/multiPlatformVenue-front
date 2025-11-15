@@ -45,11 +45,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initAuth();
 
+    // Escuchar cambios de autenticación para actualizar hasSession
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+
+      const loggedIn = !!session?.user;
+      setHasSession(loggedIn);
+      
+      if (!loggedIn) {
+        setUser(null);
+      }
+
+      // Si acabamos de iniciar sesión, refrescar la sesión para asegurar que las cookies estén actualizadas
+      if (event === "SIGNED_IN") {
+        // Pequeño delay para asegurar que las cookies se hayan establecido
+        setTimeout(() => {
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (mounted) {
+              setHasSession(!!session?.user);
+            }
+          });
+        }, 100);
+      }
+    });
+
     // Garantizar una única suscripción global
     ensureAuthSubscription(queryClient);
 
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
   }, [supabase, queryClient]);
 
