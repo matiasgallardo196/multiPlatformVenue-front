@@ -69,7 +69,7 @@ export function RouteGuard({
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            Verificando permisos...
+            Verifying permissions...
           </p>
         </div>
       </div>
