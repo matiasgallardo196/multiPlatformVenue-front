@@ -64,7 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isHeadManager = user?.role === "head-manager";
   const isReadOnly = !isManager;
 
-  const effectiveLoading = loading || (hasSession && (meLoading || meFetching));
+  // Solo mostrar loading si:
+  // 1. Estamos cargando inicialmente (loading), O
+  // 2. Tenemos sesión pero NO tenemos datos de usuario Y estamos cargando
+  // No mostrar loading si solo estamos haciendo refetch en background (meFetching pero tenemos datos)
+  const effectiveLoading = loading || (hasSession && !user && (meLoading || meFetching));
 
   const value: AuthContextValue = {
     user,
