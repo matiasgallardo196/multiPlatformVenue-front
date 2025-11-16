@@ -1,7 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "@/hooks/use-toast";
 import type { AuthUser } from "@/hooks/use-auth";
 import type {
   Person,
@@ -20,6 +23,7 @@ import type {
   ApproveBannedPlaceDto,
   BannedHistory,
   CheckActiveBansResponse,
+  BannedPlaceStatus,
 } from "@/lib/types";
 
 // Query Keys
@@ -401,9 +405,18 @@ export function useApprovalQueueBanneds(
   createdBy?: string | null,
   options?: { page?: number; limit?: number; search?: string; enabled?: boolean; staleTimeMs?: number },
 ) {
-  const queryKey = sortBy
-    ? [...queryKeys.approvalQueueBanneds, 'sorted', sortBy, createdBy || 'all', options?.page || 1, options?.limit || 20, options?.search || '']
-    : [...queryKeys.approvalQueueBanneds, createdBy || 'all', options?.page || 1, options?.limit || 20, options?.search || ''];
+  // Memoizar el queryKey para evitar recrearlo en cada render
+  // Esto previene que React Query cree múltiples observadores para la misma query
+  const queryKey = useMemo(() => {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const search = options?.search || '';
+    const creator = createdBy || 'all';
+    
+    return sortBy
+      ? [...queryKeys.approvalQueueBanneds, 'sorted', sortBy, creator, page, limit, search]
+      : [...queryKeys.approvalQueueBanneds, creator, page, limit, search];
+  }, [sortBy, createdBy, options?.page, options?.limit, options?.search]);
 
   return useQuery({
     queryKey,
@@ -435,6 +448,8 @@ export function useApprovalQueueBanneds(
 
 export function useApproveBannedPlace() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userPlaceId = user?.placeId;
 
   return useMutation({
     mutationFn: ({
@@ -444,12 +459,154 @@ export function useApproveBannedPlace() {
       bannedId: string;
       data: ApproveBannedPlaceDto;
     }) => api.post<Banned>(`/banneds/${bannedId}/approve`, data),
-    onSuccess: (_, { bannedId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.banneds });
-      queryClient.invalidateQueries({ queryKey: queryKeys.banned(bannedId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.approvalQueueBanneds });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pendingBanneds });
-      queryClient.invalidateQueries({ queryKey: queryKeys.bannedHistory(bannedId) });
+    
+    // Actualización optimista: actualizar UI inmediatamente
+    onMutate: async ({ bannedId, data }) => {
+      // Cancelar cualquier refetch en progreso para evitar sobrescribir nuestra actualización optimista
+      await queryClient.cancelQueries({ queryKey: queryKeys.approvalQueueBanneds });
+      await queryClient.cancelQueries({ queryKey: queryKeys.banned(bannedId) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.pendingBanneds });
+
+      // Guardar el estado anterior para poder revertirlo si falla
+      const previousApprovalQueue = queryClient.getQueriesData({ queryKey: queryKeys.approvalQueueBanneds });
+      const previousBanned = queryClient.getQueryData(queryKeys.banned(bannedId));
+      const previousPending = queryClient.getQueryData(queryKeys.pendingBanneds);
+
+      // Actualizar optimistamente el banned específico
+      queryClient.setQueryData(queryKeys.banned(bannedId), (old: Banned | undefined) => {
+        if (!old) return old;
+        const updatedBannedPlaces = old.bannedPlaces?.map(bp => {
+          if (bp.placeId === data.placeId) {
+            if (data.approved) {
+              return {
+                ...bp,
+                status: 'approved' as BannedPlaceStatus,
+                approvedByUserId: null, // Se actualizará con datos del servidor
+                approvedAt: null, // Se actualizará con datos del servidor
+                rejectedByUserId: null,
+                rejectedAt: null,
+              };
+            } else {
+              // Si se rechaza, el place se eliminará del array (se maneja en onSuccess)
+              return null;
+            }
+          }
+          return bp;
+        }).filter(Boolean) as BannedPlace[] | undefined;
+
+        return {
+          ...old,
+          bannedPlaces: updatedBannedPlaces,
+        };
+      });
+
+      // Actualizar optimistamente la cola de aprobación
+      // Filtrar los bans que ya no tienen lugares pendientes para el place del usuario
+      queryClient.setQueriesData<{ items: Banned[]; total: number; page: number; limit: number; hasNext: boolean }>(
+        { queryKey: queryKeys.approvalQueueBanneds },
+        (old) => {
+          if (!old) return old;
+          
+          // Actualizar los items y filtrar los que ya no tienen lugares pendientes
+          const updatedItems = old.items
+            .map(banned => {
+              if (banned.id === bannedId) {
+                const updatedBannedPlaces = banned.bannedPlaces?.map(bp => {
+                  if (bp.placeId === data.placeId) {
+                    if (data.approved) {
+                      return {
+                        ...bp,
+                        status: 'approved' as BannedPlaceStatus,
+                      };
+                    } else {
+                      return null;
+                    }
+                  }
+                  return bp;
+                }).filter(Boolean) as BannedPlace[] | undefined;
+
+                return {
+                  ...banned,
+                  bannedPlaces: updatedBannedPlaces,
+                };
+              }
+              return banned;
+            })
+            // Filtrar los bans que ya no tienen lugares pendientes para el place del usuario
+            .filter(banned => {
+              if (!userPlaceId) return true; // Si no hay userPlaceId, mantener todos
+              
+              // Verificar si este ban tiene lugares pendientes para el place del usuario
+              const hasPendingPlaces = banned.bannedPlaces?.some(
+                bp => bp.placeId === userPlaceId && bp.status === 'pending'
+              );
+              return hasPendingPlaces;
+            });
+
+          // Calcular el nuevo total basado en los items filtrados
+          return {
+            ...old,
+            items: updatedItems,
+            total: Math.max(0, old.total - (old.items.length - updatedItems.length)),
+          };
+        }
+      );
+
+      // Retornar el contexto con los datos anteriores para el rollback
+      return { previousApprovalQueue, previousBanned, previousPending, userPlaceId };
+    },
+    
+    // Si la mutación es exitosa: actualizar con los datos reales del servidor
+    onSuccess: async (data, { bannedId }) => {
+      // Actualizar el cache con los datos reales del servidor
+      queryClient.setQueryData(queryKeys.banned(bannedId), data);
+      
+      // Usar invalidateQueries con refetchType: 'active' para solo refetchear queries activas
+      // Esto evita refetches duplicados y solo actualiza las queries que están siendo usadas
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.approvalQueueBanneds,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.pendingBanneds,
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.bannedHistory(bannedId),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.banneds,
+        refetchType: 'active',
+      });
+    },
+    
+    // Si la mutación FALLA: revertir los cambios optimistas
+    onError: (error, variables, context) => {
+      // Revertir al estado anterior
+      if (context?.previousApprovalQueue) {
+        context.previousApprovalQueue.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousBanned) {
+        queryClient.setQueryData(queryKeys.banned(variables.bannedId), context.previousBanned);
+      }
+      if (context?.previousPending) {
+        queryClient.setQueryData(queryKeys.pendingBanneds, context.previousPending);
+      }
+    },
+    
+    // Solo invalidar en caso de error para asegurar sincronización después del rollback
+    onSettled: (data, error) => {
+      // Solo invalidar si hubo un error para asegurar sincronización después del rollback
+      // En caso de éxito, onSuccess ya maneja la invalidación
+      if (error) {
+        queryClient.invalidateQueries({ 
+          queryKey: queryKeys.approvalQueueBanneds,
+          refetchType: 'active',
+        });
+      }
     },
   });
 }
@@ -457,6 +614,9 @@ export function useApproveBannedPlace() {
 // Bulk approve banneds pending for head-manager's place with optional filters
 export function useBulkApproveBanneds() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userPlaceId = user?.placeId;
+  
   return useMutation({
     mutationFn: async (payload: { createdBy?: string; gender?: 'Male' | 'Female'; bannedIds?: string[]; placeIds?: string[]; maxBatchSize?: number }) => {
       return api.post<{ approvedCount: number; failedCount: number; failures?: Array<{ id: string; reason: string }> }>(
@@ -464,8 +624,161 @@ export function useBulkApproveBanneds() {
         payload,
       );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.approvalQueueBanneds });
+    
+    // Actualización optimista: actualizar UI inmediatamente
+    onMutate: async (payload) => {
+      // Validar que tenemos userPlaceId
+      if (!userPlaceId) {
+        throw new Error('User placeId is required for bulk approval');
+      }
+
+      // Cancelar cualquier refetch en progreso para evitar sobrescribir nuestra actualización optimista
+      await queryClient.cancelQueries({ queryKey: queryKeys.approvalQueueBanneds });
+      await queryClient.cancelQueries({ queryKey: queryKeys.pendingBanneds });
+      await queryClient.cancelQueries({ queryKey: queryKeys.banneds });
+
+      // Guardar el estado anterior para poder revertirlo si falla
+      const previousApprovalQueue = queryClient.getQueriesData({ queryKey: queryKeys.approvalQueueBanneds });
+      const previousPending = queryClient.getQueryData(queryKeys.pendingBanneds);
+      const previousBanneds = queryClient.getQueryData(queryKeys.banneds);
+
+      // Actualizar optimistamente todas las queries de approvalQueueBanneds
+      queryClient.setQueriesData<{ items: Banned[]; total: number; page: number; limit: number; hasNext: boolean }>(
+        { queryKey: queryKeys.approvalQueueBanneds },
+        (old) => {
+          if (!old) return old;
+          
+          // Filtrar y actualizar los bans que coinciden con los filtros
+          const updatedItems = old.items
+            .map(banned => {
+              // Verificar si este ban coincide con los filtros del payload
+              const matchesFilters = 
+                (!payload.createdBy || banned.createdByUserId === payload.createdBy) &&
+                (!payload.gender || banned.person?.gender === payload.gender) &&
+                (!payload.bannedIds || payload.bannedIds.length === 0 || payload.bannedIds.includes(banned.id));
+
+              if (!matchesFilters) return banned;
+
+              // Verificar si este ban tiene lugares pendientes para el place del usuario
+              const hasPendingPlacesForUserPlace = banned.bannedPlaces?.some(
+                bp => bp.placeId === userPlaceId && bp.status === 'pending'
+              );
+
+              if (!hasPendingPlacesForUserPlace) return banned;
+
+              // Actualizar los lugares pendientes del place del usuario
+              const updatedBannedPlaces = banned.bannedPlaces?.map(bp => {
+                if (bp.placeId === userPlaceId && bp.status === 'pending') {
+                  return {
+                    ...bp,
+                    status: 'approved' as BannedPlaceStatus,
+                    approvedByUserId: null, // Se actualizará con datos del servidor
+                    approvedAt: null,
+                    rejectedByUserId: null,
+                    rejectedAt: null,
+                  };
+                }
+                return bp;
+              });
+
+              return {
+                ...banned,
+                bannedPlaces: updatedBannedPlaces,
+              };
+            })
+            // Filtrar los bans que ya no tienen lugares pendientes para el place del usuario
+            .filter(banned => {
+              const hasPendingPlaces = banned.bannedPlaces?.some(
+                bp => bp.placeId === userPlaceId && bp.status === 'pending'
+              );
+              return hasPendingPlaces;
+            });
+
+          // Calcular el nuevo total basado en los items filtrados
+          // Nota: El total real se ajustará cuando se invalide la query
+          return {
+            ...old,
+            items: updatedItems,
+            total: Math.max(0, old.total - (old.items.length - updatedItems.length)),
+          };
+        }
+      );
+
+      // Retornar el contexto para rollback
+      return { 
+        previousApprovalQueue, 
+        previousPending, 
+        previousBanneds,
+        userPlaceId,
+      };
+    },
+    
+    // Si la mutación es exitosa: refetch queries para sincronizar con el backend
+    // El backend garantiza que los datos están disponibles antes de retornar (verificación explícita)
+    onSuccess: (data, variables, context) => {
+      // Usar resetQueries para approvalQueueBanneds
+      // resetQueries = removeQueries + refetch automático, evita duplicados
+      queryClient.resetQueries({ 
+        queryKey: queryKeys.approvalQueueBanneds,
+        exact: false,
+      });
+      
+      // Invalidar otras queries relacionadas
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.pendingBanneds,
+        refetchType: 'active',
+      });
+      
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.banneds,
+        refetchType: 'active',
+      });
+      
+      // Mostrar toast de éxito
+      setTimeout(() => {
+        toast({ 
+          title: "Bulk approval completed", 
+          description: `Approved: ${data.approvedCount} • Failed: ${data.failedCount}`,
+          duration: 5000,
+        });
+      }, 100);
+    },
+    
+    // Si la mutación FALLA: revertir los cambios optimistas
+    onError: (error: any, variables, context) => {
+      // Revertir al estado anterior
+      if (context?.previousApprovalQueue) {
+        context.previousApprovalQueue.forEach(([queryKey, data]) => {
+          if (data !== undefined) {
+            queryClient.setQueryData(queryKey, data);
+          }
+        });
+      }
+      if (context?.previousPending !== undefined) {
+        queryClient.setQueryData(queryKeys.pendingBanneds, context.previousPending);
+      }
+      if (context?.previousBanneds !== undefined) {
+        queryClient.setQueryData(queryKeys.banneds, context.previousBanneds);
+      }
+      
+      // Mostrar toast de error
+      toast({ 
+        title: "Bulk approval error", 
+        description: error?.message || "Please try again", 
+        variant: "destructive" 
+      });
+    },
+    
+    // Solo invalidar en caso de error para asegurar sincronización después del rollback
+    onSettled: (data, error) => {
+      // Solo invalidar si hubo un error para asegurar sincronización después del rollback
+      // En caso de éxito, onSuccess ya maneja la invalidación
+      if (error) {
+        queryClient.invalidateQueries({ 
+          queryKey: queryKeys.approvalQueueBanneds,
+          refetchType: 'active',
+        });
+      }
     },
   });
 }

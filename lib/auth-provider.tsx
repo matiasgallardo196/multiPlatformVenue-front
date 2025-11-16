@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useRef, useMemo, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useAuthMe } from "@/hooks/queries";
+import { useAuthMe, queryKeys } from "@/hooks/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { ensureAuthSubscription } from "@/lib/auth-subscription";
 import type { AuthUser } from "@/hooks/use-auth";
@@ -21,10 +21,13 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser>(null);
   const [loading, setLoading] = useState(true);
-  const [hasSession, setHasSession] = useState(false);
-  const hasSessionRef = useRef(false); // Para evitar actualizaciones innecesarias
-  const supabase = createClient();
   const queryClient = useQueryClient();
+  // Inicializar hasSession verificando si ya hay datos en el cache para evitar refetches innecesarios
+  const cachedAuthData = queryClient.getQueryData(queryKeys.authMe);
+  const initialHasSession = !!cachedAuthData;
+  const [hasSession, setHasSession] = useState(initialHasSession);
+  const hasSessionRef = useRef(initialHasSession); // Para evitar actualizaciones innecesarias
+  const supabase = createClient();
 
   useEffect(() => {
     let mounted = true;
