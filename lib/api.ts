@@ -18,7 +18,6 @@ export class ApiError extends Error {
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   const start = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
-  console.log("[api] →", options.method || "GET", url);
 
   // Obtener el token de Supabase
   const supabase = createClient();
@@ -41,9 +40,6 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
   try {
     const response = await fetch(url, config);
-    const end = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
-    const ms = Math.round(end - start);
-    console.log("[api] ←", response.status, options.method || "GET", url, `${ms}ms`);
 
     // Si recibimos un 401, intentar refrescar el token y reintentar una vez
     if (response.status === 401 && token) {
@@ -64,9 +60,6 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
         };
         
         const retryResponse = await fetch(url, retryConfig);
-        const retryEnd = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
-        const retryMs = Math.round(retryEnd - start);
-        console.log("[api] ←", retryResponse.status, options.method || "GET", url, `${retryMs}ms (retry)`);
         
         if (!retryResponse.ok) {
           // Manejar el error de la petición reintentada
@@ -102,16 +95,13 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
         const retryContentType = retryResponse.headers.get("content-type") || "";
         if (!retryContentType.includes("application/json")) {
           const text = await retryResponse.text();
-          console.log("[api] non-JSON response:", text);
           return text as unknown as any;
         }
 
         try {
           const data = await retryResponse.json();
-          console.log("[api] response data:", data);
           return data;
         } catch (e) {
-          console.log("[api] Failed to parse JSON response, returning null");
           return null as unknown as any;
         }
       } else {
@@ -147,14 +137,12 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
     // Handle no-content responses gracefully
     if (response.status === 204) {
-      console.log("[api] 204 No Content");
       return null as unknown as any;
     }
 
     // Some endpoints may return empty body with 200/201
     const contentLength = response.headers.get("content-length");
     if (contentLength === "0") {
-      console.log("[api] empty body");
       return null as unknown as any;
     }
 
@@ -162,16 +150,13 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     if (!contentType.includes("application/json")) {
       // Attempt text fallback
       const text = await response.text();
-      console.log("[api] non-JSON response:", text);
       return text as unknown as any;
     }
 
     try {
       const data = await response.json();
-      console.log("[api] response data:", data);
       return data;
     } catch (e) {
-      console.log("[api] Failed to parse JSON response, returning null");
       return null as unknown as any;
     }
   } catch (error) {

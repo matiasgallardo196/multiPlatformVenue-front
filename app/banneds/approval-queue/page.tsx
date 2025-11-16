@@ -23,14 +23,12 @@ import type { Banned } from "@/lib/types";
 import { format, differenceInCalendarDays } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { useBulkApproveBanneds } from "@/hooks/queries";
 
 export default function ApprovalQueuePage() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [selectedBannedId, setSelectedBannedId] = useState<string | null>(null);
   // Filtros y orden (sin estado de activo/inactivo)
   const [searchQuery, setSearchQuery] = useState("");
@@ -497,21 +495,29 @@ export default function ApprovalQueuePage() {
 function BulkApproveButton({ disabled, count, selectedCreatorId, bannedIds, genderFilter }: { disabled: boolean; count: number; selectedCreatorId: string | null; bannedIds: string[]; genderFilter: 'all' | 'Male' | 'Female' }) {
   const [open, setOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const { toast } = useToast();
   const bulkApprove = useBulkApproveBanneds();
 
-  const onConfirm = async () => {
-    try {
-      const payload: any = {};
-      if (selectedCreatorId) payload.createdBy = selectedCreatorId;
-      if (genderFilter !== 'all') payload.gender = genderFilter;
-      const res = await bulkApprove.mutateAsync(payload);
-      toast({ title: "Bulk approval completed", description: `Approved: ${res.approvedCount} • Failed: ${res.failedCount}` });
+  // Cerrar el modal automáticamente cuando la mutación termine exitosamente
+  // Esto evita duplicar callbacks y deja que el hook maneje todo centralizadamente
+  useEffect(() => {
+    if (!bulkApprove.isPending && bulkApprove.isSuccess && open) {
       setOpen(false);
       setConfirmed(false);
-    } catch (e: any) {
-      toast({ title: "Bulk approval error", description: e?.message || "Please try again", variant: "destructive" });
     }
+  }, [bulkApprove.isPending, bulkApprove.isSuccess, open]);
+
+  const onConfirm = () => {
+    const payload: any = {};
+    if (selectedCreatorId) payload.createdBy = selectedCreatorId;
+    if (genderFilter !== 'all') payload.gender = genderFilter;
+    
+    if (bannedIds && bannedIds.length > 0) {
+      payload.bannedIds = bannedIds;
+    }
+    
+    // Solo llamar mutate sin callbacks adicionales
+    // El hook ya maneja onSuccess/onError con invalidación y toast
+    bulkApprove.mutate(payload);
   };
 
   return (
@@ -527,11 +533,17 @@ function BulkApproveButton({ disabled, count, selectedCreatorId, bannedIds, gend
       <Dialog open={open} onOpenChange={(newOpen) => {
         if (!bulkApprove.isPending) {
           setOpen(newOpen);
+          if (!newOpen) {
+            setConfirmed(false);
+          }
         }
       }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Approve all filtered bans</DialogTitle>
+            <DialogDescription>
+              This will approve all pending places for the filtered bans. This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {bulkApprove.isPending ? (
