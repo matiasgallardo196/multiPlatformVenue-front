@@ -26,7 +26,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { PersonEditDialog } from "@/components/person/person-edit-dialog";
-import { IncidentCreateDialog } from "@/components/incident/incident-create-dialog";
 import { BannedCreateDialog } from "@/components/banned/banned-create-dialog";
 import { useMemo, useState } from "react";
 import {
@@ -267,32 +266,6 @@ export default function PersonDetailPage() {
             </CardContent>
           </Card>
         )}
-
-        <Card>
-          <CardContent className="p-6 space-y-3">
-            <div className="text-sm text-muted-foreground">Incidents</div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">{person.incidents?.length || 0}</Badge>
-            </div>
-            {person.incidents && person.incidents.length > 0 && (
-              <ul className="space-y-2">
-                {person.incidents.slice(0, 5).map((inc: any) => (
-                  <li key={inc.id} className="text-sm">
-                    <Link className="underline" href={`/incidents/${inc.id}`}>
-                      Incident #{inc.id.slice(-8)}
-                    </Link>
-                    {inc.place?.name && (
-                      <span className="text-muted-foreground">
-                        {" "}
-                        · {inc.place.name}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
 
         <Card>
           <CardContent className="p-6 space-y-3">

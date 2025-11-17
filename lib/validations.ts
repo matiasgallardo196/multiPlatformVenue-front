@@ -20,16 +20,6 @@ export const createPlaceSchema = z.object({
 
 export const updatePlaceSchema = createPlaceSchema.partial();
 
-// Incident validation schemas
-export const createIncidentSchema = z.object({
-  personId: z.string().min(1, "Person is required"),
-  placeId: z.string().min(1, "Place is required"),
-  details: z.string().optional(),
-  photoBook: z.array(z.string().url("Invalid URL")).optional(),
-});
-
-export const updateIncidentSchema = createIncidentSchema.partial();
-
 // Banned validation schemas
 export const createBannedSchema = z
   .object({
@@ -158,8 +148,6 @@ export type CreatePersonForm = z.infer<typeof createPersonSchema>;
 export type UpdatePersonForm = z.infer<typeof updatePersonSchema>;
 export type CreatePlaceForm = z.infer<typeof createPlaceSchema>;
 export type UpdatePlaceForm = z.infer<typeof updatePlaceSchema>;
-export type CreateIncidentForm = z.infer<typeof createIncidentSchema>;
-export type UpdateIncidentForm = z.infer<typeof updateIncidentSchema>;
 export type CreateBannedForm = z.infer<typeof createBannedSchema>;
 export type UpdateBannedForm = z.infer<typeof updateBannedSchema>;
 export type SearchForm = z.infer<typeof searchSchema>;

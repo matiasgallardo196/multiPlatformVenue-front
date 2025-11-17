@@ -30,7 +30,6 @@ const navigation = [
   { name: "Approval Queue", href: "/banneds/approval-queue", icon: CheckCircle2, roles: ["head-manager"] },
   { name: "Persons", href: "/persons", icon: Users, roles: ["manager", "staff", "head-manager"] },
   { name: "Places", href: "/places", icon: MapPin, roles: ["manager", "head-manager"] },
-  { name: "Incidents", href: "/incidents", icon: AlertTriangle, roles: ["manager", "staff", "head-manager"] },
   { name: "Users", href: "/users", icon: UserIcon, roles: ["head-manager"] },
 ];
 

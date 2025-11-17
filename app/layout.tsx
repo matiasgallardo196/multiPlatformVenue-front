@@ -13,7 +13,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Admin Dashboard",
   description:
-    "Admin dashboard for managing banned persons, places, and incidents",
+    "Admin dashboard for managing banned persons and places",
   generator: "v0.app",
   icons: {
     icon: "/favicon.svg",
