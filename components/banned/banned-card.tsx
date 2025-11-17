@@ -262,12 +262,12 @@ export function BannedCard({
       <CardContent className="p-2.5 sm:p-4 md:p-5 pt-10 sm:pt-12 md:pt-14">
         <div className="flex flex-row items-start gap-3 sm:gap-4 md:gap-6 lg:gap-8">
           <div className="flex-shrink-0 flex flex-col items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-4">
-            <Avatar className="h-16 w-16 sm:h-24 sm:w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 xl:h-48 xl:w-48">
+            <Avatar className="h-28 w-28 sm:h-24 sm:w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 xl:h-48 xl:w-48">
               <AvatarImage
                 src={profileImages[0] || "/placeholder.svg"}
                 alt={personName}
               />
-              <AvatarFallback className="bg-primary/10 text-primary text-sm sm:text-lg md:text-xl lg:text-2xl">
+              <AvatarFallback className="bg-primary/10 text-primary text-base sm:text-lg md:text-xl lg:text-2xl">
                 {personName
                   .split(" ")
                   .map((n) => n[0])
@@ -304,7 +304,7 @@ export function BannedCard({
             )}
           </div>
 
-          <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2 md:space-y-3 w-full">
+          <div className="flex-1 min-w-0 max-w-[calc(100%-8.5rem)] sm:max-w-none space-y-1.5 sm:space-y-2 md:space-y-3 w-full ml-auto">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-card-foreground text-base sm:text-lg md:text-xl lg:text-2xl break-words">
