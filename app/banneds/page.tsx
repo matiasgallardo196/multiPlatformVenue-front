@@ -186,17 +186,17 @@ export default function BannedsPage() {
               placeholder="Search by name, last name, nickname, or incident number..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-base"
             />
           </div>
 
-          {/* Filters, Sort, and Results Count in one row */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Filters, Sort, and Results Count */}
+          <div className="flex flex-col gap-3">
             {/* Filters and Sort */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Filters:</span>
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Filter className="h-4 w-4" />
+                <span>Filters:</span>
               </div>
 
               {/* Status Filter */}
@@ -206,7 +206,7 @@ export default function BannedsPage() {
                   setStatusFilter(value)
                 }
               >
-                <SelectTrigger className="w-32 h-9">
+                <SelectTrigger className="w-full sm:w-32 h-9 text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -223,7 +223,7 @@ export default function BannedsPage() {
                   setGenderFilter(value)
                 }
               >
-                <SelectTrigger className="w-36 h-9">
+                <SelectTrigger className="w-full sm:w-36 h-9 text-base">
                   <SelectValue placeholder="Gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -235,7 +235,7 @@ export default function BannedsPage() {
 
               {/* Place Filter */}
               <Select onValueChange={handlePlaceToggle}>
-                <SelectTrigger className="w-40 h-9">
+                <SelectTrigger className="w-full sm:w-40 h-9 text-base">
                   <SelectValue placeholder="Add place filter" />
                 </SelectTrigger>
                 <SelectContent>
@@ -252,9 +252,9 @@ export default function BannedsPage() {
               </Select>
 
               {/* Sort By */}
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Sort:</span>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <ArrowUpDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-sm text-muted-foreground flex-shrink-0">Sort:</span>
                 <Select
                   value={sortBy}
                   onValueChange={(
@@ -269,7 +269,7 @@ export default function BannedsPage() {
                       | "person-name-desc"
                   ) => setSortBy(value)}
                 >
-                  <SelectTrigger className="w-48 h-9">
+                  <SelectTrigger className="flex-1 sm:w-48 h-9 text-base">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -310,7 +310,7 @@ export default function BannedsPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleClearFilters}
-                  className="h-9"
+                  className="h-9 w-full sm:w-auto"
                 >
                   <X className="mr-2 h-4 w-4" />
                   Clear Filters
@@ -380,8 +380,8 @@ export default function BannedsPage() {
               </p>
             </div>
           ) : (
-            <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+            <div className="max-h-[calc(100vh-280px)] sm:max-h-[calc(100vh-320px)] overflow-y-auto border rounded-lg p-3 sm:p-4">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 {filteredBanneds.map((banned: Banned) => (
                   <BannedCard
                     key={banned.id}

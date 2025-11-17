@@ -162,21 +162,24 @@ export function BannedCard({
       onKeyDown={handleCardKeyDown}
     >
       {/* Incident number top-left */}
-      <div className="absolute top-2 left-2">
-        <Badge variant="outline" className="text-xs md:text-sm px-2 py-0.5">
+      <div className="absolute top-2 left-2 z-10">
+        <Badge variant="outline" className="text-xs px-2 py-0.5">
           #{banned.incidentNumber}
         </Badge>
       </div>
       {/* Active & Violations top-right */}
-      <div className="absolute top-2 right-2 flex items-center gap-2">
+      <div className="absolute top-2 right-2 flex items-center gap-1.5 sm:gap-2 z-10">
         <Badge
           variant={banned.isActive ? "destructive" : "secondary"}
-          className="text-xs md:text-sm px-2.5 py-1"
+          className="text-xs px-2 py-1"
         >
           {banned.isActive ? "Active" : "Inactive"}
         </Badge>
-        <Badge variant="outline" className="text-xs md:text-sm px-2.5 py-1">
+        <Badge variant="outline" className="text-xs px-2 py-1 hidden sm:inline-flex">
           Violations: {banned.violationsCount ?? 0}
+        </Badge>
+        <Badge variant="outline" className="text-xs px-1.5 py-1 sm:hidden">
+          V: {banned.violationsCount ?? 0}
         </Badge>
         {actionsAtTopRight && !readOnly && (
           <DropdownMenu>
@@ -256,15 +259,15 @@ export function BannedCard({
           </DropdownMenu>
         )}
       </div>
-      <CardContent className="p-4 md:p-5">
-        <div className="flex items-center gap-8 md:gap-10">
-          <div className="flex-shrink-0 flex flex-col items-center gap-3 md:gap-4">
-            <Avatar className="h-40 w-40 md:h-48 md:w-48">
+      <CardContent className="p-3 sm:p-4 md:p-5 pt-12 sm:pt-14">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 md:gap-8 lg:gap-10">
+          <div className="flex-shrink-0 flex flex-col items-center gap-2 sm:gap-3 md:gap-4">
+            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-48 lg:w-48">
               <AvatarImage
                 src={profileImages[0] || "/placeholder.svg"}
                 alt={personName}
               />
-              <AvatarFallback className="bg-primary/10 text-primary">
+              <AvatarFallback className="bg-primary/10 text-primary text-lg sm:text-xl md:text-2xl">
                 {personName
                   .split(" ")
                   .map((n) => n[0])
@@ -279,9 +282,9 @@ export function BannedCard({
                 <span className="block text-xs text-muted-foreground mb-1 text-center">
                   Additional Photos:
                 </span>
-                <div className="flex justify-center gap-2 md:gap-3">
+                <div className="flex justify-center gap-1.5 sm:gap-2 md:gap-3">
                   {profileImages.slice(1, 4).map((url, index) => (
-                    <Avatar key={index} className="h-12 w-12 flex-shrink-0">
+                    <Avatar key={index} className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 flex-shrink-0">
                       <AvatarImage
                         src={url || "/placeholder.svg"}
                         alt={`${personName} ${index + 2}`}
@@ -292,7 +295,7 @@ export function BannedCard({
                     </Avatar>
                   ))}
                   {profileImages.length > 4 && (
-                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
                       +{profileImages.length - 4}
                     </div>
                   )}
@@ -301,14 +304,14 @@ export function BannedCard({
             )}
           </div>
 
-          <div className="flex-1 min-w-0 space-y-4">
+          <div className="flex-1 min-w-0 space-y-2 sm:space-y-3 md:space-y-4 w-full">
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold text-card-foreground text-xl md:text-2xl">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-card-foreground text-lg sm:text-xl md:text-2xl break-words">
                   {personName}
                 </h3>
                 {person?.nickname && person.nickname !== personName && (
-                  <p className="text-sm md:text-base text-muted-foreground">
+                  <p className="text-sm sm:text-base text-muted-foreground break-words">
                     "{person.nickname}"
                   </p>
                 )}
@@ -425,9 +428,9 @@ export function BannedCard({
             </div>
 
             {/* Date Information */}
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
               <div className="flex items-center gap-1 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-4 w-4 flex-shrink-0" />
                 <span>From:</span>
               </div>
               <span className="font-medium">
@@ -436,9 +439,9 @@ export function BannedCard({
             </div>
 
             {banned.endingDate && (
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
                 <div className="flex items-center gap-1 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="h-4 w-4 flex-shrink-0" />
                   <span>Until:</span>
                 </div>
                 <span className="font-medium">
@@ -447,7 +450,7 @@ export function BannedCard({
               </div>
             )}
 
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
               <span className="text-muted-foreground">Duration:</span>
               <span className="font-medium">{getDurationText()}</span>
             </div>

@@ -192,15 +192,15 @@ export default function PersonsPage() {
               placeholder="Search by name, last name, or nickname..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-base"
             />
           </div>
 
           {/* Filters and Sort */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Filters:</span>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span>Filters:</span>
             </div>
 
             {/* Gender Filter */}
@@ -210,7 +210,7 @@ export default function PersonsPage() {
                 setGenderFilter(value)
               }
             >
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-full sm:w-36 text-base">
                 <SelectValue placeholder="Gender" />
               </SelectTrigger>
               <SelectContent>
@@ -221,9 +221,9 @@ export default function PersonsPage() {
             </Select>
 
             {/* Sort By */}
-            <div className="flex items-center gap-2 ml-auto">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Sort:</span>
+            <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-sm text-muted-foreground flex-shrink-0">Sort:</span>
               <Select
                 value={sortBy}
                 onValueChange={(
@@ -234,7 +234,7 @@ export default function PersonsPage() {
                     | "name-desc"
                 ) => setSortBy(value)}
               >
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="flex-1 sm:w-40 text-base">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -248,7 +248,12 @@ export default function PersonsPage() {
 
             {/* Clear Filters */}
             {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={handleClearFilters}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearFilters}
+                className="w-full sm:w-auto"
+              >
                 <X className="mr-2 h-4 w-4" />
                 Clear Filters
               </Button>
@@ -303,42 +308,46 @@ export default function PersonsPage() {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">
                   Showing {(currentPage - 1) * currentLimit + 1}
                   {"-"}
                   {Math.min(currentPage * currentLimit, total)} of {total} persons
                 </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Per page:</span>
-                  <Select
-                    value={String(currentLimit)}
-                    onValueChange={(v) => setLimit(Number(v))}
-                  >
-                    <SelectTrigger className="w-24 h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">Per page:</span>
+                    <Select
+                      value={String(currentLimit)}
+                      onValueChange={(v) => setLimit(Number(v))}
+                    >
+                      <SelectTrigger className="w-24 h-9 text-base">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage <= 1}
+                      className="flex-1 sm:flex-none"
                     >
                       Prev
                     </Button>
-                    <span className="text-sm">Page {currentPage}</span>
+                    <span className="text-sm px-2 whitespace-nowrap">Page {currentPage}</span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setPage((p) => p + 1)}
                       disabled={!hasNext}
+                      className="flex-1 sm:flex-none"
                     >
                       Next
                     </Button>
@@ -346,8 +355,8 @@ export default function PersonsPage() {
                 </div>
               </div>
 
-              <div className="max-h-[calc(100vh-400px)] overflow-y-auto border rounded-lg p-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto border rounded-lg p-3 sm:p-4">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((person) => (
                     <Card
                       key={person.id}

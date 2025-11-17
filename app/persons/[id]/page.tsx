@@ -131,17 +131,17 @@ export default function PersonDetailPage() {
         </Button>
       </PageHeader>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
         <Card>
-          <CardContent className="p-6 flex items-center gap-4">
+          <CardContent className="p-3 sm:p-4 md:p-6 flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
             <Dialog>
               <DialogTrigger asChild>
-                <Avatar className="h-16 w-16 cursor-zoom-in">
+                <Avatar className="h-20 w-20 sm:h-16 sm:w-16 cursor-zoom-in flex-shrink-0">
                   <AvatarImage
                     src={person.imagenProfileUrl?.[0] || "/placeholder.svg"}
                     alt={getName()}
                   />
-                  <AvatarFallback className="bg-primary/10 text-primary">
+                  <AvatarFallback className="bg-primary/10 text-primary text-lg sm:text-base">
                     {getName()
                       .split(" ")
                       .map((n: string) => n[0])
@@ -152,7 +152,7 @@ export default function PersonDetailPage() {
                 </Avatar>
               </DialogTrigger>
               <DialogContent
-                className="max-w-4xl p-0"
+                className="max-w-[calc(100%-2rem)] sm:max-w-4xl p-0"
                 onClick={(e) => e.stopPropagation()}
               >
                 <DialogTitle className="sr-only">Image preview</DialogTitle>
@@ -164,16 +164,18 @@ export default function PersonDetailPage() {
               </DialogContent>
             </Dialog>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{getName()}</span>
+            <div className="space-y-1 text-center sm:text-left flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="font-medium break-words">{getName()}</span>
+                </div>
                 {hasActiveBans && (
-                  <Badge variant="destructive">Banned</Badge>
+                  <Badge variant="destructive" className="w-fit">Banned</Badge>
                 )}
               </div>
               {person.nickname && (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground break-words">
                   "{person.nickname}"
                 </div>
               )}
@@ -188,7 +190,7 @@ export default function PersonDetailPage() {
 
         {!isReadOnly && (
           <Card>
-            <CardContent className="p-6 space-y-2">
+            <CardContent className="p-3 sm:p-4 md:p-6 space-y-2">
               <div className="text-sm font-medium mb-1">Actions</div>
               <PersonEditDialog id={person.id}>
                 <Button
@@ -198,17 +200,6 @@ export default function PersonDetailPage() {
                   Edit Person Details
                 </Button>
               </PersonEditDialog>
-              <IncidentCreateDialog
-                lockedPersonId={person.id}
-                shouldRedirect={true}
-              >
-                <Button
-                  className="w-full bg-transparent cursor-pointer"
-                  variant="outline"
-                >
-                  Create Incident for this Person
-                </Button>
-              </IncidentCreateDialog>
               <BannedCreateDialog
                 personId={person.id}
                 redirectOnSuccess
@@ -229,7 +220,7 @@ export default function PersonDetailPage() {
                     Delete Person
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete this person?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -268,7 +259,7 @@ export default function PersonDetailPage() {
         )}
 
         <Card>
-          <CardContent className="p-6 space-y-3">
+          <CardContent className="p-3 sm:p-4 md:p-6 space-y-3">
             <div className="text-sm text-muted-foreground">Bans</div>
             <div className="flex items-center gap-2">
               <Badge
@@ -280,8 +271,8 @@ export default function PersonDetailPage() {
             {bans && bans.length > 0 && (
               <ul className="space-y-2">
                 {bans.slice(0, 5).map((b: any) => (
-                  <li key={b.id} className="text-sm">
-                    <Link className="underline" href={`/banneds/${b.id}`}>
+                  <li key={b.id} className="text-sm break-words">
+                    <Link className="underline break-all" href={`/banneds/${b.id}`}>
                       Ban #{typeof b.incidentNumber === "number" ? b.incidentNumber : b.id.slice(-8)}
                     </Link>
                     {b.bannedPlaces?.length ? (
@@ -298,12 +289,12 @@ export default function PersonDetailPage() {
         </Card>
         {person.imagenProfileUrl && person.imagenProfileUrl.length > 1 && (
           <Card className="md:col-span-2">
-            <CardContent className="p-6 space-y-3">
+            <CardContent className="p-3 sm:p-4 md:p-6 space-y-3">
               <div className="flex items-center gap-2">
-                <Camera className="h-4 w-4 text-muted-foreground" />
+                <Camera className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="font-medium">Additional Photos</span>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {person.imagenProfileUrl
                   .slice(1)
                   .map((url: string, idx: number) => (
@@ -311,7 +302,7 @@ export default function PersonDetailPage() {
                       key={idx}
                       src={url || "/placeholder.svg"}
                       alt={`Photo ${idx + 2}`}
-                      className="w-full h-24 object-cover rounded border transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-zoom-in"
+                      className="w-full h-20 sm:h-24 object-cover rounded border transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-zoom-in active:scale-[0.98]"
                       onClick={() => {
                         setGalleryIndex(idx + 1);
                         setGalleryOpen(true);
@@ -322,7 +313,7 @@ export default function PersonDetailPage() {
 
               <Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
                 <DialogContent
-                  className="max-w-5xl p-0"
+                  className="max-w-[calc(100%-2rem)] sm:max-w-5xl p-0"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <DialogTitle className="sr-only">Image preview</DialogTitle>
@@ -335,7 +326,7 @@ export default function PersonDetailPage() {
                     {person.imagenProfileUrl.length > 2 && (
                       <>
                         <button
-                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 rounded-full transition-colors touch-manipulation"
                           onClick={(e) => {
                             e.stopPropagation();
                             const total = person.imagenProfileUrl.length;
@@ -343,10 +334,10 @@ export default function PersonDetailPage() {
                           }}
                           aria-label="Previous"
                         >
-                          <ChevronLeft className="h-5 w-5" />
+                          <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
                         </button>
                         <button
-                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 rounded-full transition-colors touch-manipulation"
                           onClick={(e) => {
                             e.stopPropagation();
                             const total = person.imagenProfileUrl.length;
@@ -354,7 +345,7 @@ export default function PersonDetailPage() {
                           }}
                           aria-label="Next"
                         >
-                          <ChevronRight className="h-5 w-5" />
+                          <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
                         </button>
                       </>
                     )}

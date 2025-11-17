@@ -318,13 +318,13 @@ export default function ApprovalQueuePage() {
 
           {/* Conteo + Acción masiva + Paginación */}
           {!isLoading && (
-            <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-sm text-muted-foreground">
                 Showing {(currentPage - 1) * currentLimit + 1}
                 {"-"}
                 {Math.min(currentPage * currentLimit, total)} of {total} pending approvals
               </p>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <BulkApproveButton
                   disabled={filteredBanneds.length === 0}
                   count={filteredBanneds.length}

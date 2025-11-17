@@ -15,6 +15,12 @@ export const metadata: Metadata = {
   description:
     "Admin dashboard for managing banned persons and places",
   generator: "v0.app",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
