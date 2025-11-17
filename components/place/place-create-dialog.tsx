@@ -25,6 +25,12 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { createPlaceSchema, type CreatePlaceForm } from "@/lib/validations";
 import { useCreatePlace } from "@/hooks/queries";
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function PlaceCreateDialog({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
@@ -36,12 +42,17 @@ export function PlaceCreateDialog({ children }: { children: React.ReactNode }) {
     defaultValues: {
       name: "",
       city: "",
+      placeEmail: "",
     },
   });
 
   const onSubmit = async (values: CreatePlaceForm) => {
     try {
-      await createPlace.mutateAsync({ name: values.name, city: values.city });
+      await createPlace.mutateAsync({ 
+        name: values.name, 
+        city: values.city,
+        placeEmail: values.placeEmail,
+      });
       toast({ title: "Success", description: "Place created successfully." });
       form.reset();
       setOpen(false);
@@ -86,6 +97,30 @@ export function PlaceCreateDialog({ children }: { children: React.ReactNode }) {
                   <FormLabel>City</FormLabel>
                   <FormControl>
                     <Input placeholder="City name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="placeEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    Place Email
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>This will be the email used to send baring notices</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="place@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -15,6 +15,7 @@ export const updatePersonSchema = createPersonSchema.partial();
 export const createPlaceSchema = z.object({
   name: z.string().min(1, "Place name is required"),
   city: z.string().min(1, "City is required"),
+  placeEmail: z.string().email("Invalid email address").min(1, "Place email is required"),
 });
 
 export const updatePlaceSchema = createPlaceSchema.partial();

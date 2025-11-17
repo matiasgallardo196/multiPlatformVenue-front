@@ -27,6 +27,7 @@ export interface Place {
   id: string;
   name: string | null;
   city: string;
+  placeEmail: string;
 }
 
 export interface Incident {
@@ -96,11 +97,13 @@ export interface UpdatePersonDto {
 export interface CreatePlaceDto {
   name: string;
   city: string;
+  placeEmail: string;
 }
 
 export interface UpdatePlaceDto {
   name?: string;
   city?: string;
+  placeEmail?: string;
 }
 
 export interface CreateIncidentDto {
