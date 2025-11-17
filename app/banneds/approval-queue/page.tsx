@@ -12,6 +12,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FiltersButton } from "@/components/filters/filters-button";
 import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
 import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
@@ -171,7 +178,7 @@ export default function ApprovalQueuePage() {
     if (genderFilter !== "all") {
       chips.push({
         key: "gender",
-        label: "Género",
+        label: "Gender",
         value: genderFilter,
         onRemove: () => setGenderFilter("all"),
       });
@@ -180,7 +187,7 @@ export default function ApprovalQueuePage() {
       const place = places?.find((p) => p.id === placeId);
       chips.push({
         key: `place-${placeId}`,
-        label: "Lugar",
+        label: "Place",
         value: place?.name || "Unknown",
         onRemove: () => handlePlaceToggle(placeId),
       });
@@ -189,7 +196,7 @@ export default function ApprovalQueuePage() {
       const creator = creators.find((c) => c.id === selectedCreatorId);
       chips.push({
         key: "creator",
-        label: "Creador",
+        label: "Creator",
         value: creator?.name || "Unknown",
         onRemove: () => setSelectedCreatorId(null),
       });
@@ -258,28 +265,29 @@ export default function ApprovalQueuePage() {
           description="Review and approve pending ban requests for your place"
         />
         <div className="space-y-6">
-          {/* Buscador */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by name/nickname or incident number..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          {/* Filters Button and Active Filters */}
+          {/* Buscador and Filters Button */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name/nickname or incident number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
             <FiltersButton
               activeCount={getActiveFiltersCount()}
               onClick={() => setIsFiltersModalOpen(true)}
-            />
-            <ActiveFiltersChips
-              filters={getActiveFiltersChips()}
-              onClearAll={handleClearFilters}
+              className="w-full sm:w-auto"
             />
           </div>
+
+          {/* Active Filters Chips */}
+          <ActiveFiltersChips
+            filters={getActiveFiltersChips()}
+            onClearAll={handleClearFilters}
+          />
 
           {/* Conteo + Acción masiva + Paginación */}
           {!isLoading && (

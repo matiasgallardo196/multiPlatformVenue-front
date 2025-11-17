@@ -19,7 +19,7 @@ export function FiltersButton({ activeCount, onClick, className }: FiltersButton
       className={cn("relative gap-2", className)}
     >
       <Filter className="h-4 w-4" />
-      <span className="hidden sm:inline">Filtros</span>
+      <span className="hidden sm:inline">Filters</span>
       {activeCount > 0 && (
         <Badge
           variant="default"

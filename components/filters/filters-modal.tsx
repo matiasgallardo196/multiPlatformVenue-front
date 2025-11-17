@@ -123,9 +123,9 @@ export function FiltersModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Filtros</DialogTitle>
+          <DialogTitle>Filters</DialogTitle>
           <DialogDescription>
-            Configura los filtros para refinar tu búsqueda
+            Configure filters to refine your search
           </DialogDescription>
         </DialogHeader>
 
@@ -133,7 +133,7 @@ export function FiltersModal({
           {/* Gender Filter */}
           {config.gender && (
             <div className="space-y-2">
-              <Label>Género</Label>
+              <Label>Gender</Label>
               <Select
                 value={localValues.gender || "all"}
                 onValueChange={(value: "all" | "Male" | "Female") =>
@@ -144,9 +144,9 @@ export function FiltersModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los géneros</SelectItem>
-                  <SelectItem value="Male">Masculino</SelectItem>
-                  <SelectItem value="Female">Femenino</SelectItem>
+                  <SelectItem value="all">All Genders</SelectItem>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -155,7 +155,7 @@ export function FiltersModal({
           {/* Status Filter */}
           {config.status && (
             <div className="space-y-2">
-              <Label>Estado</Label>
+              <Label>Status</Label>
               <Select
                 value={localValues.status || "all"}
                 onValueChange={(value: "all" | "active" | "inactive") =>
@@ -166,9 +166,9 @@ export function FiltersModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="active">Activo</SelectItem>
-                  <SelectItem value="inactive">Inactivo</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -177,11 +177,11 @@ export function FiltersModal({
           {/* Place Filter */}
           {config.place && (
             <div className="space-y-2">
-              <Label>Lugares</Label>
+              <Label>Places</Label>
               <div className="space-y-2">
                 <Select onValueChange={handlePlaceToggle}>
                   <SelectTrigger className="w-full text-base">
-                    <SelectValue placeholder="Agregar lugar" />
+                    <SelectValue placeholder="Add place" />
                   </SelectTrigger>
                   <SelectContent>
                     {places.map((place) => (
@@ -225,7 +225,7 @@ export function FiltersModal({
           {/* Creator Filter */}
           {config.creator && (
             <div className="space-y-2">
-              <Label>Creador</Label>
+              <Label>Creator</Label>
               <Select
                 value={localValues.creator || "__all__"}
                 onValueChange={(value: string) =>
@@ -236,10 +236,10 @@ export function FiltersModal({
                 }
               >
                 <SelectTrigger className="w-full text-base">
-                  <SelectValue placeholder="Creador" />
+                  <SelectValue placeholder="Creator" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all__">Todos los creadores</SelectItem>
+                  <SelectItem value="__all__">All creators</SelectItem>
                   {creators.map((creator) => (
                     <SelectItem key={creator.id} value={creator.id}>
                       {creator.name}
@@ -255,7 +255,7 @@ export function FiltersModal({
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <ArrowUpDown className="h-4 w-4" />
-                Ordenar por
+                Sort by
               </Label>
               <Select
                 value={localValues.sortBy || activeSortOptions[0]?.value}
@@ -284,10 +284,10 @@ export function FiltersModal({
             onClick={handleClearAll}
             className="w-full sm:w-auto"
           >
-            Limpiar todos
+            Clear all
           </Button>
           <Button onClick={handleApply} className="w-full sm:w-auto">
-            Aplicar
+            Apply
           </Button>
         </DialogFooter>
       </DialogContent>

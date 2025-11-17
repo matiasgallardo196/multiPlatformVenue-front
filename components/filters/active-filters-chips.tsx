@@ -47,7 +47,7 @@ export function ActiveFiltersChips({ filters, onClearAll, className }: ActiveFil
           onClick={onClearAll}
           className="h-6 text-xs px-2"
         >
-          Limpiar todos
+          Clear all
         </Button>
       )}
     </div>

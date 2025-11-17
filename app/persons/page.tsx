@@ -10,6 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FiltersButton } from "@/components/filters/filters-button";
 import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
 import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
@@ -128,7 +135,7 @@ export default function PersonsPage() {
     if (genderFilter !== "all") {
       chips.push({
         key: "gender",
-        label: "Género",
+        label: "Gender",
         value: genderFilter,
         onRemove: () => setGenderFilter("all"),
       });
@@ -204,28 +211,29 @@ export default function PersonsPage() {
         </PageHeader>
 
         <div className="space-y-6">
-          {/* Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, last name, or nickname..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 text-base"
-            />
-          </div>
-
-          {/* Filters Button and Active Filters */}
+          {/* Search Input and Filters Button */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, last name, or nickname..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 text-base"
+              />
+            </div>
             <FiltersButton
               activeCount={getActiveFiltersCount()}
               onClick={() => setIsFiltersModalOpen(true)}
-            />
-            <ActiveFiltersChips
-              filters={getActiveFiltersChips()}
-              onClearAll={handleClearFilters}
+              className="w-full sm:w-auto"
             />
           </div>
+
+          {/* Active Filters Chips */}
+          <ActiveFiltersChips
+            filters={getActiveFiltersChips()}
+            onClearAll={handleClearFilters}
+          />
 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">

@@ -137,15 +137,15 @@ export default function BannedsPage() {
     if (statusFilter !== "all") {
       chips.push({
         key: "status",
-        label: "Estado",
-        value: statusFilter === "active" ? "Activo" : "Inactivo",
+        label: "Status",
+        value: statusFilter === "active" ? "Active" : "Inactive",
         onRemove: () => setStatusFilter("all"),
       });
     }
     if (genderFilter !== "all") {
       chips.push({
         key: "gender",
-        label: "Género",
+        label: "Gender",
         value: genderFilter,
         onRemove: () => setGenderFilter("all"),
       });
@@ -154,7 +154,7 @@ export default function BannedsPage() {
       const place = places?.find((p: Place) => p.id === placeId);
       chips.push({
         key: `place-${placeId}`,
-        label: "Lugar",
+        label: "Place",
         value: place?.name || "Unknown",
         onRemove: () => handlePlaceToggle(placeId),
       });
@@ -221,28 +221,29 @@ export default function BannedsPage() {
         </PageHeader>
 
         <div className="space-y-4">
-          {/* Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, last name, nickname, or incident number..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 text-base"
-            />
-          </div>
-
-          {/* Filters Button and Active Filters */}
+          {/* Search Input and Filters Button */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, last name, nickname, or incident number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 text-base"
+              />
+            </div>
             <FiltersButton
               activeCount={getActiveFiltersCount()}
               onClick={() => setIsFiltersModalOpen(true)}
-            />
-            <ActiveFiltersChips
-              filters={getActiveFiltersChips()}
-              onClearAll={handleClearFilters}
+              className="w-full sm:w-auto"
             />
           </div>
+
+          {/* Active Filters Chips */}
+          <ActiveFiltersChips
+            filters={getActiveFiltersChips()}
+            onClearAll={handleClearFilters}
+          />
 
           {/* Results Count */}
           {!isLoading && filteredBanneds.length > 0 && (
