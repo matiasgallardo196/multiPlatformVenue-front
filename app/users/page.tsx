@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { PageHeader } from "@/components/ui/page-header";
 
 type User = {
   id: string;
@@ -92,76 +93,126 @@ export default function UsersPage() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="container mx-auto py-6 space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-3xl font-bold">User Management</h1>
-                <p className="text-muted-foreground">Manage system users</p>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={() => setInviteDialogOpen(true)} variant="outline" className="gap-2">
+          <div className="space-y-4 sm:space-y-6">
+            <PageHeader
+              title="User Management"
+              description="Manage system users"
+            >
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button 
+                  onClick={() => setInviteDialogOpen(true)} 
+                  variant="outline" 
+                  className="gap-2 w-full sm:w-auto"
+                >
                   <Mail className="h-4 w-4" />
-                  Invite by Email
+                  <span className="hidden sm:inline">Invite by Email</span>
+                  <span className="sm:hidden">Invite</span>
                 </Button>
-                <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+                <Button 
+                  onClick={() => setCreateDialogOpen(true)} 
+                  className="gap-2 w-full sm:w-auto"
+                >
                   <Plus className="h-4 w-4" />
                   Create User
                 </Button>
               </div>
-            </div>
+            </PageHeader>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Registered Users</CardTitle>
-                <CardDescription>Total: {users?.length || 0} users</CardDescription>
+              <CardHeader className="p-3 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl">Registered Users</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Total: {users?.length || 0} users</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users?.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.userName}</TableCell>
-                        <TableCell>{user.email || "N/A"}</TableCell>
-                        <TableCell>
-                          <Badge variant={getRoleBadge(user.role)}>{user.role}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {user.supabaseUserId ? (
-                            <Badge variant="default">Active</Badge>
-                          ) : (
-                            <Badge variant="secondary">Pending</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(user)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {!users || users.length === 0 ? (
+              <CardContent className="p-3 sm:p-6">
+                {/* Mobile: Cards view */}
+                <div className="md:hidden space-y-3">
+                  {users && users.length > 0 ? (
+                    users.map((user) => (
+                      <Card key={user.id} className="p-3">
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm break-words">{user.userName}</p>
+                              <p className="text-xs text-muted-foreground break-words mt-1">{user.email || "N/A"}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(user)}
+                              className="text-destructive hover:text-destructive h-8 w-8 p-0 flex-shrink-0 ml-2"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant={getRoleBadge(user.role)} className="text-xs">
+                              {user.role}
+                            </Badge>
+                            {user.supabaseUserId ? (
+                              <Badge variant="default" className="text-xs">Active</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">Pending</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="text-center text-muted-foreground text-sm py-8">
+                      No users registered
+                    </div>
+                  )}
+                </div>
+
+                {/* Desktop: Table view */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          No users registered
-                        </TableCell>
+                        <TableHead className="text-sm">User</TableHead>
+                        <TableHead className="text-sm">Email</TableHead>
+                        <TableHead className="text-sm">Role</TableHead>
+                        <TableHead className="text-sm">Status</TableHead>
+                        <TableHead className="text-right text-sm">Actions</TableHead>
                       </TableRow>
-                    ) : null}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {users?.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium text-sm break-words">{user.userName}</TableCell>
+                          <TableCell className="text-sm break-words">{user.email || "N/A"}</TableCell>
+                          <TableCell>
+                            <Badge variant={getRoleBadge(user.role)} className="text-xs">{user.role}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {user.supabaseUserId ? (
+                              <Badge variant="default" className="text-xs">Active</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">Pending</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(user)}
+                              className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {!users || users.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground text-sm py-8">
+                            No users registered
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
 
@@ -170,19 +221,19 @@ export default function UsersPage() {
             <UserCreateDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
 
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-              <AlertDialogContent>
+              <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete user?</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogDescription className="break-words">
                     Are you sure you want to delete user <strong>{userToDelete?.userName}</strong>? This action cannot be
                     undone and will remove the user from both the database and Supabase.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                  <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={confirmDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     {deleteMutation.isPending ? (
                       <>
