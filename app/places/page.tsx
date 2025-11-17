@@ -35,6 +35,7 @@ import {
   Loader2,
   MapPin,
   Search,
+  Mail,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -178,6 +179,12 @@ export default function PlacesPage() {
                                 {place.city && (
                                   <p className="text-sm text-muted-foreground">
                                     {place.city}
+                                  </p>
+                                )}
+                                {place.placeEmail && (
+                                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                                    <Mail className="h-3 w-3" />
+                                    {place.placeEmail}
                                   </p>
                                 )}
                               </div>
