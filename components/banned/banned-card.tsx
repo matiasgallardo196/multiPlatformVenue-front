@@ -262,7 +262,7 @@ export function BannedCard({
       <CardContent className="p-2.5 sm:p-4 md:p-5 pt-10 sm:pt-12 md:pt-14">
         <div className="flex flex-row items-start gap-3 sm:gap-4 md:gap-6 lg:gap-8">
           <div className="flex-shrink-0 flex flex-col items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-4">
-            <Avatar className="h-28 w-28 sm:h-24 sm:w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 xl:h-48 xl:w-48">
+            <Avatar className="h-36 w-36 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-40 lg:w-40 xl:h-48 xl:w-48">
               <AvatarImage
                 src={profileImages[0] || "/placeholder.svg"}
                 alt={personName}
