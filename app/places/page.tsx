@@ -35,6 +35,7 @@ import {
   Loader2,
   MapPin,
   Search,
+  Mail,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -115,7 +116,7 @@ export default function PlacesPage() {
                   placeholder="Search places by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 text-base"
                 />
               </div>
 
@@ -159,7 +160,7 @@ export default function PlacesPage() {
                     </p>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filteredPlaces.map((place: Place) => (
                       <Card
                         key={place.id}
@@ -178,6 +179,12 @@ export default function PlacesPage() {
                                 {place.city && (
                                   <p className="text-sm text-muted-foreground">
                                     {place.city}
+                                  </p>
+                                )}
+                                {place.placeEmail && (
+                                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                                    <Mail className="h-3 w-3" />
+                                    {place.placeEmail}
                                   </p>
                                 )}
                               </div>

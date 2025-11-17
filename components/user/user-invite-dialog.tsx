@@ -54,10 +54,10 @@ export function UserInviteDialog({ open, onOpenChange }: UserInviteDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Invite User by Email</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-words">
             The user will receive an email with a link to set their password
           </DialogDescription>
         </DialogHeader>
@@ -71,7 +71,7 @@ export function UserInviteDialog({ open, onOpenChange }: UserInviteDialogProps) 
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="user@example.com" type="email" {...field} />
+                    <Input placeholder="user@example.com" type="email" className="text-base" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -85,7 +85,7 @@ export function UserInviteDialog({ open, onOpenChange }: UserInviteDialogProps) 
                 <FormItem>
                   <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="username" {...field} />
+                    <Input placeholder="username" className="text-base" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -100,7 +100,7 @@ export function UserInviteDialog({ open, onOpenChange }: UserInviteDialogProps) 
                   <FormLabel>Role</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="text-base">
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                     </FormControl>
@@ -116,11 +116,11 @@ export function UserInviteDialog({ open, onOpenChange }: UserInviteDialogProps) 
               )}
             />
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button type="submit" disabled={inviteMutation.isPending}>
+              <Button type="submit" disabled={inviteMutation.isPending} className="w-full sm:w-auto">
                 {inviteMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

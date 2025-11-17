@@ -18,20 +18,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Loader2, ArrowUpDown, Search, Filter, X } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Plus, Loader2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Banned, Place, BannedPlace } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { FiltersButton } from "@/components/filters/filters-button";
+import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
+import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
 
 export default function BannedsPage() {
   const { toast } = useToast();
@@ -58,6 +53,7 @@ export default function BannedsPage() {
     | "person-name-asc"
     | "person-name-desc"
   >("violations-desc");
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
 
   // Fetch banneds with sorting
   const {
@@ -118,6 +114,52 @@ export default function BannedsPage() {
     setStatusFilter("all");
     setSelectedPlaces([]);
     setGenderFilter("all");
+    setSortBy("violations-desc");
+  };
+
+  const handleFiltersApply = (values: FilterValues) => {
+    if (values.status !== undefined) setStatusFilter(values.status);
+    if (values.gender !== undefined) setGenderFilter(values.gender);
+    if (values.places !== undefined) setSelectedPlaces(values.places);
+    if (values.sortBy !== undefined) setSortBy(values.sortBy as any);
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (statusFilter !== "all") count++;
+    if (genderFilter !== "all") count++;
+    if (selectedPlaces.length > 0) count += selectedPlaces.length;
+    return count;
+  };
+
+  const getActiveFiltersChips = (): ActiveFilter[] => {
+    const chips: ActiveFilter[] = [];
+    if (statusFilter !== "all") {
+      chips.push({
+        key: "status",
+        label: "Status",
+        value: statusFilter === "active" ? "Active" : "Inactive",
+        onRemove: () => setStatusFilter("all"),
+      });
+    }
+    if (genderFilter !== "all") {
+      chips.push({
+        key: "gender",
+        label: "Gender",
+        value: genderFilter,
+        onRemove: () => setGenderFilter("all"),
+      });
+    }
+    selectedPlaces.forEach((placeId) => {
+      const place = places?.find((p: Place) => p.id === placeId);
+      chips.push({
+        key: `place-${placeId}`,
+        label: "Place",
+        value: place?.name || "Unknown",
+        onRemove: () => handlePlaceToggle(placeId),
+      });
+    });
+    return chips;
   };
 
   const handleEdit = (banned: Banned) => {
@@ -179,190 +221,36 @@ export default function BannedsPage() {
         </PageHeader>
 
         <div className="space-y-4">
-          {/* Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, last name, nickname, or incident number..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+          {/* Search Input and Filters Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, last name, nickname, or incident number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 text-base"
+              />
+            </div>
+            <FiltersButton
+              activeCount={getActiveFiltersCount()}
+              onClick={() => setIsFiltersModalOpen(true)}
+              className="w-full sm:w-auto"
             />
           </div>
 
-          {/* Filters, Sort, and Results Count in one row */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            {/* Filters and Sort */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Filters:</span>
-              </div>
+          {/* Active Filters Chips */}
+          <ActiveFiltersChips
+            filters={getActiveFiltersChips()}
+            onClearAll={handleClearFilters}
+          />
 
-              {/* Status Filter */}
-              <Select
-                value={statusFilter}
-                onValueChange={(value: "all" | "active" | "inactive") =>
-                  setStatusFilter(value)
-                }
-              >
-                <SelectTrigger className="w-32 h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Gender Filter */}
-              <Select
-                value={genderFilter}
-                onValueChange={(value: "all" | "Male" | "Female") =>
-                  setGenderFilter(value)
-                }
-              >
-                <SelectTrigger className="w-36 h-9">
-                  <SelectValue placeholder="Gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Genders</SelectItem>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Place Filter */}
-              <Select onValueChange={handlePlaceToggle}>
-                <SelectTrigger className="w-40 h-9">
-                  <SelectValue placeholder="Add place filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {places?.map((place: Place) => (
-                    <SelectItem
-                      key={place.id}
-                      value={place.id}
-                      disabled={selectedPlaces.includes(place.id)}
-                    >
-                      {place.name || "Unnamed Place"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Sort By */}
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Sort:</span>
-                <Select
-                  value={sortBy}
-                  onValueChange={(
-                    value:
-                      | "violations-desc"
-                      | "violations-asc"
-                      | "starting-date-desc"
-                      | "starting-date-asc"
-                      | "ending-date-desc"
-                      | "ending-date-asc"
-                      | "person-name-asc"
-                      | "person-name-desc"
-                  ) => setSortBy(value)}
-                >
-                  <SelectTrigger className="w-48 h-9">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="violations-desc">
-                      Violations (High to Low)
-                    </SelectItem>
-                    <SelectItem value="violations-asc">
-                      Violations (Low to High)
-                    </SelectItem>
-                    <SelectItem value="starting-date-desc">
-                      Starting Date (Newest first)
-                    </SelectItem>
-                    <SelectItem value="starting-date-asc">
-                      Starting Date (Oldest first)
-                    </SelectItem>
-                    <SelectItem value="ending-date-desc">
-                      Ending Date (Newest first)
-                    </SelectItem>
-                    <SelectItem value="ending-date-asc">
-                      Ending Date (Oldest first)
-                    </SelectItem>
-                    <SelectItem value="person-name-asc">
-                      Person Name (A-Z)
-                    </SelectItem>
-                    <SelectItem value="person-name-desc">
-                      Person Name (Z-A)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Clear Filters */}
-              {(searchQuery ||
-                statusFilter !== "all" ||
-                selectedPlaces.length > 0 ||
-                genderFilter !== "all") && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClearFilters}
-                  className="h-9"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Clear Filters
-                </Button>
-              )}
-            </div>
-
-            {/* Results Count */}
-            {!isLoading && filteredBanneds.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                Showing {filteredBanneds.length} of {banneds?.length || 0}{" "}
-                banned persons
-              </p>
-            )}
-          </div>
-
-          {/* Active Filters Badges */}
-          {(statusFilter !== "all" ||
-            selectedPlaces.length > 0 ||
-            genderFilter !== "all") && (
-            <div className="flex flex-wrap gap-2">
-              {statusFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
-                  Status: {statusFilter}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => setStatusFilter("all")}
-                  />
-                </Badge>
-              )}
-              {genderFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
-                  Gender: {genderFilter}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => setGenderFilter("all")}
-                  />
-                </Badge>
-              )}
-              {selectedPlaces.map((placeId) => {
-                const place = places?.find((p: Place) => p.id === placeId);
-                return (
-                  <Badge key={placeId} variant="secondary" className="gap-1">
-                    {place?.name || "Unknown Place"}
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => handlePlaceToggle(placeId)}
-                    />
-                  </Badge>
-                );
-              })}
-            </div>
+          {/* Results Count */}
+          {!isLoading && filteredBanneds.length > 0 && (
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredBanneds.length} of {banneds?.length || 0}{" "}
+              banned persons
+            </p>
           )}
 
           {/* Results */}
@@ -380,8 +268,8 @@ export default function BannedsPage() {
               </p>
             </div>
           ) : (
-            <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+            <div className="max-h-[calc(100vh-280px)] sm:max-h-[calc(100vh-250px)] md:max-h-[calc(100vh-240px)] overflow-y-auto border rounded-lg p-3 sm:p-4">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 {filteredBanneds.map((banned: Banned) => (
                   <BannedCard
                     key={banned.id}
@@ -398,6 +286,27 @@ export default function BannedsPage() {
             </div>
           )}
         </div>
+
+        {/* Filters Modal */}
+        <FiltersModal
+          open={isFiltersModalOpen}
+          onOpenChange={setIsFiltersModalOpen}
+          config={{
+            gender: true,
+            status: true,
+            place: true,
+            sortBy: true,
+          }}
+          values={{
+            gender: genderFilter,
+            status: statusFilter,
+            places: selectedPlaces,
+            sortBy: sortBy,
+          }}
+          onApply={handleFiltersApply}
+          onClearAll={handleClearFilters}
+          places={places}
+        />
       </DashboardLayout>
     </RouteGuard>
   );
