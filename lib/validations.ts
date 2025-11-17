@@ -38,7 +38,7 @@ export const createBannedSchema = z
     endingDate: z.string().min(1, "Ending date is required"),
     motive: z.array(z.string()).min(1, "At least one motive is required"),
     peopleInvolved: z.string().optional(),
-    incidentReport: z.string().optional(),
+    incidentReport: z.string().min(1, "Incident report is required"),
     actionTaken: z.string().optional(),
     policeNotified: z.boolean(),
     policeNotifiedDate: z.string().optional(),
