@@ -6,19 +6,15 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BannedDetailModal } from "@/components/banned/banned-detail-modal";
 import { usePendingBanneds, usePlaces } from "@/hooks/queries";
-import { Loader2, Search, Filter, ArrowUpDown, X } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
 import { Badge } from "@/components/ui/badge";
 import type { Banned } from "@/lib/types";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FiltersButton } from "@/components/filters/filters-button";
+import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
+import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
 import { format, differenceInCalendarDays } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -45,6 +41,7 @@ export default function PendingBannedsPage() {
     error: bannedsError,
   } = usePendingBanneds(sortBy);
   const { data: places, isLoading: placesLoading } = usePlaces();
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
 
   // Nota: Los returns condicionales van después de todos los hooks
   const isLoading = bannedsLoading || placesLoading;
@@ -86,6 +83,42 @@ export default function PendingBannedsPage() {
     setSearchQuery("");
     setSelectedPlaces([]);
     setGenderFilter("all");
+    setSortBy("violations-desc");
+  };
+
+  const handleFiltersApply = (values: FilterValues) => {
+    if (values.gender !== undefined) setGenderFilter(values.gender);
+    if (values.places !== undefined) setSelectedPlaces(values.places);
+    if (values.sortBy !== undefined) setSortBy(values.sortBy as any);
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (genderFilter !== "all") count++;
+    if (selectedPlaces.length > 0) count += selectedPlaces.length;
+    return count;
+  };
+
+  const getActiveFiltersChips = (): ActiveFilter[] => {
+    const chips: ActiveFilter[] = [];
+    if (genderFilter !== "all") {
+      chips.push({
+        key: "gender",
+        label: "Género",
+        value: genderFilter,
+        onRemove: () => setGenderFilter("all"),
+      });
+    }
+    selectedPlaces.forEach((placeId) => {
+      const place = places?.find((p) => p.id === placeId);
+      chips.push({
+        key: `place-${placeId}`,
+        label: "Lugar",
+        value: place?.name || "Unknown",
+        onRemove: () => handlePlaceToggle(placeId),
+      });
+    });
+    return chips;
   };
   // Filtrado client-side
   const filteredBanneds = useMemo(() => {
@@ -153,71 +186,24 @@ export default function PendingBannedsPage() {
             />
           </div>
 
-          {/* Filtros y Orden */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Filters:</span>
-              </div>
-              {/* Género */}
-              <Select value={genderFilter} onValueChange={(v: any) => setGenderFilter(v)}>
-                <SelectTrigger className="w-36 h-9">
-                  <SelectValue placeholder="Gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Genders</SelectItem>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-              {/* Lugar */}
-              <Select onValueChange={handlePlaceToggle}>
-                <SelectTrigger className="w-40 h-9">
-                  <SelectValue placeholder="Add place filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {places?.map((p) => (
-                    <SelectItem key={p.id} value={p.id} disabled={selectedPlaces.includes(p.id)}>
-                      {p.name || "Unnamed Place"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {/* Orden */}
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Sort:</span>
-                <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                  <SelectTrigger className="w-48 h-9">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="violations-desc">Violations (High to Low)</SelectItem>
-                    <SelectItem value="violations-asc">Violations (Low to High)</SelectItem>
-                    <SelectItem value="starting-date-desc">Starting Date (Newest first)</SelectItem>
-                    <SelectItem value="starting-date-asc">Starting Date (Oldest first)</SelectItem>
-                    <SelectItem value="ending-date-desc">Ending Date (Newest first)</SelectItem>
-                    <SelectItem value="ending-date-asc">Ending Date (Oldest first)</SelectItem>
-                    <SelectItem value="person-name-asc">Person Name (A-Z)</SelectItem>
-                    <SelectItem value="person-name-desc">Person Name (Z-A)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {/* Limpiar */}
-              {(searchQuery || selectedPlaces.length > 0 || genderFilter !== "all") && (
-                <button type="button" onClick={handleClearFilters} className="inline-flex h-9 items-center rounded-md border px-3 text-sm">
-                  <X className="mr-2 h-4 w-4" />
-                  Clear Filters
-                </button>
-              )}
-            </div>
-            {!isLoading && filteredBanneds.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                Showing {filteredBanneds.length} of {banneds?.filter(hasPendingPlaces).length || 0} pending bans
-              </p>
-            )}
+          {/* Filters Button and Active Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <FiltersButton
+              activeCount={getActiveFiltersCount()}
+              onClick={() => setIsFiltersModalOpen(true)}
+            />
+            <ActiveFiltersChips
+              filters={getActiveFiltersChips()}
+              onClearAll={handleClearFilters}
+            />
           </div>
+
+          {/* Results Count */}
+          {!isLoading && filteredBanneds.length > 0 && (
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredBanneds.length} of {banneds?.filter(hasPendingPlaces).length || 0} pending bans
+            </p>
+          )}
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -306,6 +292,25 @@ export default function PendingBannedsPage() {
             }}
           />
         )}
+
+        {/* Filters Modal */}
+        <FiltersModal
+          open={isFiltersModalOpen}
+          onOpenChange={setIsFiltersModalOpen}
+          config={{
+            gender: true,
+            place: true,
+            sortBy: true,
+          }}
+          values={{
+            gender: genderFilter,
+            places: selectedPlaces,
+            sortBy: sortBy,
+          }}
+          onApply={handleFiltersApply}
+          onClearAll={handleClearFilters}
+          places={places}
+        />
       </DashboardLayout>
     </RouteGuard>
   );

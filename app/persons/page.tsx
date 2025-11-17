@@ -10,13 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FiltersButton } from "@/components/filters/filters-button";
+import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
+import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,9 +40,6 @@ import {
   Loader2,
   User,
   Search,
-  Filter,
-  X,
-  ArrowUpDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -67,6 +60,7 @@ export default function PersonsPage() {
   >("newest-first");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
 
   // Debounce de búsqueda para no disparar por cada tecla
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -115,6 +109,31 @@ export default function PersonsPage() {
   const handleClearFilters = () => {
     setSearchQuery("");
     setGenderFilter("all");
+    setSortBy("newest-first");
+  };
+
+  const handleFiltersApply = (values: FilterValues) => {
+    if (values.gender !== undefined) setGenderFilter(values.gender);
+    if (values.sortBy !== undefined) setSortBy(values.sortBy as any);
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (genderFilter !== "all") count++;
+    return count;
+  };
+
+  const getActiveFiltersChips = (): ActiveFilter[] => {
+    const chips: ActiveFilter[] = [];
+    if (genderFilter !== "all") {
+      chips.push({
+        key: "gender",
+        label: "Género",
+        value: genderFilter,
+        onRemove: () => setGenderFilter("all"),
+      });
+    }
+    return chips;
   };
 
   // El ordenamiento se hace en el backend, solo usar directamente los datos
@@ -196,84 +215,17 @@ export default function PersonsPage() {
             />
           </div>
 
-          {/* Filters and Sort */}
-          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="h-4 w-4" />
-              <span>Filters:</span>
-            </div>
-
-            {/* Gender Filter */}
-            <Select
-              value={genderFilter}
-              onValueChange={(value: "all" | "Male" | "Female") =>
-                setGenderFilter(value)
-              }
-            >
-              <SelectTrigger className="w-full sm:w-36 text-base">
-                <SelectValue placeholder="Gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Genders</SelectItem>
-                <SelectItem value="Male">Male</SelectItem>
-                <SelectItem value="Female">Female</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Sort By */}
-            <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-sm text-muted-foreground flex-shrink-0">Sort:</span>
-              <Select
-                value={sortBy}
-                onValueChange={(
-                  value:
-                    | "newest-first"
-                    | "oldest-first"
-                    | "name-asc"
-                    | "name-desc"
-                ) => setSortBy(value)}
-              >
-                <SelectTrigger className="flex-1 sm:w-40 text-base">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest-first">Newest first</SelectItem>
-                  <SelectItem value="oldest-first">Oldest first</SelectItem>
-                  <SelectItem value="name-asc">Name A-Z</SelectItem>
-                  <SelectItem value="name-desc">Name Z-A</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Clear Filters */}
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearFilters}
-                className="w-full sm:w-auto"
-              >
-                <X className="mr-2 h-4 w-4" />
-                Clear Filters
-              </Button>
-            )}
+          {/* Filters Button and Active Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <FiltersButton
+              activeCount={getActiveFiltersCount()}
+              onClick={() => setIsFiltersModalOpen(true)}
+            />
+            <ActiveFiltersChips
+              filters={getActiveFiltersChips()}
+              onClearAll={handleClearFilters}
+            />
           </div>
-
-          {/* Active Filters Display */}
-          {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2">
-              {genderFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
-                  Gender: {genderFilter}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => setGenderFilter("all")}
-                  />
-                </Badge>
-              )}
-            </div>
-          )}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -532,6 +484,28 @@ export default function PersonsPage() {
             </>
           )}
         </div>
+
+        {/* Filters Modal */}
+        <FiltersModal
+          open={isFiltersModalOpen}
+          onOpenChange={setIsFiltersModalOpen}
+          config={{
+            gender: true,
+            sortBy: true,
+          }}
+          values={{
+            gender: genderFilter,
+            sortBy: sortBy,
+          }}
+          onApply={handleFiltersApply}
+          onClearAll={handleClearFilters}
+          sortOptions={[
+            { value: "newest-first", label: "Newest first" },
+            { value: "oldest-first", label: "Oldest first" },
+            { value: "name-asc", label: "Name A-Z" },
+            { value: "name-desc", label: "Name Z-A" },
+          ]}
+        />
       </DashboardLayout>
     </RouteGuard>
   );

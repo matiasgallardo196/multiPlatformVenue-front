@@ -7,18 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BannedPlaceApproval } from "@/components/banned/banned-place-approval";
 import { BannedDetailModal } from "@/components/banned/banned-detail-modal";
 import { useApprovalQueueBanneds, usePlaces } from "@/hooks/queries";
-import { Loader2, Search, Filter, ArrowUpDown, X } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FiltersButton } from "@/components/filters/filters-button";
+import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
+import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
 import type { Banned } from "@/lib/types";
 import { format, differenceInCalendarDays } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -49,6 +45,7 @@ export default function ApprovalQueuePage() {
   >("violations-desc");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
 
   // Debounce de búsqueda para no disparar por cada tecla
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -151,6 +148,53 @@ export default function ApprovalQueuePage() {
     setSelectedPlaces([]);
     setGenderFilter("all");
     setSelectedCreatorId(null);
+    setSortBy("violations-desc");
+  };
+
+  const handleFiltersApply = (values: FilterValues) => {
+    if (values.gender !== undefined) setGenderFilter(values.gender);
+    if (values.places !== undefined) setSelectedPlaces(values.places);
+    if (values.creator !== undefined) setSelectedCreatorId(values.creator);
+    if (values.sortBy !== undefined) setSortBy(values.sortBy as any);
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (genderFilter !== "all") count++;
+    if (selectedPlaces.length > 0) count += selectedPlaces.length;
+    if (selectedCreatorId) count++;
+    return count;
+  };
+
+  const getActiveFiltersChips = (): ActiveFilter[] => {
+    const chips: ActiveFilter[] = [];
+    if (genderFilter !== "all") {
+      chips.push({
+        key: "gender",
+        label: "Género",
+        value: genderFilter,
+        onRemove: () => setGenderFilter("all"),
+      });
+    }
+    selectedPlaces.forEach((placeId) => {
+      const place = places?.find((p) => p.id === placeId);
+      chips.push({
+        key: `place-${placeId}`,
+        label: "Lugar",
+        value: place?.name || "Unknown",
+        onRemove: () => handlePlaceToggle(placeId),
+      });
+    });
+    if (selectedCreatorId) {
+      const creator = creators.find((c) => c.id === selectedCreatorId);
+      chips.push({
+        key: "creator",
+        label: "Creador",
+        value: creator?.name || "Unknown",
+        onRemove: () => setSelectedCreatorId(null),
+      });
+    }
+    return chips;
   };
 
   // Filtrado en cliente solo para filtros no implementados en backend (gender, place, creator)
@@ -225,95 +269,16 @@ export default function ApprovalQueuePage() {
             />
           </div>
 
-          {/* Filtros y Orden */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Filters:</span>
-              </div>
-
-              {/* Género */}
-              <Select
-                value={genderFilter}
-                onValueChange={(value: "all" | "Male" | "Female") => setGenderFilter(value)}
-              >
-                <SelectTrigger className="w-36 h-9">
-                  <SelectValue placeholder="Gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Genders</SelectItem>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Lugar */}
-              <Select onValueChange={handlePlaceToggle}>
-                <SelectTrigger className="w-40 h-9">
-                  <SelectValue placeholder="Add place filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {places?.map((p) => (
-                    <SelectItem key={p.id} value={p.id} disabled={selectedPlaces.includes(p.id)}>
-                      {p.name || "Unnamed Place"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Creador */}
-              <Select
-                value={selectedCreatorId ?? "__all__"}
-                onValueChange={(value: string) => setSelectedCreatorId(value === "__all__" ? null : value)}
-              >
-                <SelectTrigger className="w-56 h-9">
-                  <SelectValue placeholder="Creator" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All creators</SelectItem>
-                  {creators.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Orden */}
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Sort:</span>
-                <Select
-                  value={sortBy}
-                  onValueChange={(value: any) => setSortBy(value)}
-                >
-                  <SelectTrigger className="w-48 h-9">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="violations-desc">Violations (High to Low)</SelectItem>
-                    <SelectItem value="violations-asc">Violations (Low to High)</SelectItem>
-                    <SelectItem value="starting-date-desc">Starting Date (Newest first)</SelectItem>
-                    <SelectItem value="starting-date-asc">Starting Date (Oldest first)</SelectItem>
-                    <SelectItem value="ending-date-desc">Ending Date (Newest first)</SelectItem>
-                    <SelectItem value="ending-date-asc">Ending Date (Oldest first)</SelectItem>
-                    <SelectItem value="person-name-asc">Person Name (A-Z)</SelectItem>
-                    <SelectItem value="person-name-desc">Person Name (Z-A)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Limpiar filtros */}
-              {(searchQuery || selectedPlaces.length > 0 || genderFilter !== "all" || selectedCreatorId) && (
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="inline-flex h-9 items-center rounded-md border px-3 text-sm"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Clear Filters
-                </button>
-              )}
-            </div>
+          {/* Filters Button and Active Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <FiltersButton
+              activeCount={getActiveFiltersCount()}
+              onClick={() => setIsFiltersModalOpen(true)}
+            />
+            <ActiveFiltersChips
+              filters={getActiveFiltersChips()}
+              onClearAll={handleClearFilters}
+            />
           </div>
 
           {/* Conteo + Acción masiva + Paginación */}
@@ -487,6 +452,28 @@ export default function ApprovalQueuePage() {
             }}
           />
         )}
+
+        {/* Filters Modal */}
+        <FiltersModal
+          open={isFiltersModalOpen}
+          onOpenChange={setIsFiltersModalOpen}
+          config={{
+            gender: true,
+            place: true,
+            creator: true,
+            sortBy: true,
+          }}
+          values={{
+            gender: genderFilter,
+            places: selectedPlaces,
+            creator: selectedCreatorId,
+            sortBy: sortBy,
+          }}
+          onApply={handleFiltersApply}
+          onClearAll={handleClearFilters}
+          places={places}
+          creators={creators}
+        />
       </DashboardLayout>
     </RouteGuard>
   );
