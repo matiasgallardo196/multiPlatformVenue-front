@@ -10,16 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { FiltersButton } from "@/components/filters/filters-button";
 import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
 import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
+import { CompactPagination } from "@/components/pagination/compact-pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -268,51 +262,18 @@ export default function PersonsPage() {
             </div>
           ) : (
             <>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex flex-row flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">
-                  Showing {(currentPage - 1) * currentLimit + 1}
-                  {"-"}
-                  {Math.min(currentPage * currentLimit, total)} of {total} persons
+                  {total} {total === 1 ? "person" : "persons"}
                 </p>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">Per page:</span>
-                    <Select
-                      value={String(currentLimit)}
-                      onValueChange={(v) => setLimit(Number(v))}
-                    >
-                      <SelectTrigger className="w-24 h-9 text-base">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="20">20</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                        <SelectItem value="100">100</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
-                      className="flex-1 sm:flex-none"
-                    >
-                      Prev
-                    </Button>
-                    <span className="text-sm px-2 whitespace-nowrap">Page {currentPage}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => p + 1)}
-                      disabled={!hasNext}
-                      className="flex-1 sm:flex-none"
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
+                <CompactPagination
+                  currentPage={currentPage}
+                  total={total}
+                  limit={currentLimit}
+                  onPageChange={setPage}
+                  onLimitChange={setLimit}
+                  hasNext={hasNext}
+                />
               </div>
 
               <div className="max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto border rounded-lg p-3 sm:p-4">

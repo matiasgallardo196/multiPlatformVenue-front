@@ -22,6 +22,7 @@ import {
 import { FiltersButton } from "@/components/filters/filters-button";
 import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
 import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
+import { CompactPagination } from "@/components/pagination/compact-pagination";
 import type { Banned } from "@/lib/types";
 import { format, differenceInCalendarDays } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -293,53 +294,26 @@ export default function ApprovalQueuePage() {
           {!isLoading && (
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-sm text-muted-foreground">
-                Showing {(currentPage - 1) * currentLimit + 1}
-                {"-"}
-                {Math.min(currentPage * currentLimit, total)} of {total} pending approvals
+                {total} {total === 1 ? "pending approval" : "pending approvals"}
               </p>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
                 <BulkApproveButton
                   disabled={filteredBanneds.length === 0}
                   count={filteredBanneds.length}
                   selectedCreatorId={selectedCreatorId}
                   bannedIds={filteredBanneds.map((b) => b.id)}
                   genderFilter={genderFilter}
+                  className="order-1"
                 />
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Per page:</span>
-                  <Select
-                    value={String(currentLimit)}
-                    onValueChange={(v) => setLimit(Number(v))}
-                  >
-                    <SelectTrigger className="w-24 h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
-                    >
-                      Prev
-                    </Button>
-                    <span className="text-sm">Page {currentPage}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => p + 1)}
-                      disabled={!hasNext}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
+                <CompactPagination
+                  currentPage={currentPage}
+                  total={total}
+                  limit={currentLimit}
+                  onPageChange={setPage}
+                  onLimitChange={setLimit}
+                  hasNext={hasNext}
+                  className="order-2 ml-auto sm:ml-0"
+                />
               </div>
             </div>
           )}
@@ -487,7 +461,7 @@ export default function ApprovalQueuePage() {
   );
 }
 
-function BulkApproveButton({ disabled, count, selectedCreatorId, bannedIds, genderFilter }: { disabled: boolean; count: number; selectedCreatorId: string | null; bannedIds: string[]; genderFilter: 'all' | 'Male' | 'Female' }) {
+function BulkApproveButton({ disabled, count, selectedCreatorId, bannedIds, genderFilter, className }: { disabled: boolean; count: number; selectedCreatorId: string | null; bannedIds: string[]; genderFilter: 'all' | 'Male' | 'Female'; className?: string }) {
   const [open, setOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const bulkApprove = useBulkApproveBanneds();
@@ -522,6 +496,7 @@ function BulkApproveButton({ disabled, count, selectedCreatorId, bannedIds, gend
         variant="default"
         disabled={disabled}
         onClick={() => setOpen(true)}
+        className={className}
       >
         Approve all
       </Button>
