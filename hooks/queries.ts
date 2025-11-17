@@ -9,14 +9,11 @@ import type { AuthUser } from "@/hooks/use-auth";
 import type {
   Person,
   Place,
-  Incident,
   Banned,
   CreatePersonDto,
   UpdatePersonDto,
   CreatePlaceDto,
   UpdatePlaceDto,
-  CreateIncidentDto,
-  UpdateIncidentDto,
   CreateBannedDto,
   UpdateBannedDto,
   PersonBanStatus,
@@ -33,8 +30,6 @@ export const queryKeys = {
   person: (id: string) => ["persons", id] as const,
   places: ["places"] as const,
   place: (id: string) => ["places", id] as const,
-  incidents: ["incidents"] as const,
-  incident: (id: string) => ["incidents", id] as const,
   banneds: ["banneds"] as const,
   banned: (id: string) => ["banneds", id] as const,
   personBans: (personId: string) => ["banneds", "person", personId] as const,
@@ -216,62 +211,6 @@ export function useDeletePlace() {
     mutationFn: (id: string) => api.delete(`/places/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.places });
-    },
-  });
-}
-
-// Incidents Hooks
-export function useIncidents(options?: { enabled?: boolean; staleTimeMs?: number }) {
-  return useQuery({
-    queryKey: queryKeys.incidents,
-    queryFn: () => api.get<Incident[]>("/incidents"),
-    retry: 3,
-    retryDelay: 1000,
-    enabled: options?.enabled ?? true,
-    staleTime: options?.staleTimeMs ?? 2 * 60 * 1000,
-  });
-}
-
-export function useIncident(id: string) {
-  return useQuery({
-    queryKey: queryKeys.incident(id),
-    queryFn: () => api.get<Incident>(`/incidents/${id}`),
-    enabled: !!id,
-  });
-}
-
-export function useCreateIncident() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: CreateIncidentDto) =>
-      api.post<Incident>("/incidents", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.incidents });
-    },
-  });
-}
-
-export function useUpdateIncident() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateIncidentDto }) =>
-      api.patch<Incident>(`/incidents/${id}`, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.incidents });
-      queryClient.invalidateQueries({ queryKey: queryKeys.incident(id) });
-    },
-  });
-}
-
-export function useDeleteIncident() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.delete(`/incidents/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.incidents });
     },
   });
 }
@@ -823,7 +762,7 @@ export function useAuthMe(enabled: boolean) {
 export function useDashboardSummary(enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.dashboardSummary,
-    queryFn: () => api.get<{ totals: { totalPersons: number; activeBans: number; totalPlaces: number; totalIncidents: number } }>("/dashboard/summary"),
+    queryFn: () => api.get<{ totals: { totalPersons: number; activeBans: number; totalPlaces: number } }>("/dashboard/summary"),
     enabled,
     staleTime: 10 * 1000, // 10 segundos para forzar actualizaciones más frecuentes
     refetchOnWindowFocus: true,

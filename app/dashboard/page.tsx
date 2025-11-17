@@ -10,16 +10,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useDashboardSummary } from "@/hooks/queries";
-import { Users, MapPin, AlertTriangle, UserX } from "lucide-react";
+import { Users, MapPin, UserX } from "lucide-react";
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import dynamic from "next/dynamic";
 const BannedCreateFullDialog = dynamic(
   () => import("@/components/banned/banned-create-full-dialog").then(m => m.BannedCreateFullDialog),
-  { ssr: false }
-);
-const IncidentCreateDialog = dynamic(
-  () => import("@/components/incident/incident-create-dialog").then(m => m.IncidentCreateDialog),
   { ssr: false }
 );
 const PersonCreateDialog = dynamic(
@@ -38,7 +34,6 @@ export default function DashboardPage() {
       totalPersons: summary?.totals.totalPersons ?? 0,
       activeBans: summary?.totals.activeBans ?? 0,
       totalPlaces: summary?.totals.totalPlaces ?? 0,
-      totalIncidents: summary?.totals.totalIncidents ?? 0,
     };
   }, [summary]);
 
@@ -111,25 +106,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           )}
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Incidents
-              </CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-2xl font-bold">-</div>
-              ) : (
-                <div className="text-2xl font-bold">{stats.totalIncidents}</div>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {isLoading ? "Loading..." : "Reported incidents"}
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -137,7 +113,7 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle>Welcome to Admin Dashboard</CardTitle>
               <CardDescription>
-                Manage banned persons, places, incidents, and more from this
+                Manage banned persons, places, and more from this
                 central dashboard.
               </CardDescription>
             </CardHeader>
@@ -161,10 +137,6 @@ export default function DashboardPage() {
                       the system
                     </li>
                   )}
-                  <li>
-                    • <strong>Incidents:</strong> Track and manage incident
-                    reports
-                  </li>
                 </ul>
               </div>
             </CardContent>
@@ -193,17 +165,6 @@ export default function DashboardPage() {
                       <Users className="h-5 w-5 text-muted-foreground" />
                     </div>
                   </PersonCreateDialog>
-                  <IncidentCreateDialog shouldRedirect>
-                    <div className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer">
-                      <div>
-                        <p className="font-medium">Report Incident</p>
-                        <p className="text-sm text-muted-foreground">
-                          Create new incident report
-                        </p>
-                      </div>
-                      <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </IncidentCreateDialog>
                   <BannedCreateFullDialog redirectOnSuccess>
                     <div className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer">
                       <div>

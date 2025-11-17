@@ -487,17 +487,6 @@ export default function PersonsPage() {
                       </CardHeader>
 
                       <CardContent className="space-y-3">
-                        {person.incidents && person.incidents.length > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">
-                              Incidents:
-                            </span>
-                            <Badge variant="outline">
-                              {person.incidents.length}
-                            </Badge>
-                          </div>
-                        )}
-
                         {person.imagenProfileUrl &&
                           person.imagenProfileUrl.length > 1 && (
                             <div className="space-y-2">
