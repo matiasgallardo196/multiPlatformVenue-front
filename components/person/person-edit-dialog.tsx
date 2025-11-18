@@ -54,14 +54,23 @@ export function PersonEditDialog({
   }, [person, form]);
 
   const onSubmit = async (values: UpdatePersonForm) => {
+    console.log('[PersonEditDialog] onSubmit called', { id, values });
     try {
-      await updatePerson.mutateAsync({ id, data: values });
+      console.log('[PersonEditDialog] Calling mutateAsync');
+      const result = await updatePerson.mutateAsync({ id, data: values });
+      console.log('[PersonEditDialog] mutateAsync success', { result });
       toast({ title: "Success", description: "Person updated successfully." });
+      console.log('[PersonEditDialog] Closing modal');
       setOpen(false);
     } catch (error) {
+      console.error('[PersonEditDialog] Error in onSubmit', { 
+        error, 
+        errorMessage: error?.message,
+        errorStack: error?.stack 
+      });
       toast({
         title: "Error",
-        description: "Failed to update person. Please try again.",
+        description: error?.message || "Failed to update person. Please try again.",
         variant: "destructive",
       });
     }
