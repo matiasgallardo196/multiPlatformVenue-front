@@ -164,29 +164,39 @@ export function useDeletePerson() {
 export function usePlaces(
   options?: { page?: number; limit?: number; search?: string; enabled?: boolean; staleTimeMs?: number },
 ) {
+  const hasPagination = typeof options?.page === 'number' || typeof options?.limit === 'number' || (options?.search && options.search.trim());
+  
   const queryKey = useMemo(() => {
-    const page = options?.page || 1;
-    const limit = options?.limit || 20;
-    const search = options?.search || '';
-    return [...queryKeys.places, page, limit, search];
-  }, [options?.page, options?.limit, options?.search]);
+    if (hasPagination) {
+      const page = options?.page || 1;
+      const limit = options?.limit || 20;
+      const search = options?.search || '';
+      return [...queryKeys.places, 'paginated', page, limit, search];
+    }
+    return queryKeys.places;
+  }, [hasPagination, options?.page, options?.limit, options?.search]);
 
   return useQuery({
     queryKey,
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (typeof options?.page === 'number' && options.page > 0) {
-        params.append('page', String(options.page));
+      if (hasPagination) {
+        const params = new URLSearchParams();
+        if (typeof options?.page === 'number' && options.page > 0) {
+          params.append('page', String(options.page));
+        }
+        if (typeof options?.limit === 'number' && options.limit > 0) {
+          params.append('limit', String(options.limit));
+        }
+        if (options?.search && options.search.trim()) {
+          params.append('search', options.search.trim());
+        }
+        const queryString = params.toString();
+        const url = queryString ? `/places?${queryString}` : "/places";
+        return api.get<{ items: Place[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
+      } else {
+        // Sin paginación: retornar array directamente para compatibilidad
+        return api.get<Place[]>("/places");
       }
-      if (typeof options?.limit === 'number' && options.limit > 0) {
-        params.append('limit', String(options.limit));
-      }
-      if (options?.search && options.search.trim()) {
-        params.append('search', options.search.trim());
-      }
-      const queryString = params.toString();
-      const url = queryString ? `/places?${queryString}` : "/places";
-      return api.get<{ items: Place[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
     },
     retry: 3,
     retryDelay: 1000,
