@@ -276,7 +276,7 @@ export default function PersonsPage() {
                 />
               </div>
 
-              <div className="max-h-[calc(100vh-400px)] sm:max-h-[calc(100vh-450px)] overflow-y-auto border rounded-lg p-3 sm:p-4">
+              <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((person) => (
                     <Card
