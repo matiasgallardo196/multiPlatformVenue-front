@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { FiltersButton } from "@/components/filters/filters-button";
 import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
 import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
+import { CompactPagination } from "@/components/pagination/compact-pagination";
 import { format, differenceInCalendarDays } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -35,13 +36,34 @@ export default function PendingBannedsPage() {
     | "person-name-asc"
     | "person-name-desc"
   >("violations-desc");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
+
+  // Debounce de búsqueda para no disparar por cada tecla
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+
+  // Resetear página cuando cambian filtros/sort/búsqueda
+  useEffect(() => {
+    setPage(1);
+  }, [sortBy, genderFilter, selectedPlaces, debouncedSearch]);
+
   const {
-    data: banneds,
+    data: bannedsPage,
     isLoading: bannedsLoading,
     error: bannedsError,
-  } = usePendingBanneds(sortBy);
+  } = usePendingBanneds(sortBy, { page, limit, search: debouncedSearch });
+
+  const banneds = bannedsPage?.items || [];
+  const total = bannedsPage?.total ?? 0;
+  const currentPage = bannedsPage?.page ?? page;
+  const currentLimit = bannedsPage?.limit ?? limit;
+  const hasNext = bannedsPage?.hasNext ?? false;
   const { data: places, isLoading: placesLoading } = usePlaces();
-  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
 
   // Nota: Los returns condicionales van después de todos los hooks
   const isLoading = bannedsLoading || placesLoading;
@@ -120,21 +142,16 @@ export default function PendingBannedsPage() {
     });
     return chips;
   };
-  // Filtrado client-side
+  // Filtrado client-side (solo places y gender, la búsqueda se maneja en el backend)
   const filteredBanneds = useMemo(() => {
     const list = (banneds || []).filter(hasPendingPlaces);
     return list.filter((banned: Banned) => {
       const person = banned.person;
-      const personName = [person?.name, person?.lastName, person?.nickname].filter(Boolean).join(" ").toLowerCase();
-      const q = (searchQuery || "").toLowerCase();
-      const numQ = q.replace(/[^0-9]/g, "");
-      const matchesIncident = numQ.length > 0 && String(banned.incidentNumber).includes(numQ);
-      const matchesSearch = !q || personName.includes(q) || matchesIncident;
       const matchesPlace = selectedPlaces.length === 0 || banned.bannedPlaces?.some((bp) => selectedPlaces.includes(bp.placeId));
       const matchesGender = genderFilter === "all" || person?.gender === genderFilter;
-      return matchesSearch && matchesPlace && matchesGender;
+      return matchesPlace && matchesGender;
     });
-  }, [banneds, searchQuery, selectedPlaces, genderFilter]);
+  }, [banneds, selectedPlaces, genderFilter]);
 
   // Only show for managers (después de hooks)
   if (user?.role !== "manager") {
@@ -199,11 +216,24 @@ export default function PendingBannedsPage() {
             onClearAll={handleClearFilters}
           />
 
-          {/* Results Count */}
-          {!isLoading && filteredBanneds.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              Showing {filteredBanneds.length} of {banneds?.filter(hasPendingPlaces).length || 0} pending bans
-            </p>
+          {/* Conteo + Paginación */}
+          {!isLoading && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                {total} {total === 1 ? "pending ban" : "pending bans"}
+              </p>
+              {total > 0 && (
+                <CompactPagination
+                  currentPage={currentPage}
+                  total={total}
+                  limit={currentLimit}
+                  onPageChange={setPage}
+                  onLimitChange={setLimit}
+                  hasNext={hasNext}
+                  className="ml-auto sm:ml-0"
+                />
+              )}
+            </div>
           )}
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -218,13 +248,6 @@ export default function PendingBannedsPage() {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Showing {banneds.filter(hasPendingPlaces).length} pending
-                  ban{banneds.filter(hasPendingPlaces).length !== 1 ? "s" : ""}
-                </p>
-              </div>
-
               <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   {filteredBanneds.map((banned) => {

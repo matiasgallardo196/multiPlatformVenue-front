@@ -320,22 +320,45 @@ export function useDeleteBanned() {
   });
 }
 
-export function usePendingBanneds(sortBy?: string) {
-  const queryKey = sortBy
-    ? [...queryKeys.pendingBanneds, 'sorted', sortBy]
-    : queryKeys.pendingBanneds;
+export function usePendingBanneds(
+  sortBy?: string,
+  options?: { page?: number; limit?: number; search?: string; enabled?: boolean; staleTimeMs?: number },
+) {
+  // Memoizar el queryKey para evitar recrearlo en cada render
+  const queryKey = useMemo(() => {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const search = options?.search || '';
+    
+    return sortBy
+      ? [...queryKeys.pendingBanneds, 'sorted', sortBy, page, limit, search]
+      : [...queryKeys.pendingBanneds, page, limit, search];
+  }, [sortBy, options?.page, options?.limit, options?.search]);
 
   return useQuery({
     queryKey,
     queryFn: async () => {
       const params = new URLSearchParams();
       if (sortBy) params.append('sortBy', sortBy);
+      if (options?.search && options.search.trim()) {
+        params.append('search', options.search.trim());
+      }
+      if (typeof options?.page === 'number' && options.page > 0) {
+        params.append('page', String(options.page));
+      }
+      if (typeof options?.limit === 'number' && options.limit > 0) {
+        params.append('limit', String(options.limit));
+      }
       const queryString = params.toString();
-      const url = queryString ? `/banneds/pending?${queryString}` : "/banneds/pending";
-      return api.get<Banned[]>(url);
+      const url = queryString
+        ? `/banneds/pending?${queryString}`
+        : "/banneds/pending";
+      return api.get<{ items: Banned[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
     },
     retry: 3,
     retryDelay: 1000,
+    enabled: options?.enabled ?? true,
+    staleTime: options?.staleTimeMs ?? 2 * 60 * 1000,
   });
 }
 

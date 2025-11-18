@@ -36,7 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAuth } from "@/lib/auth-provider";
+import { useAuth } from "@/hooks/use-auth";
 
 interface BannedCardProps {
   banned: Banned;
