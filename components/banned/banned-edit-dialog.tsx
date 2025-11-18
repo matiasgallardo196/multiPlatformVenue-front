@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -115,7 +116,12 @@ export function BannedEditDialog({
         }}
       >
         <DialogHeader className="flex flex-row items-center justify-between gap-4">
-          <DialogTitle>Edit Ban</DialogTitle>
+          <div className="flex flex-col gap-2">
+            <DialogTitle>Edit Ban</DialogTitle>
+            <DialogDescription>
+              Update the ban record with new incident details or information.
+            </DialogDescription>
+          </div>
           <Form {...form}>
             <FormField
               control={form.control}

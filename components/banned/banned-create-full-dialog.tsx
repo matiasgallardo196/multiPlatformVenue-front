@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -139,7 +140,12 @@ export function BannedCreateFullDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[90vh] flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between gap-4">
-          <DialogTitle>Create Ban</DialogTitle>
+          <div className="flex flex-col gap-2">
+            <DialogTitle>Create Ban</DialogTitle>
+            <DialogDescription>
+              Create a new ban record for a person with incident details.
+            </DialogDescription>
+          </div>
           <Form {...form}>
             <FormField
               control={form.control}

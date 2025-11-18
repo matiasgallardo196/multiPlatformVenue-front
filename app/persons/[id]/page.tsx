@@ -13,6 +13,7 @@ import { Loader2, User, Camera, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTrigger,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -156,6 +157,9 @@ export default function PersonDetailPage() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <DialogTitle className="sr-only">Image preview</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Full size preview of the person's profile image
+                </DialogDescription>
                 <img
                   src={person.imagenProfileUrl?.[0] || "/placeholder.svg"}
                   alt={getName()}
@@ -317,6 +321,9 @@ export default function PersonDetailPage() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <DialogTitle className="sr-only">Image preview</DialogTitle>
+                  <DialogDescription className="sr-only">
+                    Gallery view of all person's profile images
+                  </DialogDescription>
                   <div className="relative">
                     <img
                       src={person.imagenProfileUrl[galleryIndex]}

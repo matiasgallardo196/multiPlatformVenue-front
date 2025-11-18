@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -76,6 +76,9 @@ export function BannedDetailModal({
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Loading ban information</DialogTitle>
+            <DialogDescription>
+              Please wait while we load the ban information.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -92,6 +95,9 @@ export function BannedDetailModal({
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Error loading information</DialogTitle>
+            <DialogDescription>
+              There was an error loading the ban information. Please try again.
+            </DialogDescription>
           </DialogHeader>
           <div className="text-center py-8">
             <p className="text-destructive">Error loading ban information</p>
@@ -147,6 +153,9 @@ export function BannedDetailModal({
             <User className="h-5 w-5" />
             Ban Information - {personName}
           </DialogTitle>
+          <DialogDescription>
+            View detailed information about this ban record including incident details, places, and history.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">

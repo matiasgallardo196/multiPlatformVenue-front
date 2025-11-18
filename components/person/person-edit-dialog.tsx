@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -72,6 +73,9 @@ export function PersonEditDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Person</DialogTitle>
+          <DialogDescription>
+            Update the person's personal information and details.
+          </DialogDescription>
         </DialogHeader>
 
         <PersonForm

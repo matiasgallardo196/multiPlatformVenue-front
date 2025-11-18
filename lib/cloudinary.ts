@@ -1,5 +1,4 @@
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME as string;
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 type SignatureResponse = {
   timestamp: number;
@@ -12,28 +11,9 @@ type SignatureResponse = {
 export async function getUploadSignature(
   folder?: string
 ): Promise<SignatureResponse> {
-  const res = await fetch(`${API_BASE_URL}/cloudinary/signature`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ folder }),
-  });
-  if (!res.ok) {
-    try {
-      const ct = res.headers.get("content-type") || "";
-      const data = ct.includes("application/json")
-        ? await res.json()
-        : await res.text();
-      const msg =
-        (data && (data.message || data.error)) ||
-        String(data) ||
-        res.statusText;
-      throw new Error(msg || "Failed to get upload signature");
-    } catch (e: any) {
-      throw new Error(e?.message || "Failed to get upload signature");
-    }
-  }
-  return res.json();
+  // Usar la función api.post() que maneja autenticación automáticamente
+  const { api } = await import("./api");
+  return api.post<SignatureResponse>("/cloudinary/signature", { folder });
 }
 
 export async function uploadToCloudinary(

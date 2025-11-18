@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -90,6 +91,9 @@ export function PlaceEditDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Place</DialogTitle>
+          <DialogDescription>
+            Update the place information including name, city, and email.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
