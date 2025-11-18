@@ -61,7 +61,7 @@ export function PersonEditDialog({
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update person. Please try again.",
+        description: error?.message || "Failed to update person. Please try again.",
         variant: "destructive",
       });
     }

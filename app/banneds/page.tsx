@@ -268,7 +268,7 @@ export default function BannedsPage() {
               </p>
             </div>
           ) : (
-            <div className="max-h-[calc(100vh-280px)] sm:max-h-[calc(100vh-250px)] md:max-h-[calc(100vh-240px)] overflow-y-auto border rounded-lg p-3 sm:p-4">
+            <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
               <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 {filteredBanneds.map((banned: Banned) => (
                   <BannedCard

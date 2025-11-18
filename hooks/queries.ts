@@ -122,6 +122,9 @@ export function usePerson(id: string) {
     queryKey: queryKeys.person(id),
     queryFn: () => api.get<Person>(`/persons/${id}`),
     enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutos - los datos son frescos por 5 minutos
+    refetchOnMount: false, // No refetchear al montar si los datos están frescos
+    refetchOnWindowFocus: false, // No refetchear al enfocar ventana si los datos están frescos
   });
 }
 
@@ -130,8 +133,67 @@ export function useCreatePerson() {
 
   return useMutation({
     mutationFn: (data: CreatePersonDto) => api.post<Person>("/persons", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
+    onSuccess: (data) => {
+      // Set the individual person cache first
+      queryClient.setQueryData(queryKeys.person(data.id), data);
+      
+      // Update cache with server response (includes auto-generated image, etc.)
+      // Add the new person to the beginning of lists (assuming newest-first sort)
+      queryClient.setQueriesData<{ items: Person[]; total: number; page: number; limit: number; hasNext: boolean }>(
+        { 
+          queryKey: queryKeys.persons,
+          exact: false,
+          predicate: (query) => {
+            const key = query.queryKey;
+            // Exclude individual person queries: ["persons", id]
+            if (Array.isArray(key) && key.length === 2 && key[0] === "persons") {
+              const secondKey = key[1];
+              const isListKey = secondKey === "filtered" || secondKey === "search";
+              return isListKey;
+            }
+            return true;
+          }
+        },
+        (old) => {
+          if (!old || !('items' in old) || !Array.isArray(old.items)) {
+            return old;
+          }
+          
+          // Add new person at the beginning (assuming newest-first sort)
+          // Only add if we're on page 1, otherwise let invalidation handle it
+          const isPageOne = old.page === 1;
+          
+          if (isPageOne) {
+            // If the list is full, remove the last item to maintain page size
+            const updatedItems = [data, ...old.items];
+            const shouldTrim = updatedItems.length > old.limit;
+            const finalItems = shouldTrim ? updatedItems.slice(0, old.limit) : updatedItems;
+            
+            return {
+              ...old,
+              items: finalItems,
+              total: old.total + 1,
+            };
+          }
+          
+          // If not on page 1, just increment total and let invalidation refetch
+          return {
+            ...old,
+            total: old.total + 1,
+          };
+        }
+      );
+      
+      // Invalidate only inactive queries to sync in background
+      // Don't refetch active queries immediately to avoid flickering
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.persons,
+        refetchType: 'inactive',
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.personSearch,
+        refetchType: 'inactive',
+      });
     },
   });
 }
@@ -142,9 +204,55 @@ export function useUpdatePerson() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdatePersonDto }) =>
       api.patch<Person>(`/persons/${id}`, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
-      queryClient.invalidateQueries({ queryKey: queryKeys.person(id) });
+    onSuccess: (data, { id }) => {
+      // Update specific person cache immediately
+      queryClient.setQueryData(queryKeys.person(id), data);
+      
+      // Update all persons list queries directly (including filtered ones)
+      // Exclude individual person queries (["persons", id]) which return Person objects, not paginated lists
+      queryClient.setQueriesData<{ items: Person[]; total: number; page: number; limit: number; hasNext: boolean }>(
+        { 
+          queryKey: queryKeys.persons,
+          exact: false,
+          predicate: (query) => {
+            const key = query.queryKey;
+            // Exclude individual person queries: ["persons", id] where id is a UUID
+            // Include: ["persons"], ["persons", "filtered", {...}], ["persons", "search", ...]
+            if (Array.isArray(key) && key.length === 2 && key[0] === "persons") {
+              const secondKey = key[1];
+              const isListKey = secondKey === "filtered" || secondKey === "search";
+              return isListKey;
+            }
+            return true;
+          }
+        },
+        (old) => {
+          if (!old || !('items' in old) || !Array.isArray(old.items)) {
+            return old;
+          }
+          
+          // Update the person in the items array
+          const updatedItems = old.items.map((person) =>
+            person.id === id ? data : person
+          );
+          
+          return {
+            ...old,
+            items: updatedItems,
+          };
+        }
+      );
+      
+      // Invalidate only inactive queries to sync in background
+      // Don't refetch active queries immediately to avoid flickering
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.persons,
+        refetchType: 'inactive',
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.personSearch,
+        refetchType: 'inactive',
+      });
     },
   });
 }
@@ -154,17 +262,94 @@ export function useDeletePerson() {
 
   return useMutation({
     mutationFn: (id: string) => api.delete(`/persons/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
+    onSuccess: (_, id) => {
+      // Remove specific person from cache
+      queryClient.removeQueries({ queryKey: queryKeys.person(id) });
+      
+      // Update all persons list queries directly (remove person from lists)
+      queryClient.setQueriesData<{ items: Person[]; total: number; page: number; limit: number; hasNext: boolean }>(
+        { 
+          queryKey: queryKeys.persons,
+          exact: false,
+          predicate: (query) => {
+            const key = query.queryKey;
+            // Exclude individual person queries: ["persons", id]
+            if (Array.isArray(key) && key.length === 2 && key[0] === "persons") {
+              const secondKey = key[1];
+              const isListKey = secondKey === "filtered" || secondKey === "search";
+              return isListKey;
+            }
+            return true;
+          }
+        },
+        (old) => {
+          if (!old || !('items' in old) || !Array.isArray(old.items)) {
+            return old;
+          }
+          
+          // Remove the deleted person from the items array
+          const updatedItems = old.items.filter((person) => person.id !== id);
+          const newTotal = Math.max(0, old.total - 1);
+          
+          return {
+            ...old,
+            items: updatedItems,
+            total: newTotal,
+          };
+        }
+      );
+      
+      // Invalidate only inactive queries to sync in background
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.persons,
+        refetchType: 'inactive',
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.personSearch,
+        refetchType: 'inactive',
+      });
     },
   });
 }
 
 // Places Hooks
-export function usePlaces(options?: { enabled?: boolean; staleTimeMs?: number }) {
+export function usePlaces(
+  options?: { page?: number; limit?: number; search?: string; enabled?: boolean; staleTimeMs?: number },
+) {
+  const hasPagination = typeof options?.page === 'number' || typeof options?.limit === 'number' || (options?.search && options.search.trim());
+  
+  const queryKey = useMemo(() => {
+    if (hasPagination) {
+      const page = options?.page || 1;
+      const limit = options?.limit || 20;
+      const search = options?.search || '';
+      return [...queryKeys.places, 'paginated', page, limit, search];
+    }
+    return queryKeys.places;
+  }, [hasPagination, options?.page, options?.limit, options?.search]);
+
   return useQuery({
-    queryKey: queryKeys.places,
-    queryFn: () => api.get<Place[]>("/places"),
+    queryKey,
+    queryFn: async () => {
+      if (hasPagination) {
+        const params = new URLSearchParams();
+        if (typeof options?.page === 'number' && options.page > 0) {
+          params.append('page', String(options.page));
+        }
+        if (typeof options?.limit === 'number' && options.limit > 0) {
+          params.append('limit', String(options.limit));
+        }
+        if (options?.search && options.search.trim()) {
+          params.append('search', options.search.trim());
+        }
+        const queryString = params.toString();
+        const url = queryString ? `/places?${queryString}` : "/places";
+        return api.get<{ items: Place[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
+      } else {
+        // Sin paginación: retornar array directamente para compatibilidad
+        return api.get<Place[]>("/places");
+      }
+    },
     retry: 3,
     retryDelay: 1000,
     enabled: options?.enabled ?? true,
@@ -320,22 +505,45 @@ export function useDeleteBanned() {
   });
 }
 
-export function usePendingBanneds(sortBy?: string) {
-  const queryKey = sortBy
-    ? [...queryKeys.pendingBanneds, 'sorted', sortBy]
-    : queryKeys.pendingBanneds;
+export function usePendingBanneds(
+  sortBy?: string,
+  options?: { page?: number; limit?: number; search?: string; enabled?: boolean; staleTimeMs?: number },
+) {
+  // Memoizar el queryKey para evitar recrearlo en cada render
+  const queryKey = useMemo(() => {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const search = options?.search || '';
+    
+    return sortBy
+      ? [...queryKeys.pendingBanneds, 'sorted', sortBy, page, limit, search]
+      : [...queryKeys.pendingBanneds, page, limit, search];
+  }, [sortBy, options?.page, options?.limit, options?.search]);
 
   return useQuery({
     queryKey,
     queryFn: async () => {
       const params = new URLSearchParams();
       if (sortBy) params.append('sortBy', sortBy);
+      if (options?.search && options.search.trim()) {
+        params.append('search', options.search.trim());
+      }
+      if (typeof options?.page === 'number' && options.page > 0) {
+        params.append('page', String(options.page));
+      }
+      if (typeof options?.limit === 'number' && options.limit > 0) {
+        params.append('limit', String(options.limit));
+      }
       const queryString = params.toString();
-      const url = queryString ? `/banneds/pending?${queryString}` : "/banneds/pending";
-      return api.get<Banned[]>(url);
+      const url = queryString
+        ? `/banneds/pending?${queryString}`
+        : "/banneds/pending";
+      return api.get<{ items: Banned[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
     },
     retry: 3,
     retryDelay: 1000,
+    enabled: options?.enabled ?? true,
+    staleTime: options?.staleTimeMs ?? 2 * 60 * 1000,
   });
 }
 

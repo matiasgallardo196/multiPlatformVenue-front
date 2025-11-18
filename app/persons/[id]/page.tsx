@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { PersonEditDialog } from "@/components/person/person-edit-dialog";
 import { BannedCreateDialog } from "@/components/banned/banned-create-dialog";
+import { BannedEditDialog } from "@/components/banned/banned-edit-dialog";
 import { useMemo, useState } from "react";
 import {
   AlertDialog,
@@ -55,9 +56,9 @@ export default function PersonDetailPage() {
   const [galleryIndex, setGalleryIndex] = useState(0);
 
   // Calcular estados de bans basado en bannedPlaces
-  const { hasActiveBans, hasPendingBans, banDisplayStatus } = useMemo(() => {
+  const { hasActiveBans, hasPendingBans, banDisplayStatus, mostRecentBanId } = useMemo(() => {
     if (!bans || bans.length === 0) {
-      return { hasActiveBans: false, hasPendingBans: false, banDisplayStatus: "None" as const };
+      return { hasActiveBans: false, hasPendingBans: false, banDisplayStatus: "None" as const, mostRecentBanId: null };
     }
 
     const now = new Date();
@@ -83,7 +84,9 @@ export default function PersonDetailPage() {
     }
 
     const status: "Active" | "Pending" | "None" = hasActive ? "Active" : hasPending ? "Pending" : "None";
-    return { hasActiveBans: hasActive, hasPendingBans: hasPending, banDisplayStatus: status };
+    // Obtener el ID del ban más reciente (el primero en la lista)
+    const mostRecentBanId = bans && bans.length > 0 ? bans[0].id : null;
+    return { hasActiveBans: hasActive, hasPendingBans: hasPending, banDisplayStatus: status, mostRecentBanId };
   }, [bans]);
 
   const getName = () => {
@@ -204,17 +207,28 @@ export default function PersonDetailPage() {
                   Edit Person Details
                 </Button>
               </PersonEditDialog>
-              <BannedCreateDialog
-                personId={person.id}
-                redirectOnSuccess
-              >
-                <Button
-                  className="w-full bg-transparent cursor-pointer"
-                  variant="outline"
+              {banDisplayStatus !== "None" && mostRecentBanId ? (
+                <BannedEditDialog id={mostRecentBanId}>
+                  <Button
+                    className="w-full bg-transparent cursor-pointer"
+                    variant="outline"
+                  >
+                    Edit Ban Details
+                  </Button>
+                </BannedEditDialog>
+              ) : (
+                <BannedCreateDialog
+                  personId={person.id}
+                  redirectOnSuccess
                 >
-                  Create Ban for this Person
-                </Button>
-              </BannedCreateDialog>
+                  <Button
+                    className="w-full bg-transparent cursor-pointer"
+                    variant="outline"
+                  >
+                    Create Ban for this Person
+                  </Button>
+                </BannedCreateDialog>
+              )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button

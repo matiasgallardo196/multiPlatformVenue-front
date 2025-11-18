@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -41,25 +41,40 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
+import { CompactPagination } from "@/components/pagination/compact-pagination";
 
 export default function PlacesPage() {
   const { toast } = useToast();
   const { isReadOnly, isAdmin } = useAuth();
-  const { data: places, isLoading, error } = usePlaces();
-  const deletePlace = useDeletePlace();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredPlaces = useMemo<Place[]>(() => {
-    if (!places) return [];
-    if (!searchQuery) return places;
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
 
-    return places.filter((place: Place) => {
-      const placeName = (place.name || "").toLowerCase();
-      const cityName = (place.city || "").toLowerCase();
-      const query = searchQuery.toLowerCase();
-      return placeName.includes(query) || cityName.includes(query);
-    });
-  }, [places, searchQuery]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const {
+    data: placesPage,
+    isLoading,
+    error,
+  } = usePlaces({ page, limit, search: debouncedSearch });
+
+  const places = placesPage?.items || [];
+  const total = placesPage?.total ?? 0;
+  const currentPage = placesPage?.page ?? page;
+  const currentLimit = placesPage?.limit ?? limit;
+  const hasNext = placesPage?.hasNext ?? false;
+
+  const filteredPlaces = places; // Ya viene filtrado del backend
+
+  const deletePlace = useDeletePlace();
 
   const handleDelete = async (id: string) => {
     try {
@@ -155,12 +170,20 @@ export default function PlacesPage() {
                 <>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
-                      Showing {filteredPlaces.length} of {places?.length || 0}{" "}
-                      places
+                      {total} {total === 1 ? "place" : "places"}
                     </p>
+                    <CompactPagination
+                      currentPage={currentPage}
+                      total={total}
+                      limit={currentLimit}
+                      onPageChange={setPage}
+                      onLimitChange={setLimit}
+                      hasNext={hasNext}
+                    />
                   </div>
 
-                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filteredPlaces.map((place: Place) => (
                       <Card
                         key={place.id}
@@ -249,12 +272,13 @@ export default function PlacesPage() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                        </CardHeader>
-                      </Card>
-                    ))}
+                         </CardHeader>
+                       </Card>
+                     ))}
+                    </div>
                   </div>
-                </>
-              )}
+                 </>
+               )}
             </div>
           </>
         )}
