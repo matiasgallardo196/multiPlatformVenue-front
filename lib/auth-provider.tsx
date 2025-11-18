@@ -6,10 +6,12 @@ import { useAuthMe, queryKeys } from "@/hooks/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { ensureAuthSubscription } from "@/lib/auth-subscription";
 import type { AuthUser } from "@/hooks/use-auth";
+import { isAdmin, isHeadManagerOrAbove, isManagerOrAbove } from "@/lib/role-utils";
 
 type AuthContextValue = {
   user: AuthUser;
   loading: boolean;
+  isAdmin: boolean;
   isManager: boolean;
   isHeadManager: boolean;
   isReadOnly: boolean;
@@ -110,9 +112,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(meData ?? null);
   }, [meData]);
 
-  const isManager = user?.role === "manager" || user?.role === "head-manager";
-  const isHeadManager = user?.role === "head-manager";
-  const isReadOnly = !isManager;
+  // Usar helpers de jerarquía de roles
+  const userRole = user?.role || "";
+  const userIsAdmin = isAdmin(userRole);
+  const userIsHeadManager = isHeadManagerOrAbove(userRole);
+  const userIsManager = isManagerOrAbove(userRole);
+  const isReadOnly = !userIsManager;
 
   // Solo mostrar loading si:
   // 1. Estamos cargando inicialmente (loading), O
@@ -123,8 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextValue = {
     user,
     loading: effectiveLoading,
-    isManager,
-    isHeadManager,
+    isAdmin: userIsAdmin,
+    isManager: userIsManager,
+    isHeadManager: userIsHeadManager,
     isReadOnly,
     hasSession,
   };
