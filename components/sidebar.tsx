@@ -26,10 +26,10 @@ import { User as UserIcon } from "lucide-react";
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin", "manager", "staff", "head-manager"] },
   { name: "Banned", href: "/banneds", icon: UserX, roles: ["admin", "manager", "staff", "head-manager"] },
-  { name: "Pending Bans", href: "/banneds/pending", icon: Clock, roles: ["admin", "manager", "head-manager"] },
+  { name: "Pending Bans", href: "/banneds/pending", icon: Clock, roles: ["admin", "manager"] },
   { name: "Approval Queue", href: "/banneds/approval-queue", icon: CheckCircle2, roles: ["admin", "head-manager"] },
   { name: "Persons", href: "/persons", icon: Users, roles: ["admin", "manager", "staff", "head-manager"] },
-  { name: "Places", href: "/places", icon: MapPin, roles: ["admin", "manager", "head-manager"] },
+  { name: "Places", href: "/places", icon: MapPin, roles: ["admin", "head-manager"] },
   { name: "Users", href: "/users", icon: UserIcon, roles: ["admin", "head-manager"] },
 ];
 
