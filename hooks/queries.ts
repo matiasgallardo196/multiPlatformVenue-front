@@ -122,6 +122,9 @@ export function usePerson(id: string) {
     queryKey: queryKeys.person(id),
     queryFn: () => api.get<Person>(`/persons/${id}`),
     enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutos - los datos son frescos por 5 minutos
+    refetchOnMount: false, // No refetchear al montar si los datos están frescos
+    refetchOnWindowFocus: false, // No refetchear al enfocar ventana si los datos están frescos
   });
 }
 
@@ -152,16 +155,14 @@ export function useCreatePerson() {
           }
         },
         (old) => {
-          if (!old) return old;
-          
-          // Safety check: verify structure
-          if (!('items' in old) || !Array.isArray(old.items)) {
+          if (!old || !('items' in old) || !Array.isArray(old.items)) {
             return old;
           }
           
           // Add new person at the beginning (assuming newest-first sort)
           // Only add if we're on page 1, otherwise let invalidation handle it
           const isPageOne = old.page === 1;
+          
           if (isPageOne) {
             // If the list is full, remove the last item to maintain page size
             const updatedItems = [data, ...old.items];
@@ -187,7 +188,7 @@ export function useCreatePerson() {
       // Don't refetch active queries immediately to avoid flickering
       queryClient.invalidateQueries({ 
         queryKey: queryKeys.persons,
-        refetchType: 'inactive', // Only refetch inactive queries
+        refetchType: 'inactive',
       });
       queryClient.invalidateQueries({ 
         queryKey: queryKeys.personSearch,
@@ -204,75 +205,53 @@ export function useUpdatePerson() {
     mutationFn: ({ id, data }: { id: string; data: UpdatePersonDto }) =>
       api.patch<Person>(`/persons/${id}`, data),
     onSuccess: (data, { id }) => {
-      try {
-        // Update specific person cache immediately
-        queryClient.setQueryData(queryKeys.person(id), data);
-        
-        // Update all persons list queries directly (including filtered ones)
-        // Exclude individual person queries (["persons", id]) which return Person objects, not paginated lists
-        queryClient.setQueriesData<{ items: Person[]; total: number; page: number; limit: number; hasNext: boolean }>(
-          { 
-            queryKey: queryKeys.persons,
-            exact: false, // Allow sub-queries like ["persons", "filtered", {...}]
-            predicate: (query) => {
-              const key = query.queryKey;
-              // Exclude individual person queries: ["persons", id] where id is a UUID
-              // Include: ["persons"], ["persons", "filtered", {...}], ["persons", "search", ...]
-              if (Array.isArray(key) && key.length === 2 && key[0] === "persons") {
-                const secondKey = key[1];
-                // If second key is not a known list key, it's likely an individual person ID
-                const isListKey = secondKey === "filtered" || secondKey === "search";
-                return isListKey; // Only include if it's a known list key
-              }
-              // Include base query ["persons"] and other list queries
-              return true;
-            }
-          },
-          (old) => {
-            if (!old) return old;
-            
-            // Safety check: verify structure before updating
-            if (!('items' in old) || !Array.isArray(old.items)) {
-              return old;
-            }
-            
-            // Update the person in the items array
-            const updatedItems = old.items.map((person) =>
-              person.id === id ? data : person
-            );
-            
-            return {
-              ...old,
-              items: updatedItems,
-            };
-          }
-        );
-        
-        // Invalidate only inactive queries to sync in background
-        // Don't refetch active queries immediately to avoid flickering
-        queryClient.invalidateQueries({ 
+      // Update specific person cache immediately
+      queryClient.setQueryData(queryKeys.person(id), data);
+      
+      // Update all persons list queries directly (including filtered ones)
+      // Exclude individual person queries (["persons", id]) which return Person objects, not paginated lists
+      queryClient.setQueriesData<{ items: Person[]; total: number; page: number; limit: number; hasNext: boolean }>(
+        { 
           queryKey: queryKeys.persons,
-          refetchType: 'inactive',
-        });
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.person(id),
-          refetchType: 'inactive',
-        });
-        queryClient.invalidateQueries({ 
-          queryKey: queryKeys.personSearch,
-          refetchType: 'inactive',
-        });
-      } catch (error) {
-        console.error('[useUpdatePerson] Error in onSuccess:', error);
-        throw error; // Re-throw to trigger onError
-      }
-    },
-    onError: (error, variables, context) => {
-      console.error('[useUpdatePerson] onError called', { 
-        error, 
-        errorMessage: error?.message,
-        errorStack: error?.stack,
-        variables,
+          exact: false,
+          predicate: (query) => {
+            const key = query.queryKey;
+            // Exclude individual person queries: ["persons", id] where id is a UUID
+            // Include: ["persons"], ["persons", "filtered", {...}], ["persons", "search", ...]
+            if (Array.isArray(key) && key.length === 2 && key[0] === "persons") {
+              const secondKey = key[1];
+              const isListKey = secondKey === "filtered" || secondKey === "search";
+              return isListKey;
+            }
+            return true;
+          }
+        },
+        (old) => {
+          if (!old || !('items' in old) || !Array.isArray(old.items)) {
+            return old;
+          }
+          
+          // Update the person in the items array
+          const updatedItems = old.items.map((person) =>
+            person.id === id ? data : person
+          );
+          
+          return {
+            ...old,
+            items: updatedItems,
+          };
+        }
+      );
+      
+      // Invalidate only inactive queries to sync in background
+      // Don't refetch active queries immediately to avoid flickering
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.persons,
+        refetchType: 'inactive',
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.personSearch,
+        refetchType: 'inactive',
       });
     },
   });
@@ -304,20 +283,18 @@ export function useDeletePerson() {
           }
         },
         (old) => {
-          if (!old) return old;
-          
-          // Safety check: verify structure
-          if (!('items' in old) || !Array.isArray(old.items)) {
+          if (!old || !('items' in old) || !Array.isArray(old.items)) {
             return old;
           }
           
           // Remove the deleted person from the items array
           const updatedItems = old.items.filter((person) => person.id !== id);
+          const newTotal = Math.max(0, old.total - 1);
           
           return {
             ...old,
             items: updatedItems,
-            total: Math.max(0, old.total - 1),
+            total: newTotal,
           };
         }
       );
