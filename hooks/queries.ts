@@ -161,10 +161,33 @@ export function useDeletePerson() {
 }
 
 // Places Hooks
-export function usePlaces(options?: { enabled?: boolean; staleTimeMs?: number }) {
+export function usePlaces(
+  options?: { page?: number; limit?: number; search?: string; enabled?: boolean; staleTimeMs?: number },
+) {
+  const queryKey = useMemo(() => {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const search = options?.search || '';
+    return [...queryKeys.places, page, limit, search];
+  }, [options?.page, options?.limit, options?.search]);
+
   return useQuery({
-    queryKey: queryKeys.places,
-    queryFn: () => api.get<Place[]>("/places"),
+    queryKey,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (typeof options?.page === 'number' && options.page > 0) {
+        params.append('page', String(options.page));
+      }
+      if (typeof options?.limit === 'number' && options.limit > 0) {
+        params.append('limit', String(options.limit));
+      }
+      if (options?.search && options.search.trim()) {
+        params.append('search', options.search.trim());
+      }
+      const queryString = params.toString();
+      const url = queryString ? `/places?${queryString}` : "/places";
+      return api.get<{ items: Place[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
+    },
     retry: 3,
     retryDelay: 1000,
     enabled: options?.enabled ?? true,
