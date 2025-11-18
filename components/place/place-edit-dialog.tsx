@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -25,6 +26,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { updatePlaceSchema, type UpdatePlaceForm } from "@/lib/validations";
 import { usePlace, useUpdatePlace } from "@/hooks/queries";
+import { useAuth } from "@/hooks/use-auth";
 import { Info } from "lucide-react";
 import {
   Tooltip,
@@ -43,6 +45,7 @@ export function PlaceEditDialog({
   const [open, setOpen] = useState(false);
   const { data: place } = usePlace(id);
   const updatePlace = useUpdatePlace();
+  const { isHeadManager } = useAuth();
 
   const form = useForm<UpdatePlaceForm>({
     resolver: zodResolver(updatePlaceSchema),
@@ -90,6 +93,9 @@ export function PlaceEditDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Place</DialogTitle>
+          <DialogDescription>
+            Update the place information including name, city, and email.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -101,7 +107,7 @@ export function PlaceEditDialog({
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Place name" {...field} />
+                    <Input placeholder="Place name" {...field} disabled={isHeadManager} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,7 +121,7 @@ export function PlaceEditDialog({
                 <FormItem>
                   <FormLabel>City</FormLabel>
                   <FormControl>
-                    <Input placeholder="City name" {...field} />
+                    <Input placeholder="City name" {...field} disabled={isHeadManager} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -71,6 +72,9 @@ export function PlaceCreateDialog({ children }: { children: React.ReactNode }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Place</DialogTitle>
+          <DialogDescription>
+            Add a new place to the system with its location and contact information.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

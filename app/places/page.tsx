@@ -44,7 +44,7 @@ import { RouteGuard } from "@/components/auth/route-guard";
 
 export default function PlacesPage() {
   const { toast } = useToast();
-  const { isReadOnly } = useAuth();
+  const { isReadOnly, isAdmin } = useAuth();
   const { data: places, isLoading, error } = usePlaces();
   const deletePlace = useDeletePlace();
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,7 +82,7 @@ export default function PlacesPage() {
   };
 
   return (
-    <RouteGuard requireManager>
+    <RouteGuard requireHeadManager>
       <DashboardLayout>
         {error ? (
           <>
@@ -99,7 +99,7 @@ export default function PlacesPage() {
               title="Places"
               description="Manage locations and venues in the system"
             >
-              {!isReadOnly && (
+              {isAdmin && (
                 <PlaceCreateDialog>
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
@@ -135,7 +135,7 @@ export default function PlacesPage() {
                         Get started by creating a new place.
                       </p>
                       <div className="mt-6">
-                        {!isReadOnly && (
+                        {isAdmin && (
                           <PlaceCreateDialog>
                             <Button>
                               <Plus className="mr-2 h-4 w-4" />
@@ -212,7 +212,7 @@ export default function PlacesPage() {
                                     </DropdownMenuItem>
                                   </PlaceEditDialog>
                                 )}
-                                {!isReadOnly && (
+                                {isAdmin && (
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                       <DropdownMenuItem className="text-destructive cursor-pointer">

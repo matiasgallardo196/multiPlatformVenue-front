@@ -6,11 +6,12 @@ import { useAuthMe } from "@/hooks/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { ensureAuthSubscription } from "@/lib/auth-subscription";
 import { useAuthContext } from "@/lib/auth-provider";
+import { isAdmin, isHeadManagerOrAbove, isManagerOrAbove } from "@/lib/role-utils";
 
 export type AuthUser = {
   userId: string;
   userName: string;
-  role: "manager" | "staff" | "head-manager" | string;
+  role: "admin" | "manager" | "staff" | "head-manager" | string;
   email: string;
   placeId: string | null;
   city: string | null;
@@ -78,12 +79,22 @@ export function useAuth() {
     return context;
   }
 
-  // Fallback: retornar valores locales
-  const isManager = user?.role === "manager" || user?.role === "head-manager";
-  const isHeadManager = user?.role === "head-manager";
-  const isReadOnly = !isManager;
+  // Fallback: retornar valores locales usando helpers de jerarquía
+  const userRole = user?.role || "";
+  const userIsAdmin = isAdmin(userRole);
+  const userIsHeadManager = isHeadManagerOrAbove(userRole);
+  const userIsManager = isManagerOrAbove(userRole);
+  const isReadOnly = !userIsManager;
 
   const effectiveLoading = loading || (hasSession && (meLoading || meFetching));
 
-  return { user, loading: effectiveLoading, isManager, isHeadManager, isReadOnly, hasSession };
+  return { 
+    user, 
+    loading: effectiveLoading, 
+    isAdmin: userIsAdmin,
+    isManager: userIsManager, 
+    isHeadManager: userIsHeadManager, 
+    isReadOnly, 
+    hasSession 
+  };
 }
