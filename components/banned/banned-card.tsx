@@ -36,6 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuth } from "@/lib/auth-provider";
 
 interface BannedCardProps {
   banned: Banned;
@@ -57,6 +58,8 @@ export function BannedCard({
   actionsAtTopRight = false,
 }: BannedCardProps) {
   const router = useRouter();
+  const { isHeadManager, isAdmin } = useAuth();
+  const canDelete = isHeadManager || isAdmin;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const dialogJustClosedRef = useRef(false);
   const person = banned.person;
@@ -228,33 +231,35 @@ export function BannedCard({
                   Edit
                 </DropdownMenuItem>
               </BannedEditDialog>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem
-                    className="text-destructive cursor-pointer"
-                    onClick={(e) => e.stopPropagation()}
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this ban?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete
-                      the ban and remove it from the list.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Keep Ban</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDelete(banned.id)}>
+              {canDelete && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      className="text-destructive cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
                       Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this ban?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete
+                        the ban and remove it from the list.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep Ban</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onDelete(banned.id)}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -385,7 +390,7 @@ export function BannedCard({
                           </DropdownMenuItem>
                         </BannedEditDialog>
                       )}
-                      {!readOnly && (
+                      {canDelete && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <DropdownMenuItem
