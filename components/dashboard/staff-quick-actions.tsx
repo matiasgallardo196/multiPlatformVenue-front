@@ -26,13 +26,13 @@ export function StaffQuickActions() {
         <CardTitle className="text-sm sm:text-base font-semibold">Quick Actions</CardTitle>
         <CardDescription className="text-xs leading-tight">Quick access to main sections</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 p-1 sm:p-2">
-        <div className="space-y-1 sm:space-y-1.5">
+      <CardContent className="flex-1 p-2 sm:p-3">
+        <div className="space-y-3 sm:space-y-4">
           {quickLinks.map((link) => {
             const Icon = link.icon;
             return (
-              <Link key={link.href} href={link.href}>
-                <div className="flex items-center justify-between p-1.5 sm:p-2 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer group">
+              <Link key={link.href} href={link.href} className="block">
+                <div className="flex items-center justify-between p-2 sm:p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer group">
                   <div className="min-w-0 flex-1 pr-2">
                     <p className="font-medium text-xs sm:text-sm leading-tight">{link.title}</p>
                     <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
