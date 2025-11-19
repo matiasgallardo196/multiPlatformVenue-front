@@ -28,7 +28,7 @@ export function RecentActivitySection({
       <Card className="h-full flex flex-col gap-2">
         <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
           <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
-          <CardDescription className="text-[10px] leading-tight">Loading...</CardDescription>
+          <CardDescription className="text-xs leading-tight">Loading...</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -39,7 +39,7 @@ export function RecentActivitySection({
       <Card className="h-full flex flex-col gap-2">
         <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
           <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
-          <CardDescription className="text-[10px] leading-tight">
+          <CardDescription className="text-xs leading-tight">
             No recent activity
           </CardDescription>
         </CardHeader>
@@ -66,12 +66,12 @@ export function RecentActivitySection({
       <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-1 px-4 pt-1 gap-1">
         <div>
           <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
-          <CardDescription className="text-[10px] leading-tight">
+          <CardDescription className="text-xs leading-tight">
             Latest activities in the system
           </CardDescription>
         </div>
         <Link href="/banneds">
-          <span className="text-[10px] text-primary hover:underline">View all</span>
+          <span className="text-xs text-primary hover:underline">View all</span>
         </Link>
       </CardHeader>
       <CardContent className="flex-1 p-1 overflow-y-auto">
@@ -98,10 +98,10 @@ export function RecentActivitySection({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium leading-tight">
+                      <p className="text-sm font-medium leading-tight">
                         {getActivityLabel(item.type)}
                       </p>
-                      <p className="text-[10px] text-muted-foreground leading-tight">
+                      <p className="text-xs text-muted-foreground leading-tight">
                         {timeAgo}
                       </p>
                     </div>
@@ -111,7 +111,7 @@ export function RecentActivitySection({
             })}
             {activity.length > 5 && (
               <Link href="/banneds">
-                <div className="text-center text-[10px] text-muted-foreground hover:text-foreground pt-0.5">
+                <div className="text-center text-xs text-muted-foreground hover:text-foreground pt-0.5">
                   View {activity.length - 5} more activities...
                 </div>
               </Link>

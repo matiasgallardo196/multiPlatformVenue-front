@@ -167,7 +167,7 @@ export default function DashboardPage() {
                 <Card className="h-full flex flex-col gap-2">
                   <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
                     <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
-                    <CardDescription className="text-[10px] leading-tight">Common tasks and shortcuts</CardDescription>
+                    <CardDescription className="text-xs leading-tight">Common tasks and shortcuts</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1 p-1">
                     <div className="space-y-1">
@@ -178,8 +178,8 @@ export default function DashboardPage() {
                       >
                         <div className="flex items-center justify-between p-1.5 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
                           <div className="min-w-0 flex-1 pr-2">
-                            <p className="font-medium text-xs leading-tight">Add Person</p>
-                            <p className="text-[10px] text-muted-foreground leading-tight">
+                            <p className="font-medium text-sm leading-tight">Add Person</p>
+                            <p className="text-xs text-muted-foreground leading-tight">
                               Register new individual
                             </p>
                           </div>
@@ -189,8 +189,8 @@ export default function DashboardPage() {
                       <BannedCreateFullDialog redirectOnSuccess>
                         <div className="flex items-center justify-between p-1.5 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
                           <div className="min-w-0 flex-1 pr-2">
-                            <p className="font-medium text-xs leading-tight">Create New Ban</p>
-                            <p className="text-[10px] text-muted-foreground leading-tight">
+                            <p className="font-medium text-sm leading-tight">Create New Ban</p>
+                            <p className="text-xs text-muted-foreground leading-tight">
                               Add a new ban record
                             </p>
                           </div>

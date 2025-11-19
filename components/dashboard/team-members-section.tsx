@@ -104,16 +104,16 @@ export function TeamMembersSection({
             />
           </div>
           {isLoading ? (
-            <div className="text-lg font-bold text-muted-foreground">-</div>
+            <div className="text-xl font-bold text-muted-foreground">-</div>
           ) : (
-            <div className={cn("text-lg font-bold", valueClass)}>
+            <div className={cn("text-xl font-bold", valueClass)}>
               {item.value ?? 0}
             </div>
           )}
         </div>
         <div className="space-y-0">
-          <p className="text-xs font-medium leading-tight">{item.title}</p>
-          <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+          <p className="text-sm font-medium leading-tight">{item.title}</p>
+          <p className="text-xs text-muted-foreground leading-tight line-clamp-2">
             {item.description}
           </p>
         </div>
@@ -126,7 +126,7 @@ export function TeamMembersSection({
       <Card className="h-full flex flex-col gap-2">
         <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
           <CardTitle className="text-base font-semibold">Team Members</CardTitle>
-          <CardDescription className="text-[10px] leading-tight">Loading...</CardDescription>
+          <CardDescription className="text-xs leading-tight">Loading...</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 p-1">
           <div className="grid grid-cols-2 gap-1.5 h-full">
@@ -144,7 +144,7 @@ export function TeamMembersSection({
       <Card className="h-full flex flex-col gap-2">
         <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
           <CardTitle className="text-base font-semibold">Team Members</CardTitle>
-          <CardDescription className="text-[10px] leading-tight">
+          <CardDescription className="text-xs leading-tight">
             Users under your management
           </CardDescription>
         </CardHeader>
@@ -164,12 +164,12 @@ export function TeamMembersSection({
       <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-1 px-4 pt-1 gap-1">
         <div>
           <CardTitle className="text-base font-semibold">Team Members</CardTitle>
-          <CardDescription className="text-[10px] leading-tight">
+          <CardDescription className="text-xs leading-tight">
             Users under your management
           </CardDescription>
         </div>
         <Link href="/users">
-          <span className="text-[10px] text-primary hover:underline">View all</span>
+          <span className="text-xs text-primary hover:underline">View all</span>
         </Link>
       </CardHeader>
       <CardContent className="flex-1 p-1">
