@@ -59,7 +59,7 @@ export function usePersons(
 
   return useQuery({
     queryKey,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       
       if (filters?.gender && filters.gender !== "all") {
@@ -87,7 +87,8 @@ export function usePersons(
 
       const queryString = params.toString();
       const url = queryString ? `/persons?${queryString}` : "/persons";
-      return api.get<{ items: Person[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
+      // Pasar el signal para permitir cancelación de requests en vuelo
+      return api.get<{ items: Person[]; total: number; page: number; limit: number; hasNext: boolean }>(url, { signal });
     },
     retry: 3,
     retryDelay: 1000,
@@ -101,12 +102,12 @@ export function usePersons(
 export function useSearchPersons(query: string, enabled: boolean = true) {
   return useQuery({
     queryKey: queryKeys.personSearch(query || "__empty__"),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!query) return [] as Person[];
       try {
         // Prefer server-side search if available
         const encoded = encodeURIComponent(query);
-        return await api.get<Person[]>(`/persons?query=${encoded}`);
+        return await api.get<Person[]>(`/persons?query=${encoded}`, { signal });
       } catch {
         // Graceful fallback: no results
         return [] as Person[];
@@ -120,7 +121,7 @@ export function useSearchPersons(query: string, enabled: boolean = true) {
 export function usePerson(id: string) {
   return useQuery({
     queryKey: queryKeys.person(id),
-    queryFn: () => api.get<Person>(`/persons/${id}`),
+    queryFn: ({ signal }) => api.get<Person>(`/persons/${id}`, { signal }),
     enabled: !!id,
     staleTime: 5 * 60 * 1000, // 5 minutos - los datos son frescos por 5 minutos
     refetchOnMount: false, // No refetchear al montar si los datos están frescos
@@ -330,7 +331,7 @@ export function usePlaces(
 
   return useQuery({
     queryKey,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (hasPagination) {
         const params = new URLSearchParams();
         if (typeof options?.page === 'number' && options.page > 0) {
@@ -344,10 +345,10 @@ export function usePlaces(
         }
         const queryString = params.toString();
         const url = queryString ? `/places?${queryString}` : "/places";
-        return api.get<{ items: Place[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
+        return api.get<{ items: Place[]; total: number; page: number; limit: number; hasNext: boolean }>(url, { signal });
       } else {
         // Sin paginación: retornar array directamente para compatibilidad
-        return api.get<Place[]>("/places");
+        return api.get<Place[]>("/places", { signal });
       }
     },
     retry: 3,
@@ -360,7 +361,7 @@ export function usePlaces(
 export function usePlace(id: string) {
   return useQuery({
     queryKey: queryKeys.place(id),
-    queryFn: () => api.get<Place>(`/places/${id}`),
+    queryFn: ({ signal }) => api.get<Place>(`/places/${id}`, { signal }),
     enabled: !!id,
   });
 }
@@ -408,14 +409,14 @@ export function useBanneds(sortBy?: string, options?: { enabled?: boolean; stale
 
   return useQuery({
     queryKey,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       if (sortBy) {
         params.append("sortBy", sortBy);
       }
       const queryString = params.toString();
       const url = queryString ? `/banneds?${queryString}` : "/banneds";
-      return api.get<Banned[]>(url);
+      return api.get<Banned[]>(url, { signal });
     },
     retry: 3,
     retryDelay: 1000,
@@ -427,7 +428,7 @@ export function useBanneds(sortBy?: string, options?: { enabled?: boolean; stale
 export function useBanned(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.banned(id),
-    queryFn: () => api.get<Banned>(`/banneds/${id}`),
+    queryFn: ({ signal }) => api.get<Banned>(`/banneds/${id}`, { signal }),
     enabled: options?.enabled !== undefined ? options.enabled && !!id : !!id,
   });
 }
@@ -449,7 +450,7 @@ export function useIncrementBannedViolation() {
 export function usePersonBans(personId: string) {
   return useQuery({
     queryKey: queryKeys.personBans(personId),
-    queryFn: () => api.get<Banned[]>(`/banneds/person/${personId}`),
+    queryFn: ({ signal }) => api.get<Banned[]>(`/banneds/person/${personId}`, { signal }),
     enabled: !!personId,
   });
 }
@@ -457,8 +458,8 @@ export function usePersonBans(personId: string) {
 export function usePersonBanStatus(personId: string) {
   return useQuery({
     queryKey: queryKeys.personBanStatus(personId),
-    queryFn: () =>
-      api.get<PersonBanStatus>(`/banneds/person/${personId}/active`),
+    queryFn: ({ signal }) =>
+      api.get<PersonBanStatus>(`/banneds/person/${personId}/active`, { signal }),
     enabled: !!personId,
   });
 }
@@ -522,7 +523,7 @@ export function usePendingBanneds(
 
   return useQuery({
     queryKey,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       if (sortBy) params.append('sortBy', sortBy);
       if (options?.search && options.search.trim()) {
@@ -538,7 +539,7 @@ export function usePendingBanneds(
       const url = queryString
         ? `/banneds/pending?${queryString}`
         : "/banneds/pending";
-      return api.get<{ items: Banned[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
+      return api.get<{ items: Banned[]; total: number; page: number; limit: number; hasNext: boolean }>(url, { signal });
     },
     retry: 3,
     retryDelay: 1000,
@@ -567,7 +568,7 @@ export function useApprovalQueueBanneds(
 
   return useQuery({
     queryKey,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       if (sortBy) params.append('sortBy', sortBy);
       if (createdBy) params.append('createdBy', createdBy);
@@ -584,7 +585,7 @@ export function useApprovalQueueBanneds(
       const url = queryString
         ? `/banneds/approval-queue?${queryString}`
         : "/banneds/approval-queue";
-      return api.get<{ items: Banned[]; total: number; page: number; limit: number; hasNext: boolean }>(url);
+      return api.get<{ items: Banned[]; total: number; page: number; limit: number; hasNext: boolean }>(url, { signal });
     },
     retry: 3,
     retryDelay: 1000,
@@ -933,7 +934,7 @@ export function useBulkApproveBanneds() {
 export function useBannedHistory(bannedId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: queryKeys.bannedHistory(bannedId),
-    queryFn: () => api.get<BannedHistory[]>(`/banneds/${bannedId}/history`),
+    queryFn: ({ signal }) => api.get<BannedHistory[]>(`/banneds/${bannedId}/history`, { signal }),
     enabled: options?.enabled !== undefined ? options.enabled && !!bannedId : !!bannedId,
     retry: 3,
     retryDelay: 1000,
@@ -1046,7 +1047,7 @@ export type DashboardSummary = DashboardSummaryStaff | DashboardSummaryManager |
 export function useDashboardSummary(enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.dashboardSummary,
-    queryFn: () => api.get<DashboardSummary>("/dashboard/summary"),
+    queryFn: ({ signal }) => api.get<DashboardSummary>("/dashboard/summary", { signal }),
     enabled,
     staleTime: 10 * 1000, // 10 segundos para forzar actualizaciones más frecuentes
     refetchOnWindowFocus: true,

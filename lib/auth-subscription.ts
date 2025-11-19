@@ -23,7 +23,11 @@ export function ensureAuthSubscription(queryClient: QueryClient) {
     switch (event) {
       case "SIGNED_OUT":
         hasLoadedSession = false;
-        queryClient.removeQueries({ queryKey: ["auth", "me"] });
+        // Cancelar todas las queries activas cuando el usuario se desloguea
+        // Esto evita que las queries sigan ejecutándose y fallen con 401
+        queryClient.cancelQueries();
+        // Limpiar todas las queries del cache para evitar datos obsoletos
+        queryClient.removeQueries();
         break;
       case "SIGNED_IN":
         // Si ya se cargó una sesión antes, este SIGNED_IN es probablemente un falso positivo
