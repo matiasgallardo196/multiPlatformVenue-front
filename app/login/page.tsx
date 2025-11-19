@@ -83,8 +83,9 @@ export default function LoginPage() {
       if (error) throw error;
 
       toast.success("Welcome!");
+      // Optimización: router.replace() ya navega y refresca, no necesitamos router.refresh()
+      // que puede causar navegación duplicada
       router.replace("/dashboard");
-      router.refresh();
     } catch (e: any) {
       setError(e?.message || "Invalid credentials");
       toast.error("Failed to sign in");
