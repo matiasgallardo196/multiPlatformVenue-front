@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useDashboardSummary, type DashboardSummaryAdmin, type DashboardSummaryHeadManager, type DashboardSummaryManager } from "@/hooks/queries";
+import { useDashboardSummary, type DashboardSummaryAdmin, type DashboardSummaryHeadManager, type DashboardSummaryManager, type DashboardSummaryStaff } from "@/hooks/queries";
 import { Users, MapPin, UserX, UserCheck, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import dynamic from "next/dynamic";
@@ -19,6 +19,7 @@ import { TeamMembersSection } from "@/components/dashboard/team-members-section"
 import { PlacesOverview } from "@/components/dashboard/places-overview";
 import { UsersByRole } from "@/components/dashboard/users-by-role";
 import { RecentActivitySection } from "@/components/dashboard/recent-activity-section";
+import { StaffDashboardSection } from "@/components/dashboard/staff-dashboard-section";
 
 const BannedCreateFullDialog = dynamic(
   () => import("@/components/banned/banned-create-full-dialog").then(m => m.BannedCreateFullDialog),
@@ -39,7 +40,7 @@ function getDashboardDescription(role?: string | null): string {
     case "manager":
       return "Overview of your assigned place";
     case "staff":
-      return "System overview";
+      return "View and browse system information";
     default:
       return "Overview of your admin system";
   }
@@ -54,11 +55,13 @@ export default function DashboardPage() {
   const isAdmin = user?.role === "admin";
   const isHeadManager = user?.role === "head-manager";
   const isManager = user?.role === "manager";
+  const isStaff = user?.role === "staff";
 
   // Determinar qué tipo de resumen tenemos
   const adminSummary = isAdmin ? (summary as DashboardSummaryAdmin | undefined) : undefined;
   const headManagerSummary = isHeadManager ? (summary as DashboardSummaryHeadManager | undefined) : undefined;
   const managerSummary = isManager ? (summary as DashboardSummaryManager | undefined) : undefined;
+  const staffSummary = isStaff ? (summary as DashboardSummaryStaff | undefined) : undefined;
 
   return (
     <RouteGuard>
@@ -68,8 +71,16 @@ export default function DashboardPage() {
           description={getDashboardDescription(user?.role)}
         />
 
-        {/* Estadísticas principales - Solo para STAFF y ADMIN */}
-        {!(isHeadManager || isManager) && (
+        {/* Dashboard para STAFF */}
+        {isStaff && (
+          <StaffDashboardSection
+            summary={staffSummary}
+            isLoading={isLoading}
+          />
+        )}
+
+        {/* Estadísticas principales - Solo para ADMIN */}
+        {isAdmin && (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <StatsCard
               title="Total Persons"
@@ -79,18 +90,7 @@ export default function DashboardPage() {
               isLoading={isLoading}
             />
 
-            {!isAdmin && (
-              <StatsCard
-                title="Active Bans"
-                value={summary?.totals.activeBans}
-                description="Currently active"
-                icon={UserX}
-                isLoading={isLoading}
-                variant="destructive"
-              />
-            )}
-
-            {isAdmin && adminSummary && (
+            {adminSummary && (
               <>
                 <StatsCard
                   title="Active Bans"

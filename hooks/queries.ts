@@ -975,7 +975,19 @@ export type DashboardSummaryBase = {
   };
 };
 
-export type DashboardSummaryStaff = DashboardSummaryBase;
+export type DashboardSummaryStaff = DashboardSummaryBase & {
+  placeId?: string | null;
+  placeName?: string | null;
+  placeStats?: {
+    activeBans: number;
+    pendingBans: number;
+    totalPersons: number;
+  };
+  contactInfo?: {
+    manager: { userName: string; email: string | null } | null;
+    headManager: { userName: string; email: string | null } | null;
+  };
+};
 
 export type DashboardSummaryManager = DashboardSummaryBase & {
   placeId: string;
