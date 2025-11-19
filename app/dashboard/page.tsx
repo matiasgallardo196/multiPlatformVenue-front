@@ -164,37 +164,37 @@ export default function DashboardPage() {
             {/* Cuadrante 4: Quick Actions */}
             {!isReadOnly && (
               <div className="row-span-1">
-                <Card className="h-full flex flex-col">
-                  <CardHeader className="flex-shrink-0 pb-3">
-                    <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">Common tasks and shortcuts</CardDescription>
+                <Card className="h-full flex flex-col gap-2">
+                  <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
+                    <CardTitle className="text-sm font-semibold">Quick Actions</CardTitle>
+                    <CardDescription className="text-[10px] leading-tight">Common tasks and shortcuts</CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-1 overflow-y-auto p-4 sm:p-6">
-                    <div className="space-y-2">
+                  <CardContent className="flex-1 p-1">
+                    <div className="space-y-1">
                       <PersonCreateDialog
                         onCreated={(person) => {
                           window.location.href = `/persons/${person.id}`;
                         }}
                       >
-                        <div className="flex items-center justify-between p-2.5 sm:p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
+                        <div className="flex items-center justify-between p-1.5 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
                           <div className="min-w-0 flex-1 pr-2">
-                            <p className="font-medium text-sm">Add Person</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <p className="font-medium text-xs leading-tight">Add Person</p>
+                            <p className="text-[10px] text-muted-foreground leading-tight">
                               Register new individual
                             </p>
                           </div>
-                          <Users className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
+                          <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                         </div>
                       </PersonCreateDialog>
                       <BannedCreateFullDialog redirectOnSuccess>
-                        <div className="flex items-center justify-between p-2.5 sm:p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
+                        <div className="flex items-center justify-between p-1.5 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
                           <div className="min-w-0 flex-1 pr-2">
-                            <p className="font-medium text-sm">Create New Ban</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <p className="font-medium text-xs leading-tight">Create New Ban</p>
+                            <p className="text-[10px] text-muted-foreground leading-tight">
                               Add a new ban record
                             </p>
                           </div>
-                          <UserX className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
+                          <UserX className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                         </div>
                       </BannedCreateFullDialog>
                     </div>
