@@ -1,8 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatsCard } from "./stats-card";
-import { UserX, AlertCircle, Users, UserCheck } from "lucide-react";
+import { UserX, AlertCircle, Users, LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface PlaceDashboardSectionProps {
   placeName: string | null;
@@ -12,82 +13,144 @@ interface PlaceDashboardSectionProps {
     totalPersons: number;
   };
   totalPersons?: number; // Total persons del sistema
-  teamMembersCount?: number; // Solo para head-manager
   isLoading?: boolean;
+}
+
+interface StatItem {
+  icon: LucideIcon;
+  title: string;
+  value: number | undefined;
+  description: string;
+  variant?: "default" | "destructive" | "warning";
+  linkTo?: string;
 }
 
 export function PlaceDashboardSection({
   placeName,
   placeStats,
   totalPersons,
-  teamMembersCount,
   isLoading = false,
 }: PlaceDashboardSectionProps) {
-  // Para el layout de cuadrantes, usar un grid más compacto
-  // Máximo 3 columnas en desktop para que se vea bien en el cuadrante
-  const statsCount = 3 + (totalPersons !== undefined ? 1 : 0) + (teamMembersCount !== undefined ? 1 : 0);
-  // En cuadrantes, limitamos a 2-3 columnas máximo
-  const gridCols = statsCount <= 3 ? "lg:grid-cols-3" : "lg:grid-cols-3";
+  // Construir la lista de estadísticas
+  const stats: StatItem[] = [];
+
+  if (totalPersons !== undefined) {
+    stats.push({
+      icon: Users,
+      title: "Total Persons",
+      value: totalPersons,
+      description: "Registered individuals",
+    });
+  }
+
+  stats.push({
+    icon: UserX,
+    title: "Active Bans",
+    value: placeStats.activeBans,
+    description: "Currently active bans",
+    variant: "destructive",
+  });
+
+  stats.push({
+    icon: AlertCircle,
+    title: "Pending Approvals",
+    value: placeStats.pendingBans,
+    description: "Bans awaiting approval",
+    variant: "warning",
+    linkTo: "/banneds/approval-queue",
+  });
+
+  stats.push({
+    icon: Users,
+    title: "Related Persons",
+    value: placeStats.totalPersons,
+    description: "Persons with bans in this place",
+  });
+
+  const StatCard = ({ item }: { item: StatItem }) => {
+    const Icon = item.icon;
+    const valueClass =
+      item.variant === "destructive"
+        ? "text-destructive"
+        : item.variant === "warning"
+        ? "text-yellow-600 dark:text-yellow-500"
+        : "";
+
+    const content = (
+      <div
+        className={cn(
+          "flex flex-col p-1.5 rounded-lg border transition-colors h-full",
+          item.linkTo
+            ? "hover:bg-muted/50 cursor-pointer hover:border-primary/50"
+            : "bg-muted/30"
+        )}
+      >
+        <div className="flex items-start justify-between mb-1">
+          <div
+            className={cn(
+              "flex-shrink-0 p-1 rounded-md",
+              item.variant === "destructive"
+                ? "bg-destructive/10"
+                : item.variant === "warning"
+                ? "bg-yellow-500/10"
+                : "bg-muted"
+            )}
+          >
+            <Icon
+              className={cn(
+                "h-3.5 w-3.5",
+                item.variant === "destructive"
+                  ? "text-destructive"
+                  : item.variant === "warning"
+                  ? "text-yellow-600 dark:text-yellow-500"
+                  : "text-muted-foreground"
+              )}
+            />
+          </div>
+          {isLoading ? (
+            <div className="text-lg font-bold text-muted-foreground">-</div>
+          ) : (
+            <div className={cn("text-lg font-bold", valueClass)}>
+              {item.value ?? 0}
+            </div>
+          )}
+        </div>
+        <div className="space-y-0">
+          <p className="text-xs font-medium leading-tight">{item.title}</p>
+          <p className="text-[10px] text-muted-foreground leading-tight line-clamp-2">
+            {item.description}
+          </p>
+        </div>
+      </div>
+    );
+
+    if (item.linkTo) {
+      return (
+        <Link href={item.linkTo} className="block h-full">
+          {content}
+        </Link>
+      );
+    }
+
+    return content;
+  };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="flex-shrink-0 pb-3">
-        <CardTitle className="text-base sm:text-lg">
+    <Card className="h-full flex flex-col gap-2">
+      <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
+        <CardTitle className="text-sm font-semibold">
           {placeName ? `${placeName} - Overview` : "Place Overview"}
         </CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
+        <CardDescription className="text-[10px] leading-tight">
           Complete information about your assigned place
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className={`grid gap-3 grid-cols-2 ${gridCols}`}>
-            {totalPersons !== undefined && (
-              <StatsCard
-                title="Total Persons"
-                value={totalPersons}
-                description="Registered individuals"
-                icon={Users}
-                isLoading={isLoading}
-              />
-            )}
-            
-            {teamMembersCount !== undefined && (
-              <StatsCard
-                title="Team Members"
-                value={teamMembersCount}
-                description="Users under management"
-                icon={UserCheck}
-                isLoading={isLoading}
-              />
-            )}
-
-            <StatsCard
-              title="Active Bans"
-              value={placeStats.activeBans}
-              description="Currently active bans"
-              icon={UserX}
-              isLoading={isLoading}
-              variant="destructive"
-            />
-            
-            <StatsCard
-              title="Pending Approvals"
-              value={placeStats.pendingBans}
-              description="Bans awaiting approval"
-              icon={AlertCircle}
-              isLoading={isLoading}
-              variant="warning"
-              linkTo="/banneds/approval-queue"
-            />
-            
-            <StatsCard
-              title="Related Persons"
-              value={placeStats.totalPersons}
-              description="Persons with bans in this place"
-              icon={Users}
-              isLoading={isLoading}
-            />
-          </div>
+      <CardContent className="flex-1 p-1">
+        <div className="grid grid-cols-2 gap-1.5 h-full">
+          {stats.map((stat, index) => (
+            <StatCard key={index} item={stat} />
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

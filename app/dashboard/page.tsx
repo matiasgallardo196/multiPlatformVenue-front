@@ -129,14 +129,13 @@ export default function DashboardPage() {
 
         {/* Layout en cuadrantes para MANAGER y HEAD_MANAGER */}
         {(isHeadManager || isManager) && (headManagerSummary || managerSummary) && (
-          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 grid-rows-2 h-[calc(100vh-12rem)]">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 grid-rows-2 h-[calc(100vh-8rem)]">
             {/* Cuadrante 1: Place Overview */}
             <div className={isHeadManager ? "row-span-1" : "row-span-2"}>
               <PlaceDashboardSection
                 placeName={headManagerSummary?.placeName ?? managerSummary?.placeName ?? null}
                 placeStats={headManagerSummary?.placeStats ?? managerSummary?.placeStats!}
                 totalPersons={summary?.totals.totalPersons}
-                teamMembersCount={headManagerSummary?.usersUnderManagement?.length}
                 isLoading={isLoading}
               />
             </div>
