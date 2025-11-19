@@ -138,7 +138,7 @@ export function PlaceDashboardSection({
   return (
     <Card className="h-full flex flex-col gap-2">
       <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
-        <CardTitle className="text-sm font-semibold">
+        <CardTitle className="text-base font-semibold">
           {placeName ? `${placeName} - Overview` : "Place Overview"}
         </CardTitle>
         <CardDescription className="text-[10px] leading-tight">

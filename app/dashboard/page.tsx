@@ -166,7 +166,7 @@ export default function DashboardPage() {
               <div className="row-span-1">
                 <Card className="h-full flex flex-col gap-2">
                   <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
-                    <CardTitle className="text-sm font-semibold">Quick Actions</CardTitle>
+                    <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
                     <CardDescription className="text-[10px] leading-tight">Common tasks and shortcuts</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1 p-1">

@@ -125,7 +125,7 @@ export function TeamMembersSection({
     return (
       <Card className="h-full flex flex-col gap-2">
         <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
-          <CardTitle className="text-sm font-semibold">Team Members</CardTitle>
+          <CardTitle className="text-base font-semibold">Team Members</CardTitle>
           <CardDescription className="text-[10px] leading-tight">Loading...</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 p-1">
@@ -143,7 +143,7 @@ export function TeamMembersSection({
     return (
       <Card className="h-full flex flex-col gap-2">
         <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
-          <CardTitle className="text-sm font-semibold">Team Members</CardTitle>
+          <CardTitle className="text-base font-semibold">Team Members</CardTitle>
           <CardDescription className="text-[10px] leading-tight">
             Users under your management
           </CardDescription>
@@ -163,7 +163,7 @@ export function TeamMembersSection({
     <Card className="h-full flex flex-col gap-2">
       <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-1 px-4 pt-1 gap-1">
         <div>
-          <CardTitle className="text-sm font-semibold">Team Members</CardTitle>
+          <CardTitle className="text-base font-semibold">Team Members</CardTitle>
           <CardDescription className="text-[10px] leading-tight">
             Users under your management
           </CardDescription>
