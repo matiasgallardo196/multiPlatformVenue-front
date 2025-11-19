@@ -129,9 +129,9 @@ export default function DashboardPage() {
 
         {/* Layout en cuadrantes para MANAGER y HEAD_MANAGER */}
         {(isHeadManager || isManager) && (headManagerSummary || managerSummary) && (
-          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 grid-rows-2 h-[calc(100vh-8rem)]">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-rows-2 lg:h-[calc(100vh-8rem)]">
             {/* Cuadrante 1: Place Overview */}
-            <div className={isHeadManager ? "row-span-1" : "row-span-2"}>
+            <div className={isHeadManager ? "lg:row-span-1" : "lg:row-span-2"}>
               <PlaceDashboardSection
                 placeName={headManagerSummary?.placeName ?? managerSummary?.placeName ?? null}
                 placeStats={headManagerSummary?.placeStats ?? managerSummary?.placeStats!}
@@ -142,7 +142,7 @@ export default function DashboardPage() {
 
             {/* Cuadrante 2: Team Members (solo HEAD_MANAGER) */}
             {isHeadManager && headManagerSummary && headManagerSummary.usersUnderManagement && (
-              <div className="row-span-1">
+              <div className="lg:row-span-1">
                 <TeamMembersSection
                   users={headManagerSummary.usersUnderManagement}
                   isLoading={isLoading}
@@ -152,7 +152,7 @@ export default function DashboardPage() {
 
             {/* Cuadrante 3: Recent Activity */}
             {summary && "recentActivity" in summary && summary.recentActivity && (
-              <div className="row-span-1">
+              <div className="lg:row-span-1">
                 <RecentActivitySection
                   activity={summary.recentActivity}
                   isLoading={isLoading}
@@ -163,38 +163,38 @@ export default function DashboardPage() {
 
             {/* Cuadrante 4: Quick Actions */}
             {!isReadOnly && (
-              <div className="row-span-1">
-                <Card className="h-full flex flex-col gap-2 py-1">
-                  <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
-                    <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
+              <div className="lg:row-span-1">
+                <Card className="h-full flex flex-col gap-2 py-1 min-h-0">
+                  <CardHeader className="flex-shrink-0 pb-1 px-3 sm:px-4 pt-1 gap-1">
+                    <CardTitle className="text-sm sm:text-base font-semibold">Quick Actions</CardTitle>
                     <CardDescription className="text-xs leading-tight">Common tasks and shortcuts</CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-1 p-1">
-                    <div className="space-y-1">
+                  <CardContent className="flex-1 p-1 sm:p-2">
+                    <div className="space-y-1 sm:space-y-1.5">
                       <PersonCreateDialog
                         onCreated={(person) => {
                           window.location.href = `/persons/${person.id}`;
                         }}
                       >
-                        <div className="flex items-center justify-between p-1.5 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
+                        <div className="flex items-center justify-between p-1.5 sm:p-2 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
                           <div className="min-w-0 flex-1 pr-2">
-                            <p className="font-medium text-sm leading-tight">Add Person</p>
-                            <p className="text-xs text-muted-foreground leading-tight">
+                            <p className="font-medium text-xs sm:text-sm leading-tight">Add Person</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
                               Register new individual
                             </p>
                           </div>
-                          <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                          <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                         </div>
                       </PersonCreateDialog>
                       <BannedCreateFullDialog redirectOnSuccess>
-                        <div className="flex items-center justify-between p-1.5 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
+                        <div className="flex items-center justify-between p-1.5 sm:p-2 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
                           <div className="min-w-0 flex-1 pr-2">
-                            <p className="font-medium text-sm leading-tight">Create New Ban</p>
-                            <p className="text-xs text-muted-foreground leading-tight">
+                            <p className="font-medium text-xs sm:text-sm leading-tight">Create New Ban</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
                               Add a new ban record
                             </p>
                           </div>
-                          <UserX className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                          <UserX className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                         </div>
                       </BannedCreateFullDialog>
                     </div>

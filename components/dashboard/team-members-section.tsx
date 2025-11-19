@@ -78,13 +78,13 @@ export function TeamMembersSection({
     return (
       <div
         className={cn(
-          "flex flex-col p-1.5 rounded-lg border transition-colors h-full bg-muted/30"
+          "flex flex-col p-1 lg:p-1.5 rounded-lg border transition-colors h-full min-h-0 bg-muted/30"
         )}
       >
-        <div className="flex items-start justify-between mb-1">
+        <div className="flex items-start justify-between mb-0.5 lg:mb-1">
           <div
             className={cn(
-              "flex-shrink-0 p-1 rounded-md",
+              "flex-shrink-0 p-0.5 lg:p-1 rounded-md",
               item.variant === "destructive"
                 ? "bg-destructive/10"
                 : item.variant === "secondary"
@@ -94,7 +94,7 @@ export function TeamMembersSection({
           >
             <Icon
               className={cn(
-                "h-3.5 w-3.5",
+                "h-3.5 w-3.5 sm:h-4 sm:w-4",
                 item.variant === "destructive"
                   ? "text-destructive"
                   : item.variant === "secondary"
@@ -104,16 +104,16 @@ export function TeamMembersSection({
             />
           </div>
           {isLoading ? (
-            <div className="text-xl font-bold text-muted-foreground">-</div>
+            <div className="text-lg sm:text-xl font-bold text-muted-foreground">-</div>
           ) : (
-            <div className={cn("text-xl font-bold", valueClass)}>
+            <div className={cn("text-lg sm:text-xl font-bold", valueClass)}>
               {item.value ?? 0}
             </div>
           )}
         </div>
-        <div className="space-y-0">
-          <p className="text-sm font-medium leading-tight">{item.title}</p>
-          <p className="text-xs text-muted-foreground leading-tight line-clamp-2">
+        <div className="space-y-0 flex-1 min-h-0 flex flex-col justify-end">
+          <p className="text-xs sm:text-sm font-medium leading-tight">{item.title}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight line-clamp-2">
             {item.description}
           </p>
         </div>
@@ -123,13 +123,13 @@ export function TeamMembersSection({
 
   if (isLoading) {
     return (
-      <Card className="h-full flex flex-col gap-2 py-1">
-        <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
-          <CardTitle className="text-base font-semibold">Team Members</CardTitle>
+      <Card className="h-full flex flex-col gap-0.5 lg:gap-1 py-1 min-h-0">
+        <CardHeader className="flex-shrink-0 pb-0.5 lg:pb-0 px-3 sm:px-4 pt-0.5 lg:pt-0.5 gap-0.5">
+          <CardTitle className="text-sm sm:text-base font-semibold">Team Members</CardTitle>
           <CardDescription className="text-xs leading-tight">Loading...</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 p-1">
-          <div className="grid grid-cols-2 gap-1.5 h-full">
+        <CardContent className="flex-1 p-0.5 lg:p-1 overflow-hidden">
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-1 lg:gap-1 h-full">
             {stats.map((stat, index) => (
               <StatCard key={index} item={stat} />
             ))}
@@ -141,15 +141,15 @@ export function TeamMembersSection({
 
   if (!users || users.length === 0) {
     return (
-      <Card className="h-full flex flex-col gap-2 py-1">
-        <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
-          <CardTitle className="text-base font-semibold">Team Members</CardTitle>
+      <Card className="h-full flex flex-col gap-0.5 lg:gap-1 py-1 min-h-0">
+        <CardHeader className="flex-shrink-0 pb-0.5 lg:pb-0 px-3 sm:px-4 pt-0.5 lg:pt-0.5 gap-0.5">
+          <CardTitle className="text-sm sm:text-base font-semibold">Team Members</CardTitle>
           <CardDescription className="text-xs leading-tight">
             Users under your management
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 p-1">
-          <div className="grid grid-cols-2 gap-1.5 h-full">
+        <CardContent className="flex-1 p-0.5 lg:p-1 overflow-hidden">
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-1 lg:gap-1 h-full">
             {stats.map((stat, index) => (
               <StatCard key={index} item={stat} />
             ))}
@@ -160,10 +160,10 @@ export function TeamMembersSection({
   }
 
   return (
-    <Card className="h-full flex flex-col gap-2 py-1">
-      <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-1 px-4 pt-1 gap-1">
+    <Card className="h-full flex flex-col gap-0.5 lg:gap-1 py-1 min-h-0">
+      <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-0.5 lg:pb-0 px-3 sm:px-4 pt-0.5 lg:pt-0.5 gap-0.5">
         <div>
-          <CardTitle className="text-base font-semibold">Team Members</CardTitle>
+          <CardTitle className="text-sm sm:text-base font-semibold">Team Members</CardTitle>
           <CardDescription className="text-xs leading-tight">
             Users under your management
           </CardDescription>
@@ -172,8 +172,8 @@ export function TeamMembersSection({
           <span className="text-xs text-primary hover:underline">View all</span>
         </Link>
       </CardHeader>
-      <CardContent className="flex-1 p-1">
-        <div className="grid grid-cols-2 gap-1.5 h-full">
+      <CardContent className="flex-1 p-0.5 lg:p-1 overflow-hidden">
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-1 lg:gap-1 h-full">
           {stats.map((stat, index) => (
             <StatCard key={index} item={stat} />
           ))}

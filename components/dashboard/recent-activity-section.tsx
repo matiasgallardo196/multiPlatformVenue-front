@@ -25,9 +25,9 @@ export function RecentActivitySection({
 }: RecentActivitySectionProps) {
   if (isLoading) {
     return (
-      <Card className="h-full flex flex-col gap-2 py-1">
-        <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
-          <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
+      <Card className="h-full flex flex-col gap-2 py-1 min-h-0">
+        <CardHeader className="flex-shrink-0 pb-1 px-3 sm:px-4 pt-1 gap-1">
+          <CardTitle className="text-sm sm:text-base font-semibold">Recent Activity</CardTitle>
           <CardDescription className="text-xs leading-tight">Loading...</CardDescription>
         </CardHeader>
       </Card>
@@ -36,7 +36,7 @@ export function RecentActivitySection({
 
   if (!activity || activity.length === 0) {
     return (
-      <Card className="h-full flex flex-col gap-2 py-1">
+      <Card className="h-full flex flex-col gap-2 py-1 min-h-0">
         <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
           <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
           <CardDescription className="text-xs leading-tight">
@@ -63,9 +63,9 @@ export function RecentActivitySection({
 
   return (
     <Card className="h-full flex flex-col gap-2 py-1">
-      <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-1 px-4 pt-1 gap-1">
+      <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-1 px-3 sm:px-4 pt-1 gap-1">
         <div>
-          <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
+          <CardTitle className="text-sm sm:text-base font-semibold">Recent Activity</CardTitle>
           <CardDescription className="text-xs leading-tight">
             Latest activities in the system
           </CardDescription>
@@ -74,8 +74,8 @@ export function RecentActivitySection({
           <span className="text-xs text-primary hover:underline">View all</span>
         </Link>
       </CardHeader>
-      <CardContent className="flex-1 p-1 overflow-y-auto">
-        <div className="space-y-1">
+      <CardContent className="flex-1 p-1 sm:p-2 overflow-y-auto">
+        <div className="space-y-1 sm:space-y-1.5">
             {activity.slice(0, 5).map((item) => {
               const date = new Date(item.startingDate);
               const timeAgo = formatDistanceToNow(date, {
@@ -87,21 +87,21 @@ export function RecentActivitySection({
                 <Link
                   key={item.id}
                   href={`/banneds/${item.id}`}
-                  className="block p-1.5 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                  className="block p-1.5 sm:p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
                 >
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2 sm:gap-2.5">
                     <div className="flex-shrink-0 mt-0.5">
                       {item.type === "ban" ? (
-                        <Ban className="h-3.5 w-3.5 text-destructive" />
+                        <Ban className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" />
                       ) : (
-                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-tight">
+                      <p className="text-xs sm:text-sm font-medium leading-tight">
                         {getActivityLabel(item.type)}
                       </p>
-                      <p className="text-xs text-muted-foreground leading-tight">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
                         {timeAgo}
                       </p>
                     </div>
