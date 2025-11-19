@@ -399,11 +399,11 @@ export default function LoginPage() {
                 <span className="sm:hidden">Email</span>
               </a>
               <a
-                href="tel:+549431269954"
+                href="tel:+61431269954"
                 className="flex items-center gap-1.5 text-xs sm:text-sm text-white hover:text-primary transition-colors font-medium"
               >
                 <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span>+54 9 4312 69954</span>
+                <span>+61 431 269 954</span>
               </a>
             </div>
           </div>
