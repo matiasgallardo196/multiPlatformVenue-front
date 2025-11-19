@@ -967,10 +967,86 @@ export function useAuthMe(enabled: boolean) {
   });
 }
 
+// Tipos para la respuesta del dashboard según rol
+export type DashboardSummaryBase = {
+  totals: {
+    totalPersons: number;
+    activeBans: number;
+  };
+};
+
+export type DashboardSummaryStaff = DashboardSummaryBase & {
+  placeId?: string | null;
+  placeName?: string | null;
+  placeStats?: {
+    activeBans: number;
+    pendingBans: number;
+    totalPersons: number;
+  };
+  contactInfo?: {
+    manager: { userName: string; email: string | null } | null;
+    headManager: { userName: string; email: string | null } | null;
+  };
+};
+
+export type DashboardSummaryManager = DashboardSummaryBase & {
+  placeId: string;
+  placeName: string | null;
+  placeStats: {
+    activeBans: number;
+    pendingBans: number;
+    totalPersons: number;
+  };
+  recentActivity: Array<{
+    id: string;
+    startingDate: string;
+    type: string;
+  }>;
+};
+
+export type DashboardSummaryHeadManager = DashboardSummaryManager & {
+  usersUnderManagement: Array<{
+    id: string;
+    userName: string;
+    role: string;
+    email: string | null;
+  }>;
+};
+
+export type DashboardSummaryAdmin = DashboardSummaryBase & {
+  totals: {
+    totalPersons: number;
+    activeBans: number;
+    totalPlaces: number;
+    totalUsers: number;
+  };
+  usersByRole: {
+    admin: number;
+    'head-manager': number;
+    manager: number;
+    staff: number;
+  };
+  pendingBans: number;
+  placesStats: Array<{
+    placeId: string;
+    placeName: string;
+    activeBans: number;
+    pendingBans: number;
+    totalPersons: number;
+  }>;
+  recentActivity: Array<{
+    id: string;
+    startingDate: string;
+    type: string;
+  }>;
+};
+
+export type DashboardSummary = DashboardSummaryStaff | DashboardSummaryManager | DashboardSummaryHeadManager | DashboardSummaryAdmin;
+
 export function useDashboardSummary(enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.dashboardSummary,
-    queryFn: () => api.get<{ totals: { totalPersons: number; activeBans: number; totalPlaces: number } }>("/dashboard/summary"),
+    queryFn: () => api.get<DashboardSummary>("/dashboard/summary"),
     enabled,
     staleTime: 10 * 1000, // 10 segundos para forzar actualizaciones más frecuentes
     refetchOnWindowFocus: true,

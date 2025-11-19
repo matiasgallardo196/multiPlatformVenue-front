@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Eye, EyeOff, Lock, Mail, Moon, Sun, Sparkles } from "lucide-react";
+import { Loader2, Eye, EyeOff, Lock, Mail, Moon, Sun, Sparkles, Linkedin, Phone, Shield, CheckCircle2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
@@ -114,35 +114,45 @@ export default function LoginPage() {
   const isDark = (resolvedTheme || theme) === "dark";
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4">
-      {/* Decorative background for login – mesh gradient + subtle grid */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute inset-0 opacity-90 [background:radial-gradient(60%_40%_at_20%_10%,hsl(var(--primary)/0.18),transparent_70%),radial-gradient(50%_35%_at_90%_15%,hsl(var(--accent)/0.14),transparent_70%),radial-gradient(45%_30%_at_50%_85%,hsl(var(--muted-foreground)/0.10),transparent_70%)]" />
-        <div className="absolute inset-0 mix-blend-overlay [background-image:linear-gradient(to_right,hsl(var(--border)/0.35)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.35)_1px,transparent_1px)] bg-[size:40px_40px]" />
+    <div className="relative min-h-screen flex overflow-hidden">
+      {/* Full-screen Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')"
+        }}
+      >
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
-      <div className="w-full max-w-md rounded-xl border bg-card shadow-sm">
-        <div className="p-6 sm:p-8">
-          <div className="flex justify-end mb-2">
-            {mounted ? (
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-                onClick={() => setTheme(isDark ? "light" : "dark")}
-              >
-                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
-            ) : (
-              <Button variant="outline" size="icon" aria-label="Toggle theme" disabled>
-                <Moon className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Sign In</h1>
-            <p className="text-sm text-muted-foreground mt-1">Access the dashboard</p>
-          </div>
+      {/* Content Container */}
+      <div className="relative z-10 w-full flex flex-col lg:flex-row h-screen overflow-y-auto lg:overflow-hidden snap-y snap-mandatory lg:snap-none">
+        {/* Left Side - Floating Login Card */}
+        <div className="w-full lg:w-[45%] min-h-screen lg:min-h-0 flex items-center justify-center lg:items-start lg:justify-start pt-0 lg:pt-16 xl:pt-20 p-4 sm:p-6 lg:p-8 lg:pl-12 xl:pl-16 pb-20 lg:pb-0 snap-start">
+          <div className="w-full max-w-md">
+            <div className="rounded-xl border bg-card/95 backdrop-blur-md shadow-2xl">
+              <div className="p-6 sm:p-8">
+                <div className="flex justify-end mb-2">
+                  {mounted ? (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+                      onClick={() => setTheme(isDark ? "light" : "dark")}
+                    >
+                      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="icon" aria-label="Toggle theme" disabled>
+                      <Moon className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="mb-6 text-center">
+                  <h1 className="text-2xl font-semibold tracking-tight">Sign In</h1>
+                  <p className="text-sm text-muted-foreground mt-1">Access the dashboard</p>
+                </div>
 
           {checking ? (
             <div className="flex items-center justify-center py-6 text-muted-foreground">
@@ -300,6 +310,103 @@ export default function LoginPage() {
               </TabsContent>
             </Tabs>
           )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Brand Information Panel */}
+        <div className="w-full lg:w-[55%] min-h-screen lg:min-h-0 flex flex-col justify-center p-4 sm:p-6 lg:p-8 lg:pr-12 xl:pr-16 relative pb-20 lg:pb-0 snap-start">
+          {/* Brand Section */}
+          <div className="flex flex-col space-y-6 lg:space-y-8 text-white">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
+                  <Shield className="h-8 w-8 text-white" />
+                </div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight">
+                  BanMate
+                </h2>
+              </div>
+              <p className="text-lg sm:text-xl lg:text-2xl text-white/90 max-w-lg leading-relaxed">
+                Comprehensive security and access management system for modern hospitality venues
+              </p>
+            </div>
+
+            {/* Features List */}
+            <div className="space-y-4 pt-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-white text-base sm:text-lg">Centralized Person Management</p>
+                  <p className="text-sm text-white/80">Manage all individuals in one unified system</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-white text-base sm:text-lg">Access Control & Bans</p>
+                  <p className="text-sm text-white/80">Track and manage access restrictions efficiently</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-white text-base sm:text-lg">Real-time Reporting</p>
+                  <p className="text-sm text-white/80">Get instant insights and analytics</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-white text-base sm:text-lg">Intuitive Interface</p>
+                  <p className="text-sm text-white/80">User-friendly design for all team members</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Developer Footer - Fixed at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 border-t border-white/20">
+        <div className="bg-black/40 backdrop-blur-md px-4 sm:px-6 py-2.5 sm:py-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 sm:gap-4 max-w-7xl mx-auto">
+            <div className="text-center sm:text-left">
+              <p className="text-xs sm:text-sm text-white/90 leading-tight">
+                <span className="font-medium uppercase tracking-wide">Developed by</span>{" "}
+                <span className="font-bold">Matias Gallardo</span>{" "}
+                <span className="text-white/70">•</span>{" "}
+                <span className="text-white/80">Full-stack development & design</span>
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+              <a
+                href="https://www.linkedin.com/in/matiasgallardo-dev/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs sm:text-sm text-white hover:text-primary transition-colors font-medium"
+              >
+                <Linkedin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span>matiasgallardo-dev</span>
+              </a>
+              <a
+                href="mailto:matiasgallardo196@gmail.com"
+                className="flex items-center gap-1.5 text-xs sm:text-sm text-white hover:text-primary transition-colors font-medium"
+              >
+                <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">matiasgallardo196@gmail.com</span>
+                <span className="sm:hidden">Email</span>
+              </a>
+              <a
+                href="tel:+549431269954"
+                className="flex items-center gap-1.5 text-xs sm:text-sm text-white hover:text-primary transition-colors font-medium"
+              >
+                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span>+54 9 4312 69954</span>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
