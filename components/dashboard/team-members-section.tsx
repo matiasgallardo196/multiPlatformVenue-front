@@ -123,7 +123,7 @@ export function TeamMembersSection({
 
   if (isLoading) {
     return (
-      <Card className="h-full flex flex-col gap-2">
+      <Card className="h-full flex flex-col gap-2 py-1">
         <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
           <CardTitle className="text-base font-semibold">Team Members</CardTitle>
           <CardDescription className="text-xs leading-tight">Loading...</CardDescription>
@@ -141,7 +141,7 @@ export function TeamMembersSection({
 
   if (!users || users.length === 0) {
     return (
-      <Card className="h-full flex flex-col gap-2">
+      <Card className="h-full flex flex-col gap-2 py-1">
         <CardHeader className="flex-shrink-0 pb-1 px-4 pt-1 gap-1">
           <CardTitle className="text-base font-semibold">Team Members</CardTitle>
           <CardDescription className="text-xs leading-tight">
@@ -160,7 +160,7 @@ export function TeamMembersSection({
   }
 
   return (
-    <Card className="h-full flex flex-col gap-2">
+    <Card className="h-full flex flex-col gap-2 py-1">
       <CardHeader className="flex flex-row items-center justify-between flex-shrink-0 pb-1 px-4 pt-1 gap-1">
         <div>
           <CardTitle className="text-base font-semibold">Team Members</CardTitle>
