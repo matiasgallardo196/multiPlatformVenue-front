@@ -9,11 +9,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useDashboardSummary } from "@/hooks/queries";
-import { Users, MapPin, UserX } from "lucide-react";
-import { useMemo } from "react";
+import { useDashboardSummary, type DashboardSummaryAdmin, type DashboardSummaryHeadManager, type DashboardSummaryManager } from "@/hooks/queries";
+import { Users, MapPin, UserX, UserCheck, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import dynamic from "next/dynamic";
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { PlaceDashboardSection } from "@/components/dashboard/place-dashboard-section";
+import { TeamMembersSection } from "@/components/dashboard/team-members-section";
+import { PlacesOverview } from "@/components/dashboard/places-overview";
+import { UsersByRole } from "@/components/dashboard/users-by-role";
+import { RecentActivitySection } from "@/components/dashboard/recent-activity-section";
+
 const BannedCreateFullDialog = dynamic(
   () => import("@/components/banned/banned-create-full-dialog").then(m => m.BannedCreateFullDialog),
   { ssr: false }
@@ -24,134 +30,132 @@ const PersonCreateDialog = dynamic(
 );
 import { RouteGuard } from "@/components/auth/route-guard";
 
+function getDashboardDescription(role?: string | null): string {
+  switch (role) {
+    case "admin":
+      return "Complete system overview";
+    case "head-manager":
+      return "Overview of your place and team";
+    case "manager":
+      return "Overview of your assigned place";
+    case "staff":
+      return "System overview";
+    default:
+      return "Overview of your admin system";
+  }
+}
+
 export default function DashboardPage() {
   const { isReadOnly, user, loading } = useAuth();
   const enabled = !!user && !loading;
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary(enabled);
 
-  const stats = useMemo(() => {
-    return {
-      totalPersons: summary?.totals.totalPersons ?? 0,
-      activeBans: summary?.totals.activeBans ?? 0,
-      totalPlaces: summary?.totals.totalPlaces ?? 0,
-    };
-  }, [summary]);
-
   const isLoading = summaryLoading;
+  const isAdmin = user?.role === "admin";
+  const isHeadManager = user?.role === "head-manager";
+  const isManager = user?.role === "manager";
+
+  // Determinar qué tipo de resumen tenemos
+  const adminSummary = isAdmin ? (summary as DashboardSummaryAdmin | undefined) : undefined;
+  const headManagerSummary = isHeadManager ? (summary as DashboardSummaryHeadManager | undefined) : undefined;
+  const managerSummary = isManager ? (summary as DashboardSummaryManager | undefined) : undefined;
 
   return (
     <RouteGuard>
       <DashboardLayout>
         <PageHeader
           title="Dashboard"
-          description="Overview of your admin system"
+          description={getDashboardDescription(user?.role)}
         />
 
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Persons
-              </CardTitle>
-              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-xl sm:text-2xl font-bold">-</div>
-              ) : (
-                <div className="text-xl sm:text-2xl font-bold">{stats.totalPersons}</div>
-              )}
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                {isLoading ? "Loading..." : "Registered individuals"}
-              </p>
-            </CardContent>
-          </Card>
+        {/* Estadísticas principales - Solo para STAFF y ADMIN */}
+        {!(isHeadManager || isManager) && (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <StatsCard
+              title="Total Persons"
+              value={summary?.totals.totalPersons}
+              description="Registered individuals"
+              icon={Users}
+              isLoading={isLoading}
+            />
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Bans</CardTitle>
-              <UserX className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="text-xl sm:text-2xl font-bold">-</div>
-              ) : (
-                <div className="text-xl sm:text-2xl font-bold text-destructive">
-                  {stats.activeBans}
-                </div>
-              )}
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                {isLoading ? "Loading..." : "Currently active"}
-              </p>
-            </CardContent>
-          </Card>
+            {!isAdmin && (
+              <StatsCard
+                title="Active Bans"
+                value={summary?.totals.activeBans}
+                description="Currently active"
+                icon={UserX}
+                isLoading={isLoading}
+                variant="destructive"
+              />
+            )}
 
-          {!isReadOnly && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Places
-                </CardTitle>
-                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="text-xl sm:text-2xl font-bold">-</div>
-                ) : (
-                  <div className="text-xl sm:text-2xl font-bold">{stats.totalPlaces}</div>
-                )}
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  {isLoading ? "Loading..." : "Registered locations"}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+            {isAdmin && adminSummary && (
+              <>
+                <StatsCard
+                  title="Active Bans"
+                  value={adminSummary.totals.activeBans}
+                  description="Currently active"
+                  icon={UserX}
+                  isLoading={isLoading}
+                  variant="destructive"
+                />
+                <StatsCard
+                  title="Total Places"
+                  value={adminSummary.totals.totalPlaces}
+                  description="Registered locations"
+                  icon={MapPin}
+                  isLoading={isLoading}
+                />
+                <StatsCard
+                  title="Total Users"
+                  value={adminSummary.totals.totalUsers}
+                  description="System users"
+                  icon={UserCheck}
+                  isLoading={isLoading}
+                />
+              </>
+            )}
+          </div>
+        )}
 
-        <div className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Welcome to Admin Dashboard</CardTitle>
-              <CardDescription className="text-sm">
-                Manage banned persons, places, and more from this
-                central dashboard.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 sm:space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Use the sidebar navigation to access different sections:
-                </p>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="flex-shrink-0">•</span>
-                    <span>
-                      <strong>Banned:</strong> View and manage banned persons
-                      with photos, dates, and associated places
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="flex-shrink-0">•</span>
-                    <span>
-                      <strong>Persons:</strong> Manage individual person records
-                      and their profile information
-                    </span>
-                  </li>
-                  {!isReadOnly && (
-                    <li className="flex items-start gap-2">
-                      <span className="flex-shrink-0">•</span>
-                      <span>
-                        <strong>Places:</strong> Manage locations and venues in
-                        the system
-                      </span>
-                    </li>
-                  )}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Secciones específicas por rol */}
+        {isAdmin && adminSummary && (
+          <>
+            <UsersByRole usersByRole={adminSummary.usersByRole} isLoading={isLoading} />
+            <PlacesOverview placesStats={adminSummary.placesStats} isLoading={isLoading} />
+          </>
+        )}
 
-          {!isReadOnly && (
+        {(isHeadManager || isManager) && (headManagerSummary || managerSummary) && (
+          <PlaceDashboardSection
+            placeName={headManagerSummary?.placeName ?? managerSummary?.placeName ?? null}
+            placeStats={headManagerSummary?.placeStats ?? managerSummary?.placeStats!}
+            totalPersons={summary?.totals.totalPersons}
+            teamMembersCount={headManagerSummary?.usersUnderManagement?.length}
+            isLoading={isLoading}
+          />
+        )}
+
+        {isHeadManager && headManagerSummary && headManagerSummary.usersUnderManagement && (
+          <TeamMembersSection
+            users={headManagerSummary.usersUnderManagement}
+            isLoading={isLoading}
+          />
+        )}
+
+        {/* Actividad reciente */}
+        {summary && "recentActivity" in summary && summary.recentActivity && (
+          <RecentActivitySection
+            activity={summary.recentActivity}
+            isLoading={isLoading}
+            role={user?.role}
+          />
+        )}
+
+        {/* Acciones rápidas */}
+        {!isReadOnly && (
+          <div className="mt-6 sm:mt-8">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg sm:text-xl">Quick Actions</CardTitle>
@@ -188,8 +192,8 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </div>
+        )}
       </DashboardLayout>
     </RouteGuard>
   );
