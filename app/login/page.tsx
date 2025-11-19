@@ -373,9 +373,12 @@ export default function LoginPage() {
         <div className="bg-black/40 backdrop-blur-md px-4 sm:px-6 py-2.5 sm:py-3">
           <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 sm:gap-4 max-w-7xl mx-auto">
             <div className="text-center sm:text-left">
-              <p className="text-[10px] sm:text-xs text-white/90 font-medium uppercase tracking-wide">Developed by</p>
-              <p className="text-sm sm:text-base text-white font-bold leading-tight">Matias Gallardo</p>
-              <p className="text-[10px] sm:text-xs text-white/80 leading-tight">Full-stack development & design</p>
+              <p className="text-xs sm:text-sm text-white/90 leading-tight">
+                <span className="font-medium uppercase tracking-wide">Developed by</span>{" "}
+                <span className="font-bold">Matias Gallardo</span>{" "}
+                <span className="text-white/70">•</span>{" "}
+                <span className="text-white/80">Full-stack development & design</span>
+              </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
               <a
