@@ -23,23 +23,24 @@ export function PlaceDashboardSection({
   teamMembersCount,
   isLoading = false,
 }: PlaceDashboardSectionProps) {
-  // Determinar cuántas columnas necesitamos según las estadísticas disponibles
+  // Para el layout de cuadrantes, usar un grid más compacto
+  // Máximo 3 columnas en desktop para que se vea bien en el cuadrante
   const statsCount = 3 + (totalPersons !== undefined ? 1 : 0) + (teamMembersCount !== undefined ? 1 : 0);
-  const gridCols = statsCount <= 3 ? "lg:grid-cols-3" : statsCount === 4 ? "lg:grid-cols-4" : "lg:grid-cols-5";
+  // En cuadrantes, limitamos a 2-3 columnas máximo
+  const gridCols = statsCount <= 3 ? "lg:grid-cols-3" : "lg:grid-cols-3";
 
   return (
-    <div className="mt-6 sm:mt-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">
-            {placeName ? `${placeName} - Overview` : "Place Overview"}
-          </CardTitle>
-          <CardDescription className="text-sm">
-            Complete information about your assigned place
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className={`grid gap-4 grid-cols-1 sm:grid-cols-2 ${gridCols}`}>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="flex-shrink-0 pb-3">
+        <CardTitle className="text-base sm:text-lg">
+          {placeName ? `${placeName} - Overview` : "Place Overview"}
+        </CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          Complete information about your assigned place
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className={`grid gap-3 grid-cols-2 ${gridCols}`}>
             {totalPersons !== undefined && (
               <StatsCard
                 title="Total Persons"
@@ -87,9 +88,8 @@ export function PlaceDashboardSection({
               isLoading={isLoading}
             />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

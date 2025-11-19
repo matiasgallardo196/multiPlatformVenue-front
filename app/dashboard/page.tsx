@@ -127,71 +127,82 @@ export default function DashboardPage() {
           </>
         )}
 
+        {/* Layout en cuadrantes para MANAGER y HEAD_MANAGER */}
         {(isHeadManager || isManager) && (headManagerSummary || managerSummary) && (
-          <PlaceDashboardSection
-            placeName={headManagerSummary?.placeName ?? managerSummary?.placeName ?? null}
-            placeStats={headManagerSummary?.placeStats ?? managerSummary?.placeStats!}
-            totalPersons={summary?.totals.totalPersons}
-            teamMembersCount={headManagerSummary?.usersUnderManagement?.length}
-            isLoading={isLoading}
-          />
-        )}
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 grid-rows-2 h-[calc(100vh-12rem)]">
+            {/* Cuadrante 1: Place Overview */}
+            <div className={isHeadManager ? "row-span-1" : "row-span-2"}>
+              <PlaceDashboardSection
+                placeName={headManagerSummary?.placeName ?? managerSummary?.placeName ?? null}
+                placeStats={headManagerSummary?.placeStats ?? managerSummary?.placeStats!}
+                totalPersons={summary?.totals.totalPersons}
+                teamMembersCount={headManagerSummary?.usersUnderManagement?.length}
+                isLoading={isLoading}
+              />
+            </div>
 
-        {isHeadManager && headManagerSummary && headManagerSummary.usersUnderManagement && (
-          <TeamMembersSection
-            users={headManagerSummary.usersUnderManagement}
-            isLoading={isLoading}
-          />
-        )}
+            {/* Cuadrante 2: Team Members (solo HEAD_MANAGER) */}
+            {isHeadManager && headManagerSummary && headManagerSummary.usersUnderManagement && (
+              <div className="row-span-1">
+                <TeamMembersSection
+                  users={headManagerSummary.usersUnderManagement}
+                  isLoading={isLoading}
+                />
+              </div>
+            )}
 
-        {/* Actividad reciente */}
-        {summary && "recentActivity" in summary && summary.recentActivity && (
-          <RecentActivitySection
-            activity={summary.recentActivity}
-            isLoading={isLoading}
-            role={user?.role}
-          />
-        )}
+            {/* Cuadrante 3: Recent Activity */}
+            {summary && "recentActivity" in summary && summary.recentActivity && (
+              <div className="row-span-1">
+                <RecentActivitySection
+                  activity={summary.recentActivity}
+                  isLoading={isLoading}
+                  role={user?.role}
+                />
+              </div>
+            )}
 
-        {/* Acciones rápidas */}
-        {!isReadOnly && (
-          <div className="mt-6 sm:mt-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Quick Actions</CardTitle>
-                <CardDescription className="text-sm">Common tasks and shortcuts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <PersonCreateDialog
-                    onCreated={(person) => {
-                      window.location.href = `/persons/${person.id}`;
-                    }}
-                  >
-                    <div className="flex items-center justify-between p-3 sm:p-4 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
-                      <div className="min-w-0 flex-1 pr-3">
-                        <p className="font-medium text-sm sm:text-base">Add Person</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                          Register new individual
-                        </p>
-                      </div>
-                      <Users className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground flex-shrink-0" />
+            {/* Cuadrante 4: Quick Actions */}
+            {!isReadOnly && (
+              <div className="row-span-1">
+                <Card className="h-full flex flex-col">
+                  <CardHeader className="flex-shrink-0 pb-3">
+                    <CardTitle className="text-base sm:text-lg">Quick Actions</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">Common tasks and shortcuts</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 overflow-y-auto p-4 sm:p-6">
+                    <div className="space-y-2">
+                      <PersonCreateDialog
+                        onCreated={(person) => {
+                          window.location.href = `/persons/${person.id}`;
+                        }}
+                      >
+                        <div className="flex items-center justify-between p-2.5 sm:p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
+                          <div className="min-w-0 flex-1 pr-2">
+                            <p className="font-medium text-sm">Add Person</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Register new individual
+                            </p>
+                          </div>
+                          <Users className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
+                        </div>
+                      </PersonCreateDialog>
+                      <BannedCreateFullDialog redirectOnSuccess>
+                        <div className="flex items-center justify-between p-2.5 sm:p-3 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
+                          <div className="min-w-0 flex-1 pr-2">
+                            <p className="font-medium text-sm">Create New Ban</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Add a new ban record
+                            </p>
+                          </div>
+                          <UserX className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
+                        </div>
+                      </BannedCreateFullDialog>
                     </div>
-                  </PersonCreateDialog>
-                  <BannedCreateFullDialog redirectOnSuccess>
-                    <div className="flex items-center justify-between p-3 sm:p-4 bg-muted rounded-lg hover:bg-muted/80 transition cursor-pointer active:scale-[0.98]">
-                      <div className="min-w-0 flex-1 pr-3">
-                        <p className="font-medium text-sm sm:text-base">Create New Ban</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                          Add a new ban record
-                        </p>
-                      </div>
-                      <UserX className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground flex-shrink-0" />
-                    </div>
-                  </BannedCreateFullDialog>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         )}
       </DashboardLayout>

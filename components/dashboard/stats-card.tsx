@@ -32,21 +32,21 @@ export function StatsCard({
       : "";
 
   const content = (
-    <Card className={linkTo ? "hover:bg-muted/50 transition-colors" : ""}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
+    <Card className={`h-full ${linkTo ? "hover:bg-muted/50 transition-colors" : ""}`}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 pt-3">
+        <CardTitle className="text-xs sm:text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 pb-3">
         {isLoading ? (
-          <div className="text-xl sm:text-2xl font-bold">-</div>
+          <div className="text-lg sm:text-xl font-bold">-</div>
         ) : (
-          <div className={`text-xl sm:text-2xl font-bold ${valueClass}`}>
+          <div className={`text-lg sm:text-xl font-bold ${valueClass}`}>
             {value ?? 0}
           </div>
         )}
         {description && (
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
             {isLoading ? "Loading..." : description}
           </p>
         )}
