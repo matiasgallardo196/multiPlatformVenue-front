@@ -127,9 +127,9 @@ export default function LoginPage() {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 w-full flex flex-col lg:flex-row h-screen overflow-y-auto lg:overflow-hidden">
+      <div className="relative z-10 w-full flex flex-col lg:flex-row h-screen overflow-y-auto lg:overflow-hidden snap-y snap-mandatory lg:snap-none">
         {/* Left Side - Floating Login Card */}
-        <div className="w-full lg:w-[45%] min-h-screen lg:min-h-0 flex items-center justify-center lg:items-start lg:justify-start pt-0 lg:pt-16 xl:pt-20 p-4 sm:p-6 lg:p-8 lg:pl-12 xl:pl-16 pb-20 lg:pb-0">
+        <div className="w-full lg:w-[45%] min-h-screen lg:min-h-0 flex items-center justify-center lg:items-start lg:justify-start pt-0 lg:pt-16 xl:pt-20 p-4 sm:p-6 lg:p-8 lg:pl-12 xl:pl-16 pb-20 lg:pb-0 snap-start">
           <div className="w-full max-w-md">
             <div className="rounded-xl border bg-card/95 backdrop-blur-md shadow-2xl">
               <div className="p-6 sm:p-8">
@@ -316,7 +316,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right Side - Brand Information Panel */}
-        <div className="w-full lg:w-[55%] min-h-screen lg:min-h-0 flex flex-col justify-center p-4 sm:p-6 lg:p-8 lg:pr-12 xl:pr-16 relative pb-20 lg:pb-0">
+        <div className="w-full lg:w-[55%] min-h-screen lg:min-h-0 flex flex-col justify-center p-4 sm:p-6 lg:p-8 lg:pr-12 xl:pr-16 relative pb-20 lg:pb-0 snap-start">
           {/* Brand Section */}
           <div className="flex flex-col space-y-6 lg:space-y-8 text-white">
             <div className="space-y-4">
