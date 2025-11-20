@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -61,6 +62,9 @@ export function PersonCreateDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Person</DialogTitle>
+          <DialogDescription>
+            Add a new person to the system with their personal information.
+          </DialogDescription>
         </DialogHeader>
 
         <PersonForm

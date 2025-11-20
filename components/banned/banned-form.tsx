@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { DateInput } from "@/components/ui/date-input";
 import {
   FormControl,
@@ -23,7 +24,7 @@ type BannedFormValues = {
   endingDate: string;
   motive: string[];
   peopleInvolved?: string;
-  incidentReport?: string;
+  incidentReport: string;
   actionTaken?: string;
   policeNotified: boolean;
   policeNotifiedDate?: string;
@@ -294,13 +295,13 @@ export function BannedForm({
 
       <FormField
         control={form.control}
-        name="peopleInvolved"
+        name="incidentReport"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>People Involved</FormLabel>
+            <FormLabel>Incident Report</FormLabel>
             <FormControl>
-              <Input
-                placeholder="Enter people involved"
+              <Textarea
+                placeholder="Enter incident report"
                 {...field}
                 value={field.value || ""}
               />
@@ -312,13 +313,13 @@ export function BannedForm({
 
       <FormField
         control={form.control}
-        name="incidentReport"
+        name="peopleInvolved"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Incident Report</FormLabel>
+            <FormLabel>People Involved</FormLabel>
             <FormControl>
               <Input
-                placeholder="Enter incident report"
+                placeholder="Enter people involved"
                 {...field}
                 value={field.value || ""}
               />

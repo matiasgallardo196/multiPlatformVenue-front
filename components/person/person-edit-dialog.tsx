@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -60,7 +61,7 @@ export function PersonEditDialog({
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update person. Please try again.",
+        description: error?.message || "Failed to update person. Please try again.",
         variant: "destructive",
       });
     }
@@ -72,6 +73,9 @@ export function PersonEditDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Person</DialogTitle>
+          <DialogDescription>
+            Update the person's personal information and details.
+          </DialogDescription>
         </DialogHeader>
 
         <PersonForm

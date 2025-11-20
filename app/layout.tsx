@@ -1,5 +1,5 @@
 import type React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/next";
@@ -13,13 +13,20 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Admin Dashboard",
   description:
-    "Admin dashboard for managing banned persons, places, and incidents",
+    "Admin dashboard for managing banned persons and places",
   generator: "v0.app",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
     apple: "/placeholder-logo.png",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({

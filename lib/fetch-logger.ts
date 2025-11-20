@@ -6,6 +6,25 @@ const ENABLED =
   (typeof process !== "undefined" && process.env.NEXT_PUBLIC_ENABLE_API_LOGGER === "true") ||
   (typeof window !== "undefined" && process.env.NODE_ENV !== "production");
 
+// Función para obtener el color según el código de estado HTTP
+function getStatusColor(status: number): string {
+  if (status >= 200 && status < 300) {
+    // 2xx: Éxito - Verde
+    return "color: #10b981; font-weight: bold;"; // green-500
+  } else if (status >= 300 && status < 400) {
+    // 3xx: Redirección - Azul/Cian
+    return "color: #3b82f6; font-weight: bold;"; // blue-500
+  } else if (status >= 400 && status < 500) {
+    // 4xx: Error del cliente - Amarillo/Naranja
+    return "color: #f59e0b; font-weight: bold;"; // amber-500
+  } else if (status >= 500) {
+    // 5xx: Error del servidor - Rojo
+    return "color: #ef4444; font-weight: bold;"; // red-500
+  }
+  // Otros códigos - Gris
+  return "color: #6b7280; font-weight: bold;"; // gray-500
+}
+
 if (typeof window !== "undefined" && typeof fetch === "function" && ENABLED) {
   // Avoid double-patching
   const globalAny = window as any;
@@ -63,8 +82,10 @@ if (typeof window !== "undefined" && typeof fetch === "function" && ENABLED) {
         }
 
         // Grouped, collapsed log for readability
+        // Color para peticiones salientes (sending) - Azul claro/Cian
+        const sendingColor = "color: #06b6d4; font-weight: bold;"; // cyan-500
         // eslint-disable-next-line no-console
-        console.groupCollapsed(`${label} • sending`);
+        console.groupCollapsed(`${label} • %csending%c`, sendingColor, "color: inherit; font-weight: normal;");
         // eslint-disable-next-line no-console
         console.log({ method, url, headers: init?.headers, body: bodyInfo });
         // eslint-disable-next-line no-console
@@ -94,12 +115,25 @@ if (typeof window !== "undefined" && typeof fetch === "function" && ENABLED) {
           // ignore preview errors
         }
 
+        // Obtener color según el código de estado
+        const statusColor = getStatusColor(res.status);
+        
+        // Log con código de estado coloreado
         // eslint-disable-next-line no-console
-        console.groupCollapsed(`${label} • ${res.status} • ${ms}ms`);
+        console.groupCollapsed(`${label} • %c${res.status}%c • ${ms}ms`, statusColor, "color: inherit; font-weight: normal;");
         // eslint-disable-next-line no-console
         console.log({ status: res.status, ok: res.ok, headers: Object.fromEntries(res.headers.entries()), preview });
         // eslint-disable-next-line no-console
         console.groupEnd();
+
+        // Simple métricas locales para depurar nº de requests y última latencia
+        try {
+          const w: any = window as any;
+          w.__API_REQUEST_COUNT__ = (w.__API_REQUEST_COUNT__ || 0) + 1;
+          w.__API_LAST_REQUEST_MS__ = ms;
+        } catch {
+          // ignore metrics errors
+        }
 
         return res;
       } catch (e) {

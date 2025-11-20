@@ -58,7 +58,7 @@ export default function BannedDetailPage() {
   const { data: banned, isLoading, error } = useBanned(id);
   const { data: places } = usePlaces();
   const { data: history, isLoading: historyLoading } = useBannedHistory(id);
-  const { isReadOnly, isManager, isHeadManager } = useAuth();
+  const { isReadOnly, isManager, isHeadManager, isAdmin } = useAuth();
   const deleteBanned = useDeleteBanned();
   const { toast } = useToast();
   const [deleting, setDeleting] = useState(false);
@@ -327,50 +327,52 @@ export default function BannedDetailPage() {
                   </Link>
                 </Button>
               )}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    className="w-full cursor-pointer"
-                    variant="destructive"
-                  >
-                    Delete Ban Record
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this ban?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete
-                      the ban and remove it from the list.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Keep Ban</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={async () => {
-                        try {
-                          setDeleting(true);
-                          router.replace("/banneds");
-                          await deleteBanned.mutateAsync(banned.id);
-                          toast({
-                            title: "Deleted",
-                            description: "Ban removed.",
-                          });
-                        } catch (e: unknown) {
-                          const errorMessage = e instanceof Error ? e.message : "Failed to delete ban.";
-                          toast({
-                            title: "Error",
-                            description: errorMessage,
-                            variant: "destructive",
-                          });
-                        }
-                      }}
+              {(isHeadManager || isAdmin) && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      className="w-full cursor-pointer"
+                      variant="destructive"
                     >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      Delete Ban Record
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this ban?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete
+                        the ban and remove it from the list.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep Ban</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={async () => {
+                          try {
+                            setDeleting(true);
+                            router.replace("/banneds");
+                            await deleteBanned.mutateAsync(banned.id);
+                            toast({
+                              title: "Deleted",
+                              description: "Ban removed.",
+                            });
+                          } catch (e: unknown) {
+                            const errorMessage = e instanceof Error ? e.message : "Failed to delete ban.";
+                            toast({
+                              title: "Error",
+                              description: errorMessage,
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </CardContent>
           </Card>
         )}

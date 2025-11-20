@@ -18,15 +18,15 @@ export function RouteGuard({
   requireHeadManager = false,
   redirectTo = "/dashboard",
 }: RouteGuardProps) {
-  const { user, loading, isManager, isHeadManager } = useAuth();
+  const { user, loading, isManager, isHeadManager, hasSession } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (loading) return;
 
-    // Si no hay usuario autenticado, redirigir al login (el middleware debería manejar esto)
-    if (!user) {
-      console.warn("[RouteGuard] No user found, redirecting to login");
+    // Redirigir a login solo cuando sabemos con certeza que NO hay sesión
+    if (!user && hasSession === false) {
+      console.warn("[RouteGuard] No user session, redirecting to login");
       router.replace("/login");
       return;
     }
@@ -59,6 +59,7 @@ export function RouteGuard({
     requireHeadManager,
     redirectTo,
     router,
+    hasSession,
   ]);
 
   // Mostrar loading mientras se verifica la autenticación
@@ -68,14 +69,14 @@ export function RouteGuard({
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            Verificando permisos...
+            Verifying permissions...
           </p>
         </div>
       </div>
     );
   }
 
-  // Si no hay usuario, no mostrar nada (ya se está redirigiendo)
+  // Si no hay usuario, no mostrar nada (ya se está redirigiendo o esperando sesión)
   if (!user) {
     return null;
   }

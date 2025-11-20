@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FiltersButton } from "@/components/filters/filters-button";
+import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
+import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
+import { CompactPagination } from "@/components/pagination/compact-pagination";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,9 +41,6 @@ import {
   Loader2,
   User,
   Search,
-  Filter,
-  X,
-  ArrowUpDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -65,6 +59,16 @@ export default function PersonsPage() {
   const [sortBy, setSortBy] = useState<
     "newest-first" | "oldest-first" | "name-asc" | "name-desc"
   >("newest-first");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
+
+  // Debounce de búsqueda para no disparar por cada tecla
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
 
   // Construir filtros para el hook
   const filters = useMemo(() => {
@@ -72,34 +76,73 @@ export default function PersonsPage() {
       gender?: "all" | "Male" | "Female";
       search?: string;
       sortBy?: "newest-first" | "oldest-first" | "name-asc" | "name-desc";
+      page?: number;
+      limit?: number;
     } = {};
 
     if (genderFilter !== "all") {
       filterObj.gender = genderFilter;
     }
 
-    if (searchQuery.trim()) {
-      filterObj.search = searchQuery;
+    if (debouncedSearch.trim()) {
+      filterObj.search = debouncedSearch;
     }
 
     if (sortBy) {
       filterObj.sortBy = sortBy;
     }
 
-    return Object.keys(filterObj).length > 0 ? filterObj : undefined;
-  }, [genderFilter, searchQuery, sortBy]);
+    filterObj.page = page;
+    filterObj.limit = limit;
 
-  const { data: persons, isLoading, error } = usePersons(filters);
+    return Object.keys(filterObj).length > 0 ? filterObj : undefined;
+  }, [genderFilter, debouncedSearch, sortBy, page, limit]);
+
+  const { data: personsPage, isLoading, error } = usePersons(filters);
+
+  // Resetear a página 1 cuando cambian búsqueda/filtros/sort
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, genderFilter, sortBy]);
 
   const hasActiveFilters = searchQuery || genderFilter !== "all";
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setGenderFilter("all");
+    setSortBy("newest-first");
+  };
+
+  const handleFiltersApply = (values: FilterValues) => {
+    if (values.gender !== undefined) setGenderFilter(values.gender);
+    if (values.sortBy !== undefined) setSortBy(values.sortBy as any);
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (genderFilter !== "all") count++;
+    return count;
+  };
+
+  const getActiveFiltersChips = (): ActiveFilter[] => {
+    const chips: ActiveFilter[] = [];
+    if (genderFilter !== "all") {
+      chips.push({
+        key: "gender",
+        label: "Gender",
+        value: genderFilter,
+        onRemove: () => setGenderFilter("all"),
+      });
+    }
+    return chips;
   };
 
   // El ordenamiento se hace en el backend, solo usar directamente los datos
-  const sortedPersons = persons || [];
+  const items = personsPage?.items || [];
+  const total = personsPage?.total ?? 0;
+  const currentPage = personsPage?.page ?? page;
+  const currentLimit = personsPage?.limit ?? limit;
+  const hasNext = personsPage?.hasNext ?? false;
 
   const handleDelete = async (id: string) => {
     try {
@@ -162,99 +205,38 @@ export default function PersonsPage() {
         </PageHeader>
 
         <div className="space-y-6">
-          {/* Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, last name, or nickname..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+          {/* Search Input and Filters Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, last name, or nickname..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 text-base"
+              />
+            </div>
+            <FiltersButton
+              activeCount={getActiveFiltersCount()}
+              onClick={() => setIsFiltersModalOpen(true)}
+              className="w-full sm:w-auto"
             />
           </div>
 
-          {/* Filters and Sort */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Filters:</span>
-            </div>
-
-            {/* Gender Filter */}
-            <Select
-              value={genderFilter}
-              onValueChange={(value: "all" | "Male" | "Female") =>
-                setGenderFilter(value)
-              }
-            >
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Genders</SelectItem>
-                <SelectItem value="Male">Male</SelectItem>
-                <SelectItem value="Female">Female</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Sort By */}
-            <div className="flex items-center gap-2 ml-auto">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Sort:</span>
-              <Select
-                value={sortBy}
-                onValueChange={(
-                  value:
-                    | "newest-first"
-                    | "oldest-first"
-                    | "name-asc"
-                    | "name-desc"
-                ) => setSortBy(value)}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest-first">Newest first</SelectItem>
-                  <SelectItem value="oldest-first">Oldest first</SelectItem>
-                  <SelectItem value="name-asc">Name A-Z</SelectItem>
-                  <SelectItem value="name-desc">Name Z-A</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Clear Filters */}
-            {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={handleClearFilters}>
-                <X className="mr-2 h-4 w-4" />
-                Clear Filters
-              </Button>
-            )}
-          </div>
-
-          {/* Active Filters Display */}
-          {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2">
-              {genderFilter !== "all" && (
-                <Badge variant="secondary" className="gap-1">
-                  Gender: {genderFilter}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => setGenderFilter("all")}
-                  />
-                </Badge>
-              )}
-            </div>
-          )}
+          {/* Active Filters Chips */}
+          <ActiveFiltersChips
+            filters={getActiveFiltersChips()}
+            onClearAll={handleClearFilters}
+          />
 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="ml-2">Loading persons...</span>
             </div>
-          ) : sortedPersons.length === 0 ? (
+          ) : items.length === 0 ? (
             <div className="text-center py-8">
-              {persons?.length === 0 ? (
+              {total === 0 ? (
                 <>
                   <User className="mx-auto h-12 w-12 text-muted-foreground" />
                   <h3 className="mt-2 text-sm font-semibold">No persons</h3>
@@ -280,16 +262,23 @@ export default function PersonsPage() {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-row flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">
-                  Showing {sortedPersons.length} of {sortedPersons.length}{" "}
-                  persons
+                  {total} {total === 1 ? "person" : "persons"}
                 </p>
+                <CompactPagination
+                  currentPage={currentPage}
+                  total={total}
+                  limit={currentLimit}
+                  onPageChange={setPage}
+                  onLimitChange={setLimit}
+                  hasNext={hasNext}
+                />
               </div>
 
-              <div className="max-h-[calc(100vh-400px)] overflow-y-auto border rounded-lg p-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {sortedPersons.map((person) => (
+              <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {items.map((person) => (
                     <Card
                       key={person.id}
                       className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
@@ -428,17 +417,6 @@ export default function PersonsPage() {
                       </CardHeader>
 
                       <CardContent className="space-y-3">
-                        {person.incidents && person.incidents.length > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">
-                              Incidents:
-                            </span>
-                            <Badge variant="outline">
-                              {person.incidents.length}
-                            </Badge>
-                          </div>
-                        )}
-
                         {person.imagenProfileUrl &&
                           person.imagenProfileUrl.length > 1 && (
                             <div className="space-y-2">
@@ -475,6 +453,28 @@ export default function PersonsPage() {
             </>
           )}
         </div>
+
+        {/* Filters Modal */}
+        <FiltersModal
+          open={isFiltersModalOpen}
+          onOpenChange={setIsFiltersModalOpen}
+          config={{
+            gender: true,
+            sortBy: true,
+          }}
+          values={{
+            gender: genderFilter,
+            sortBy: sortBy,
+          }}
+          onApply={handleFiltersApply}
+          onClearAll={handleClearFilters}
+          sortOptions={[
+            { value: "newest-first", label: "Newest first" },
+            { value: "oldest-first", label: "Oldest first" },
+            { value: "name-asc", label: "Name A-Z" },
+            { value: "name-desc", label: "Name Z-A" },
+          ]}
+        />
       </DashboardLayout>
     </RouteGuard>
   );

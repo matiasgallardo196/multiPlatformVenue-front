@@ -6,13 +6,13 @@ import { useForm } from "react-hook-form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { DateInput } from "@/components/ui/date-input";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -23,12 +23,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { FormDescription } from "@/components/ui/form";
 import { createBannedSchema, type CreateBannedForm } from "@/lib/validations";
-import { useCreateBanned } from "@/hooks/queries";
+import { useCreateBanned, usePlaces } from "@/hooks/queries";
 import { useRouter } from "next/navigation";
-import { add, intervalToDuration, isValid } from "date-fns";
-import { MotiveSelect } from "./motive-select";
+import { BannedForm } from "./banned-form";
+import { useAuth } from "@/hooks/use-auth";
 
 export function BannedCreateDialog({
   children,
@@ -42,9 +41,11 @@ export function BannedCreateDialog({
   redirectOnSuccess?: boolean;
 }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [navigating, setNavigating] = useState(false);
   const createBanned = useCreateBanned();
+  const { data: places = [] } = usePlaces({ enabled: open });
   const router = useRouter();
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -53,6 +54,12 @@ export function BannedCreateDialog({
     d.setDate(d.getDate() + 1);
     return d.toISOString().slice(0, 10);
   }, []);
+
+  // Preseleccionar el lugar del usuario si existe y no hay defaultPlaceId
+  const userPlaceId = user?.placeId ?? null;
+  const initialPlaceIds = defaultPlaceId 
+    ? [defaultPlaceId] 
+    : (userPlaceId ? [userPlaceId] : []);
 
   const form = useForm<CreateBannedForm>({
     resolver: zodResolver(createBannedSchema),
@@ -71,9 +78,22 @@ export function BannedCreateDialog({
       policeNotifiedDate: "",
       policeNotifiedTime: "",
       policeNotifiedEvent: "",
-      placeIds: defaultPlaceId ? [defaultPlaceId] : [],
+      placeIds: initialPlaceIds,
     },
   });
+
+  // Asegurar que el place del usuario esté siempre presente si no hay defaultPlaceId
+  useEffect(() => {
+    if (!defaultPlaceId && userPlaceId && open) {
+      const currentPlaceIds = form.getValues("placeIds") || [];
+      if (!currentPlaceIds.includes(userPlaceId)) {
+        form.setValue("placeIds", [userPlaceId, ...currentPlaceIds], { 
+          shouldDirty: false, 
+          shouldValidate: true 
+        });
+      }
+    }
+  }, [defaultPlaceId, userPlaceId, open, form]);
 
   const onSubmit = async (values: CreateBannedForm) => {
     try {
@@ -133,56 +153,18 @@ export function BannedCreateDialog({
     }
   };
 
-  // Local duration UI state (not sent to backend)
-  const [durationYears, setDurationYears] = useState<string>("");
-  const [durationMonths, setDurationMonths] = useState<string>("");
-  const [durationDays, setDurationDays] = useState<string>("");
-
-  // Sync: dates -> durations and validate
-  const startingDate = form.watch("startingDate");
-  const endingDate = form.watch("endingDate");
-
-  useEffect(() => {
-    if (!startingDate || !endingDate) return;
-    const start = new Date(startingDate);
-    const end = new Date(endingDate);
-    if (!isValid(start) || !isValid(end)) return;
-    const yearsNum = parseInt(durationYears || "0", 10) || 0;
-    const monthsNum = parseInt(durationMonths || "0", 10) || 0;
-    const daysNum = parseInt(durationDays || "0", 10) || 0;
-    const hasPositiveDuration = yearsNum + monthsNum + daysNum > 0;
-
-    // Validation: at least 1 day
-    if (end <= start) {
-      form.setError("endingDate" as any, {
-        type: "validate",
-        message: "Ban must be at least 1 day long.",
-      });
-      // Don't update duration fields if end date is before start date
-      return;
-    }
-
-    form.clearErrors("endingDate" as any);
-    const dur = intervalToDuration({ start, end });
-    // Ensure we don't set negative values
-    setDurationYears(String(Math.max(0, dur.years || 0)));
-    setDurationMonths(String(Math.max(0, dur.months || 0)));
-    setDurationDays(String(Math.max(0, dur.days || 0)));
-  }, [
-    startingDate,
-    endingDate,
-    durationYears,
-    durationMonths,
-    durationDays,
-    form,
-  ]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[90vh] flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between gap-4">
-          <DialogTitle>Create Ban</DialogTitle>
+          <div className="flex flex-col gap-2">
+            <DialogTitle>Create Ban</DialogTitle>
+            <DialogDescription>
+              Create a new ban record for a person with incident details.
+            </DialogDescription>
+          </div>
           <Form {...form}>
             <FormField
               control={form.control}
@@ -213,254 +195,11 @@ export function BannedCreateDialog({
         <div className="overflow-y-auto flex-1 min-h-0 pr-2 -mr-2 custom-scrollbar">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-
-            <FormField
-              control={form.control}
-              name="startingDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Starting date</FormLabel>
-                  <FormControl>
-                    <DateInput
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                  </FormControl>
-                  <div className="min-h-5">
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="endingDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ending date</FormLabel>
-                  <FormControl>
-                    <DateInput
-                      value={field.value}
-                      onChange={(value) => {
-                        field.onChange(value);
-                    // Immediate validation: at least 1 day
-                        const start = form.getValues("startingDate");
-                    if (start && value) {
-                      const s = new Date(start);
-                      const e = new Date(value);
-                      if (e <= s) {
-                        form.setError("endingDate", {
-                          type: "validate",
-                          message: "Ban must be at least 1 day long.",
-                        });
-                      } else {
-                        form.clearErrors("endingDate");
-                      }
-                    }
-                      }}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                  </FormControl>
-                  <div className="min-h-5">
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="motive"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Motive</FormLabel>
-                  <FormControl>
-                    <MotiveSelect
-                      value={field.value || []}
-                      onChange={(val) => {
-                        form.setValue("motive", val, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                          shouldTouch: true,
-                        });
-                        if (val && val.length > 0) {
-                          form.clearErrors("motive");
-                        }
-                      }}
-                      onBlur={field.onBlur}
-                      error={!!form.formState.errors.motive}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="peopleInvolved"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>People Involved</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter people involved"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="incidentReport"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Incident Report</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter incident report"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="actionTaken"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Action Taken</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter action taken"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Duration inputs */}
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <FormLabel>Years</FormLabel>
-                <Input
-                  type="number"
-                  min={0}
-                  value={durationYears}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    // Prevent negative numbers
-                    if (val && parseInt(val, 10) < 0) return;
-                    setDurationYears(val);
-                    const s = form.getValues("startingDate");
-                    if (!s) return;
-                    const base = new Date(s);
-                    if (!isValid(base)) return;
-                    const years = parseInt(val || "0", 10) || 0;
-                    const months = parseInt(durationMonths || "0", 10) || 0;
-                    const days = parseInt(durationDays || "0", 10) || 0;
-                    const end = add(base, { years, months, days });
-                    // Ensure end date is not before start date
-                    if (end < base) return;
-                    form.setValue(
-                      "endingDate",
-                      end.toISOString().slice(0, 10),
-                      {
-                        shouldDirty: true,
-                      }
-                    );
-                  }}
-                />
-              </div>
-              <div>
-                <FormLabel>Months</FormLabel>
-                <Input
-                  type="number"
-                  min={0}
-                  value={durationMonths}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    // Prevent negative numbers
-                    if (val && parseInt(val, 10) < 0) return;
-                    setDurationMonths(val);
-                    const s = form.getValues("startingDate");
-                    if (!s) return;
-                    const base = new Date(s);
-                    if (!isValid(base)) return;
-                    const years = parseInt(durationYears || "0", 10) || 0;
-                    const months = parseInt(val || "0", 10) || 0;
-                    const days = parseInt(durationDays || "0", 10) || 0;
-                    const end = add(base, { years, months, days });
-                    // Ensure end date is not before start date
-                    if (end < base) return;
-                    form.setValue(
-                      "endingDate",
-                      end.toISOString().slice(0, 10),
-                      {
-                        shouldDirty: true,
-                      }
-                    );
-                  }}
-                />
-              </div>
-              <div>
-                <FormLabel>Days</FormLabel>
-                <Input
-                  type="number"
-                  min={0}
-                  value={durationDays}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    // Prevent negative numbers
-                    if (val && parseInt(val, 10) < 0) return;
-                    setDurationDays(val);
-                    const s = form.getValues("startingDate");
-                    if (!s) return;
-                    const base = new Date(s);
-                    if (!isValid(base)) return;
-                    const years = parseInt(durationYears || "0", 10) || 0;
-                    const months = parseInt(durationMonths || "0", 10) || 0;
-                    const days = parseInt(val || "0", 10) || 0;
-                    const end = add(base, { years, months, days });
-                    // Ensure end date is not before start date
-                    if (end < base) return;
-                    form.setValue(
-                      "endingDate",
-                      end.toISOString().slice(0, 10),
-                      {
-                        shouldDirty: true,
-                      }
-                    );
-                  }}
-                />
-              </div>
-            </div>
-            <FormDescription>
-              You can set the ban by duration (years, months, days) or by
-              picking start and end dates. Both are synchronized.
-            </FormDescription>
-
-            {defaultPlaceId && (
-              <div className="text-xs text-muted-foreground">
-                A default place has been pre-selected. You can add more places
-                later in edit.
-              </div>
-            )}
+              <BannedForm
+                form={form as any}
+                places={places}
+                lockedPlaceId={defaultPlaceId || userPlaceId || undefined}
+              />
             </form>
           </Form>
         </div>

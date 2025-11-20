@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BannedPlaceApproval } from "@/components/banned/banned-place-approval";
 import { BannedDetailModal } from "@/components/banned/banned-detail-modal";
 import { useApprovalQueueBanneds, usePlaces } from "@/hooks/queries";
-import { Loader2, Search, Filter, ArrowUpDown, X } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
 import { Badge } from "@/components/ui/badge";
@@ -19,18 +19,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FiltersButton } from "@/components/filters/filters-button";
+import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
+import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
+import { CompactPagination } from "@/components/pagination/compact-pagination";
 import type { Banned } from "@/lib/types";
 import { format, differenceInCalendarDays } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import Link from "next/link";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { useBulkApproveBanneds } from "@/hooks/queries";
 
 export default function ApprovalQueuePage() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [selectedBannedId, setSelectedBannedId] = useState<string | null>(null);
   // Filtros y orden (sin estado de activo/inactivo)
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,12 +51,33 @@ export default function ApprovalQueuePage() {
     | "person-name-asc"
     | "person-name-desc"
   >("violations-desc");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
+
+  // Debounce de búsqueda para no disparar por cada tecla
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
+
+  // Resetear página cuando cambian filtros/sort/búsqueda
+  useEffect(() => {
+    setPage(1);
+  }, [sortBy, selectedCreatorId, genderFilter, selectedPlaces, debouncedSearch]);
 
   const {
-    data: banneds,
+    data: bannedsPage,
     isLoading: bannedsLoading,
     error: bannedsError,
-  } = useApprovalQueueBanneds(sortBy, selectedCreatorId);
+  } = useApprovalQueueBanneds(sortBy, selectedCreatorId, { page, limit, search: debouncedSearch });
+
+  const banneds = bannedsPage?.items || [];
+  const total = bannedsPage?.total ?? 0;
+  const currentPage = bannedsPage?.page ?? page;
+  const currentLimit = bannedsPage?.limit ?? limit;
+  const hasNext = bannedsPage?.hasNext ?? false;
   const { data: places, isLoading: placesLoading } = usePlaces();
 
   // Lista de creadores (empleados) deducida de los datos cargados
@@ -133,23 +156,62 @@ export default function ApprovalQueuePage() {
     setSelectedPlaces([]);
     setGenderFilter("all");
     setSelectedCreatorId(null);
+    setSortBy("violations-desc");
   };
 
-  // Filtrado en cliente (ordenado en backend) - MUST be before any conditional returns
+  const handleFiltersApply = (values: FilterValues) => {
+    if (values.gender !== undefined) setGenderFilter(values.gender);
+    if (values.places !== undefined) setSelectedPlaces(values.places);
+    if (values.creator !== undefined) setSelectedCreatorId(values.creator);
+    if (values.sortBy !== undefined) setSortBy(values.sortBy as any);
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (genderFilter !== "all") count++;
+    if (selectedPlaces.length > 0) count += selectedPlaces.length;
+    if (selectedCreatorId) count++;
+    return count;
+  };
+
+  const getActiveFiltersChips = (): ActiveFilter[] => {
+    const chips: ActiveFilter[] = [];
+    if (genderFilter !== "all") {
+      chips.push({
+        key: "gender",
+        label: "Gender",
+        value: genderFilter,
+        onRemove: () => setGenderFilter("all"),
+      });
+    }
+    selectedPlaces.forEach((placeId) => {
+      const place = places?.find((p) => p.id === placeId);
+      chips.push({
+        key: `place-${placeId}`,
+        label: "Place",
+        value: place?.name || "Unknown",
+        onRemove: () => handlePlaceToggle(placeId),
+      });
+    });
+    if (selectedCreatorId) {
+      const creator = creators.find((c) => c.id === selectedCreatorId);
+      chips.push({
+        key: "creator",
+        label: "Creator",
+        value: creator?.name || "Unknown",
+        onRemove: () => setSelectedCreatorId(null),
+      });
+    }
+    return chips;
+  };
+
+  // Filtrado en cliente solo para filtros no implementados en backend (gender, place, creator)
+  // La búsqueda ahora se hace en el servidor
   const filteredBanneds = useMemo(() => {
     if (!banneds) return [] as Banned[];
 
     return banneds.filter((banned: Banned) => {
       const person = banned.person;
-      const personName = [person?.name, person?.lastName, person?.nickname]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      const q = (searchQuery || "").toLowerCase();
-      const numQ = q.replace(/[^0-9]/g, "");
-      const matchesIncident = numQ.length > 0 && String(banned.incidentNumber).includes(numQ);
-      const matchesSearch = !q || personName.includes(q) || matchesIncident;
 
       const matchesPlace =
         selectedPlaces.length === 0 ||
@@ -159,9 +221,9 @@ export default function ApprovalQueuePage() {
       const creatorId = (banned as any).createdBy?.id || (banned as any).createdByUserId || null;
       const matchesCreator = !selectedCreatorId || (creatorId && creatorId === selectedCreatorId);
 
-      return matchesSearch && matchesPlace && matchesGender && matchesCreator;
+      return matchesPlace && matchesGender && matchesCreator;
     });
-  }, [banneds, searchQuery, selectedPlaces, genderFilter, selectedCreatorId]);
+  }, [banneds, selectedPlaces, genderFilter, selectedCreatorId]);
 
   const isLoading = bannedsLoading || placesLoading;
 
@@ -204,123 +266,55 @@ export default function ApprovalQueuePage() {
           description="Review and approve pending ban requests for your place"
         />
         <div className="space-y-6">
-          {/* Buscador */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by name/nickname or incident number..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+          {/* Buscador and Filters Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name/nickname or incident number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <FiltersButton
+              activeCount={getActiveFiltersCount()}
+              onClick={() => setIsFiltersModalOpen(true)}
+              className="w-full sm:w-auto"
             />
           </div>
 
-          {/* Filtros y Orden */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Filters:</span>
-              </div>
+          {/* Active Filters Chips */}
+          <ActiveFiltersChips
+            filters={getActiveFiltersChips()}
+            onClearAll={handleClearFilters}
+          />
 
-              {/* Género */}
-              <Select
-                value={genderFilter}
-                onValueChange={(value: "all" | "Male" | "Female") => setGenderFilter(value)}
-              >
-                <SelectTrigger className="w-36 h-9">
-                  <SelectValue placeholder="Gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Genders</SelectItem>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Lugar */}
-              <Select onValueChange={handlePlaceToggle}>
-                <SelectTrigger className="w-40 h-9">
-                  <SelectValue placeholder="Add place filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {places?.map((p) => (
-                    <SelectItem key={p.id} value={p.id} disabled={selectedPlaces.includes(p.id)}>
-                      {p.name || "Unnamed Place"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Creador */}
-              <Select
-                value={selectedCreatorId ?? "__all__"}
-                onValueChange={(value: string) => setSelectedCreatorId(value === "__all__" ? null : value)}
-              >
-                <SelectTrigger className="w-56 h-9">
-                  <SelectValue placeholder="Creator" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All creators</SelectItem>
-                  {creators.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Orden */}
-              <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Sort:</span>
-                <Select
-                  value={sortBy}
-                  onValueChange={(value: any) => setSortBy(value)}
-                >
-                  <SelectTrigger className="w-48 h-9">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="violations-desc">Violations (High to Low)</SelectItem>
-                    <SelectItem value="violations-asc">Violations (Low to High)</SelectItem>
-                    <SelectItem value="starting-date-desc">Starting Date (Newest first)</SelectItem>
-                    <SelectItem value="starting-date-asc">Starting Date (Oldest first)</SelectItem>
-                    <SelectItem value="ending-date-desc">Ending Date (Newest first)</SelectItem>
-                    <SelectItem value="ending-date-asc">Ending Date (Oldest first)</SelectItem>
-                    <SelectItem value="person-name-asc">Person Name (A-Z)</SelectItem>
-                    <SelectItem value="person-name-desc">Person Name (Z-A)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Limpiar filtros */}
-              {(searchQuery || selectedPlaces.length > 0 || genderFilter !== "all" || selectedCreatorId) && (
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="inline-flex h-9 items-center rounded-md border px-3 text-sm"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Clear Filters
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Conteo + Acción masiva (fila fija bajo filtros) */}
+          {/* Conteo + Acción masiva + Paginación */}
           {!isLoading && (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-sm text-muted-foreground">
-                {banneds?.length
-                  ? `Showing ${filteredBanneds.length} of ${banneds.length} pending approvals`
-                  : `Showing 0 of 0 pending approvals`}
+                {total} {total === 1 ? "pending approval" : "pending approvals"}
               </p>
-              <BulkApproveButton
-                disabled={filteredBanneds.length === 0}
-                count={filteredBanneds.length}
-                selectedCreatorId={selectedCreatorId}
-                bannedIds={filteredBanneds.map((b) => b.id)}
-                genderFilter={genderFilter}
-              />
+              <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
+                <BulkApproveButton
+                  disabled={filteredBanneds.length === 0}
+                  count={filteredBanneds.length}
+                  selectedCreatorId={selectedCreatorId}
+                  bannedIds={filteredBanneds.map((b) => b.id)}
+                  genderFilter={genderFilter}
+                  className="order-1"
+                />
+                <CompactPagination
+                  currentPage={currentPage}
+                  total={total}
+                  limit={currentLimit}
+                  onPageChange={setPage}
+                  onLimitChange={setLimit}
+                  hasNext={hasNext}
+                  className="order-2 ml-auto sm:ml-0"
+                />
+              </div>
             </div>
           )}
           {isLoading ? (
@@ -328,7 +322,7 @@ export default function ApprovalQueuePage() {
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="ml-2">Loading approval queue...</span>
             </div>
-          ) : !banneds || banneds.length === 0 ? (
+          ) : total === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
                 No pending approvals. All bans for your place have been reviewed.
@@ -440,29 +434,59 @@ export default function ApprovalQueuePage() {
             }}
           />
         )}
+
+        {/* Filters Modal */}
+        <FiltersModal
+          open={isFiltersModalOpen}
+          onOpenChange={setIsFiltersModalOpen}
+          config={{
+            gender: true,
+            place: true,
+            creator: true,
+            sortBy: true,
+          }}
+          values={{
+            gender: genderFilter,
+            places: selectedPlaces,
+            creator: selectedCreatorId,
+            sortBy: sortBy,
+          }}
+          onApply={handleFiltersApply}
+          onClearAll={handleClearFilters}
+          places={places}
+          creators={creators}
+        />
       </DashboardLayout>
     </RouteGuard>
   );
 }
 
-function BulkApproveButton({ disabled, count, selectedCreatorId, bannedIds, genderFilter }: { disabled: boolean; count: number; selectedCreatorId: string | null; bannedIds: string[]; genderFilter: 'all' | 'Male' | 'Female' }) {
+function BulkApproveButton({ disabled, count, selectedCreatorId, bannedIds, genderFilter, className }: { disabled: boolean; count: number; selectedCreatorId: string | null; bannedIds: string[]; genderFilter: 'all' | 'Male' | 'Female'; className?: string }) {
   const [open, setOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const { toast } = useToast();
   const bulkApprove = useBulkApproveBanneds();
 
-  const onConfirm = async () => {
-    try {
-      const payload: any = {};
-      if (selectedCreatorId) payload.createdBy = selectedCreatorId;
-      if (genderFilter !== 'all') payload.gender = genderFilter;
-      const res = await bulkApprove.mutateAsync(payload);
-      toast({ title: "Bulk approval completed", description: `Approved: ${res.approvedCount} • Failed: ${res.failedCount}` });
+  // Cerrar el modal automáticamente cuando la mutación termine exitosamente
+  // Esto evita duplicar callbacks y deja que el hook maneje todo centralizadamente
+  useEffect(() => {
+    if (!bulkApprove.isPending && bulkApprove.isSuccess && open) {
       setOpen(false);
       setConfirmed(false);
-    } catch (e: any) {
-      toast({ title: "Bulk approval error", description: e?.message || "Please try again", variant: "destructive" });
     }
+  }, [bulkApprove.isPending, bulkApprove.isSuccess, open]);
+
+  const onConfirm = () => {
+    const payload: any = {};
+    if (selectedCreatorId) payload.createdBy = selectedCreatorId;
+    if (genderFilter !== 'all') payload.gender = genderFilter;
+    
+    if (bannedIds && bannedIds.length > 0) {
+      payload.bannedIds = bannedIds;
+    }
+    
+    // Solo llamar mutate sin callbacks adicionales
+    // El hook ya maneja onSuccess/onError con invalidación y toast
+    bulkApprove.mutate(payload);
   };
 
   return (
@@ -472,17 +496,24 @@ function BulkApproveButton({ disabled, count, selectedCreatorId, bannedIds, gend
         variant="default"
         disabled={disabled}
         onClick={() => setOpen(true)}
+        className={className}
       >
         Approve all
       </Button>
       <Dialog open={open} onOpenChange={(newOpen) => {
         if (!bulkApprove.isPending) {
           setOpen(newOpen);
+          if (!newOpen) {
+            setConfirmed(false);
+          }
         }
       }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Approve all filtered bans</DialogTitle>
+            <DialogDescription>
+              This will approve all pending places for the filtered bans. This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {bulkApprove.isPending ? (

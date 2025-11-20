@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -35,30 +35,46 @@ import {
   Loader2,
   MapPin,
   Search,
+  Mail,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
+import { CompactPagination } from "@/components/pagination/compact-pagination";
 
 export default function PlacesPage() {
   const { toast } = useToast();
-  const { isReadOnly } = useAuth();
-  const { data: places, isLoading, error } = usePlaces();
-  const deletePlace = useDeletePlace();
+  const { isReadOnly, isAdmin } = useAuth();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredPlaces = useMemo<Place[]>(() => {
-    if (!places) return [];
-    if (!searchQuery) return places;
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
 
-    return places.filter((place: Place) => {
-      const placeName = (place.name || "").toLowerCase();
-      const cityName = (place.city || "").toLowerCase();
-      const query = searchQuery.toLowerCase();
-      return placeName.includes(query) || cityName.includes(query);
-    });
-  }, [places, searchQuery]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const {
+    data: placesPage,
+    isLoading,
+    error,
+  } = usePlaces({ page, limit, search: debouncedSearch });
+
+  const places = placesPage?.items || [];
+  const total = placesPage?.total ?? 0;
+  const currentPage = placesPage?.page ?? page;
+  const currentLimit = placesPage?.limit ?? limit;
+  const hasNext = placesPage?.hasNext ?? false;
+
+  const filteredPlaces = places; // Ya viene filtrado del backend
+
+  const deletePlace = useDeletePlace();
 
   const handleDelete = async (id: string) => {
     try {
@@ -81,7 +97,7 @@ export default function PlacesPage() {
   };
 
   return (
-    <RouteGuard requireManager>
+    <RouteGuard requireHeadManager>
       <DashboardLayout>
         {error ? (
           <>
@@ -98,7 +114,7 @@ export default function PlacesPage() {
               title="Places"
               description="Manage locations and venues in the system"
             >
-              {!isReadOnly && (
+              {isAdmin && (
                 <PlaceCreateDialog>
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
@@ -115,7 +131,7 @@ export default function PlacesPage() {
                   placeholder="Search places by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 text-base"
                 />
               </div>
 
@@ -134,7 +150,7 @@ export default function PlacesPage() {
                         Get started by creating a new place.
                       </p>
                       <div className="mt-6">
-                        {!isReadOnly && (
+                        {isAdmin && (
                           <PlaceCreateDialog>
                             <Button>
                               <Plus className="mr-2 h-4 w-4" />
@@ -154,12 +170,20 @@ export default function PlacesPage() {
                 <>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
-                      Showing {filteredPlaces.length} of {places?.length || 0}{" "}
-                      places
+                      {total} {total === 1 ? "place" : "places"}
                     </p>
+                    <CompactPagination
+                      currentPage={currentPage}
+                      total={total}
+                      limit={currentLimit}
+                      onPageChange={setPage}
+                      onLimitChange={setLimit}
+                      hasNext={hasNext}
+                    />
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filteredPlaces.map((place: Place) => (
                       <Card
                         key={place.id}
@@ -178,6 +202,12 @@ export default function PlacesPage() {
                                 {place.city && (
                                   <p className="text-sm text-muted-foreground">
                                     {place.city}
+                                  </p>
+                                )}
+                                {place.placeEmail && (
+                                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                                    <Mail className="h-3 w-3" />
+                                    {place.placeEmail}
                                   </p>
                                 )}
                               </div>
@@ -205,7 +235,7 @@ export default function PlacesPage() {
                                     </DropdownMenuItem>
                                   </PlaceEditDialog>
                                 )}
-                                {!isReadOnly && (
+                                {isAdmin && (
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                       <DropdownMenuItem className="text-destructive cursor-pointer">
@@ -242,12 +272,13 @@ export default function PlacesPage() {
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                        </CardHeader>
-                      </Card>
-                    ))}
+                         </CardHeader>
+                       </Card>
+                     ))}
+                    </div>
                   </div>
-                </>
-              )}
+                 </>
+               )}
             </div>
           </>
         )}

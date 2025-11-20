@@ -33,10 +33,11 @@ export function PersonCombobox({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  const { data: allPersons = [], isLoading } = usePersons();
+  const { data: personsData, isLoading } = usePersons(undefined, { enabled: open });
+  const allPersons = personsData?.items || [];
 
   const filteredPersons = useMemo<Person[]>(() => {
-    const list: Person[] = (allPersons || []) as Person[];
+    const list: Person[] = allPersons;
     const q = query.trim().toLowerCase();
     if (!q) return list;
     return list.filter((p: Person) => {
@@ -52,7 +53,7 @@ export function PersonCombobox({
   }, [allPersons, query]);
 
   const selectedPerson = useMemo<Person | undefined>(
-    () => ((allPersons || []) as Person[]).find((p: Person) => p.id === value),
+    () => allPersons.find((p: Person) => p.id === value),
     [allPersons, value]
   );
 

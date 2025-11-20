@@ -36,6 +36,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/use-auth";
 
 interface BannedCardProps {
   banned: Banned;
@@ -57,6 +58,8 @@ export function BannedCard({
   actionsAtTopRight = false,
 }: BannedCardProps) {
   const router = useRouter();
+  const { isHeadManager, isAdmin } = useAuth();
+  const canDelete = isHeadManager || isAdmin;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const dialogJustClosedRef = useRef(false);
   const person = banned.person;
@@ -162,21 +165,24 @@ export function BannedCard({
       onKeyDown={handleCardKeyDown}
     >
       {/* Incident number top-left */}
-      <div className="absolute top-2 left-2">
-        <Badge variant="outline" className="text-xs md:text-sm px-2 py-0.5">
+      <div className="absolute top-1.5 sm:top-2 left-1.5 sm:left-2 z-10">
+        <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5">
           #{banned.incidentNumber}
         </Badge>
       </div>
       {/* Active & Violations top-right */}
-      <div className="absolute top-2 right-2 flex items-center gap-2">
+      <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 flex items-center gap-1 sm:gap-1.5 md:gap-2 z-10">
         <Badge
           variant={banned.isActive ? "destructive" : "secondary"}
-          className="text-xs md:text-sm px-2.5 py-1"
+          className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1"
         >
           {banned.isActive ? "Active" : "Inactive"}
         </Badge>
-        <Badge variant="outline" className="text-xs md:text-sm px-2.5 py-1">
+        <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 hidden sm:inline-flex">
           Violations: {banned.violationsCount ?? 0}
+        </Badge>
+        <Badge variant="outline" className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 sm:py-1 sm:hidden">
+          V: {banned.violationsCount ?? 0}
         </Badge>
         {actionsAtTopRight && !readOnly && (
           <DropdownMenu>
@@ -225,46 +231,48 @@ export function BannedCard({
                   Edit
                 </DropdownMenuItem>
               </BannedEditDialog>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem
-                    className="text-destructive cursor-pointer"
-                    onClick={(e) => e.stopPropagation()}
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this ban?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete
-                      the ban and remove it from the list.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Keep Ban</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDelete(banned.id)}>
+              {canDelete && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      className="text-destructive cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
                       Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this ban?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete
+                        the ban and remove it from the list.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Keep Ban</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onDelete(banned.id)}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
       </div>
-      <CardContent className="p-4 md:p-5">
-        <div className="flex items-center gap-8 md:gap-10">
-          <div className="flex-shrink-0 flex flex-col items-center gap-3 md:gap-4">
-            <Avatar className="h-40 w-40 md:h-48 md:w-48">
+      <CardContent className="p-2.5 sm:p-4 md:p-5 pt-10 sm:pt-12 md:pt-14">
+        <div className="flex flex-row items-start gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+          <div className="flex-shrink-0 flex flex-col items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-4">
+            <Avatar className="h-36 w-36 sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-40 lg:w-40 xl:h-48 xl:w-48">
               <AvatarImage
                 src={profileImages[0] || "/placeholder.svg"}
                 alt={personName}
               />
-              <AvatarFallback className="bg-primary/10 text-primary">
+              <AvatarFallback className="bg-primary/10 text-primary text-base sm:text-lg md:text-xl lg:text-2xl">
                 {personName
                   .split(" ")
                   .map((n) => n[0])
@@ -276,23 +284,23 @@ export function BannedCard({
 
             {profileImages.length > 1 && (
               <div className="w-full">
-                <span className="block text-xs text-muted-foreground mb-1 text-center">
+                <span className="block text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1 text-center">
                   Additional Photos:
                 </span>
-                <div className="flex justify-center gap-2 md:gap-3">
+                <div className="flex justify-center gap-1 sm:gap-1.5 md:gap-2">
                   {profileImages.slice(1, 4).map((url, index) => (
-                    <Avatar key={index} className="h-12 w-12 flex-shrink-0">
+                    <Avatar key={index} className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 flex-shrink-0">
                       <AvatarImage
                         src={url || "/placeholder.svg"}
                         alt={`${personName} ${index + 2}`}
                       />
-                      <AvatarFallback className="text-xs">
+                      <AvatarFallback className="text-[10px] sm:text-xs">
                         {index + 2}
                       </AvatarFallback>
                     </Avatar>
                   ))}
                   {profileImages.length > 4 && (
-                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                    <div className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 rounded-full bg-muted flex items-center justify-center text-[10px] sm:text-xs text-muted-foreground">
                       +{profileImages.length - 4}
                     </div>
                   )}
@@ -301,19 +309,19 @@ export function BannedCard({
             )}
           </div>
 
-          <div className="flex-1 min-w-0 space-y-4">
+          <div className="flex-1 min-w-0 max-w-[calc(100%-8.5rem)] sm:max-w-none space-y-1.5 sm:space-y-2 md:space-y-3 w-full ml-auto">
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold text-card-foreground text-xl md:text-2xl">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-card-foreground text-base sm:text-lg md:text-xl lg:text-2xl break-words">
                   {personName}
                 </h3>
                 {person?.nickname && person.nickname !== personName && (
-                  <p className="text-sm md:text-base text-muted-foreground">
+                  <p className="text-xs sm:text-sm md:text-base text-muted-foreground break-words">
                     "{person.nickname}"
                   </p>
                 )}
                 {person?.gender && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
                     Gender: {person.gender}
                   </p>
                 )}
@@ -382,7 +390,7 @@ export function BannedCard({
                           </DropdownMenuItem>
                         </BannedEditDialog>
                       )}
-                      {!readOnly && (
+                      {canDelete && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <DropdownMenuItem
@@ -425,36 +433,28 @@ export function BannedCard({
             </div>
 
             {/* Date Information */}
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>From:</span>
-              </div>
-              <span className="font-medium">
-                {formatDate(banned.startingDate)}
-              </span>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-muted-foreground" />
+              <span className="text-muted-foreground">From:</span>
+              <span className="font-medium">{formatDate(banned.startingDate)}</span>
             </div>
 
             {banned.endingDate && (
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>Until:</span>
-                </div>
-                <span className="font-medium">
-                  {formatDate(banned.endingDate)}
-                </span>
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 text-muted-foreground" />
+                <span className="text-muted-foreground">Until:</span>
+                <span className="font-medium">{formatDate(banned.endingDate)}</span>
               </div>
             )}
 
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
               <span className="text-muted-foreground">Duration:</span>
               <span className="font-medium">{getDurationText()}</span>
             </div>
 
             {/* Motive (Tooltip like approval-queue) */}
             {banned.motive && banned.motive.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap text-sm">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap text-xs sm:text-sm">
                 <span className="text-muted-foreground">Motives:</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -479,14 +479,14 @@ export function BannedCard({
 
             {/* Banned Places */}
             {bannedPlaceNames.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
+              <div className="space-y-1 sm:space-y-1.5">
+                <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span>Banned from:</span>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {bannedPlaceNames.map((placeName, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
+                    <Badge key={index} variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0.5">
                       {placeName}
                     </Badge>
                   ))}

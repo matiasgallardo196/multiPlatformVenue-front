@@ -18,7 +18,6 @@ export interface Person {
   nickname: string | null;
   imagenProfileUrl: string[] | null;
   gender: "Male" | "Female" | null;
-  incidents: Incident[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -27,14 +26,7 @@ export interface Place {
   id: string;
   name: string | null;
   city: string;
-}
-
-export interface Incident {
-  id: string;
-  details: string | null;
-  photoBook: string[] | null;
-  person?: Person | null;
-  place?: Place | null;
+  placeEmail: string;
 }
 
 export interface BannedPlace {
@@ -96,25 +88,13 @@ export interface UpdatePersonDto {
 export interface CreatePlaceDto {
   name: string;
   city: string;
+  placeEmail: string;
 }
 
 export interface UpdatePlaceDto {
   name?: string;
   city?: string;
-}
-
-export interface CreateIncidentDto {
-  personId: string;
-  placeId: string;
-  details?: string;
-  photoBook?: string[];
-}
-
-export interface UpdateIncidentDto {
-  personId?: string;
-  placeId?: string;
-  details?: string;
-  photoBook?: string[];
+  placeEmail?: string;
 }
 
 export interface CreateBannedDto {

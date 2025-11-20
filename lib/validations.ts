@@ -15,19 +15,10 @@ export const updatePersonSchema = createPersonSchema.partial();
 export const createPlaceSchema = z.object({
   name: z.string().min(1, "Place name is required"),
   city: z.string().min(1, "City is required"),
+  placeEmail: z.string().email("Invalid email address").min(1, "Place email is required"),
 });
 
 export const updatePlaceSchema = createPlaceSchema.partial();
-
-// Incident validation schemas
-export const createIncidentSchema = z.object({
-  personId: z.string().min(1, "Person is required"),
-  placeId: z.string().min(1, "Place is required"),
-  details: z.string().optional(),
-  photoBook: z.array(z.string().url("Invalid URL")).optional(),
-});
-
-export const updateIncidentSchema = createIncidentSchema.partial();
 
 // Banned validation schemas
 export const createBannedSchema = z
@@ -38,7 +29,7 @@ export const createBannedSchema = z
     endingDate: z.string().min(1, "Ending date is required"),
     motive: z.array(z.string()).min(1, "At least one motive is required"),
     peopleInvolved: z.string().optional(),
-    incidentReport: z.string().optional(),
+    incidentReport: z.string().min(1, "Incident report is required"),
     actionTaken: z.string().optional(),
     policeNotified: z.boolean(),
     policeNotifiedDate: z.string().optional(),
@@ -157,8 +148,6 @@ export type CreatePersonForm = z.infer<typeof createPersonSchema>;
 export type UpdatePersonForm = z.infer<typeof updatePersonSchema>;
 export type CreatePlaceForm = z.infer<typeof createPlaceSchema>;
 export type UpdatePlaceForm = z.infer<typeof updatePlaceSchema>;
-export type CreateIncidentForm = z.infer<typeof createIncidentSchema>;
-export type UpdateIncidentForm = z.infer<typeof updateIncidentSchema>;
 export type CreateBannedForm = z.infer<typeof createBannedSchema>;
 export type UpdateBannedForm = z.infer<typeof updateBannedSchema>;
 export type SearchForm = z.infer<typeof searchSchema>;
