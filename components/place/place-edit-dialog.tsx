@@ -68,13 +68,18 @@ export function PlaceEditDialog({
 
   const onSubmit = async (values: UpdatePlaceForm) => {
     try {
+      // Si es head manager, solo enviar placeEmail
+      const updateData = isHeadManager
+        ? { placeEmail: values.placeEmail }
+        : {
+            name: values.name,
+            city: values.city,
+            placeEmail: values.placeEmail,
+          };
+
       await updatePlace.mutateAsync({
         id,
-        data: {
-          name: values.name,
-          city: values.city,
-          placeEmail: values.placeEmail,
-        },
+        data: updateData,
       });
       toast({ title: "Success", description: "Place updated successfully." });
       setOpen(false);
