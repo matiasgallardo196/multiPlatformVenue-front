@@ -402,8 +402,13 @@ export function useDeletePlace() {
 }
 
 // Banneds Hooks
-export function useBanneds(sortBy?: string, options?: { enabled?: boolean; staleTimeMs?: number }) {
-  const queryKey = sortBy
+export function useBanneds(sortBy?: string, placeId?: string, motives?: string[], options?: { enabled?: boolean; staleTimeMs?: number }) {
+  const motivesKey = motives && motives.length > 0 ? motives.join(',') : undefined;
+  const queryKey = motivesKey
+    ? [...queryKeys.banneds, "filtered", sortBy || "default", placeId || "all", motivesKey]
+    : placeId
+    ? [...queryKeys.banneds, "filtered", sortBy || "default", placeId]
+    : sortBy
     ? [...queryKeys.banneds, "sorted", sortBy]
     : queryKeys.banneds;
 
@@ -413,6 +418,12 @@ export function useBanneds(sortBy?: string, options?: { enabled?: boolean; stale
       const params = new URLSearchParams();
       if (sortBy) {
         params.append("sortBy", sortBy);
+      }
+      if (placeId) {
+        params.append("placeId", placeId);
+      }
+      if (motives && motives.length > 0) {
+        params.append("motives", motives.join(","));
       }
       const queryString = params.toString();
       const url = queryString ? `/banneds?${queryString}` : "/banneds";
