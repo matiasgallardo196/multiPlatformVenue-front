@@ -7,13 +7,14 @@ import { Providers } from "@/lib/providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
+import { DynamicTitle } from "@/components/dynamic-title";
 import { Suspense } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard",
+  title: "Venues Hub - Ban List",
   description:
-    "Admin dashboard for managing banned persons and places",
+    "Management hub for venues - banned persons and places",
   generator: "v0.app",
   icons: {
     icon: "/favicon.svg",
@@ -52,6 +53,7 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               <Providers>
+                <DynamicTitle />
                 {children}
                 <Toaster />
               </Providers>

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const BAN_MOTIVES = [
+export const BAN_MOTIVES = [
   "Underage entry or alcohol attempt",
   "Theft or stealing",
   "Physical or verbal assault",

@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { X, ArrowUpDown } from "lucide-react";
 import type { Place } from "@/lib/types";
+import { BAN_MOTIVES } from "@/components/banned/motive-select";
 
 export type FilterConfig = {
   gender?: boolean;
@@ -28,6 +29,7 @@ export type FilterConfig = {
   place?: boolean;
   creator?: boolean;
   sortBy?: boolean;
+  motive?: boolean;
 };
 
 export type FilterValues = {
@@ -36,6 +38,7 @@ export type FilterValues = {
   places?: string[];
   creator?: string | null;
   sortBy?: string;
+  motives?: string[];
 };
 
 interface FiltersModalProps {
@@ -48,6 +51,7 @@ interface FiltersModalProps {
   places?: Place[];
   creators?: Array<{ id: string; name: string }>;
   sortOptions?: Array<{ value: string; label: string }>;
+  placeDisabled?: boolean;
 }
 
 const defaultSortOptions = [
@@ -78,13 +82,16 @@ export function FiltersModal({
   places = [],
   creators = [],
   sortOptions,
+  placeDisabled = false,
 }: FiltersModalProps) {
   const [localValues, setLocalValues] = useState<FilterValues>(values);
   const [selectedPlaces, setSelectedPlaces] = useState<string[]>(values.places || []);
+  const [selectedMotives, setSelectedMotives] = useState<string[]>(values.motives || []);
 
   useEffect(() => {
     setLocalValues(values);
     setSelectedPlaces(values.places || []);
+    setSelectedMotives(values.motives || []);
   }, [values, open]);
 
   const handlePlaceToggle = (placeId: string) => {
@@ -95,10 +102,19 @@ export function FiltersModal({
     );
   };
 
+  const handleMotiveToggle = (motive: string) => {
+    setSelectedMotives((prev) =>
+      prev.includes(motive)
+        ? prev.filter((m) => m !== motive)
+        : [...prev, motive]
+    );
+  };
+
   const handleApply = () => {
     onApply({
       ...localValues,
       places: selectedPlaces,
+      motives: selectedMotives,
     });
     onOpenChange(false);
   };
@@ -110,9 +126,11 @@ export function FiltersModal({
       places: [],
       creator: config.creator ? null : undefined,
       sortBy: config.sortBy ? (sortOptions?.[0]?.value || defaultSortOptions[0].value) : undefined,
+      motives: [],
     };
     setLocalValues(cleared);
     setSelectedPlaces([]);
+    setSelectedMotives([]);
     onClearAll();
     onOpenChange(false);
   };
@@ -177,11 +195,21 @@ export function FiltersModal({
           {/* Place Filter */}
           {config.place && (
             <div className="space-y-2">
-              <Label>Places</Label>
+              <Label>
+                Places
+                {placeDisabled && selectedPlaces.length > 0 && (
+                  <span className="text-muted-foreground text-xs ml-2">
+                    (locked to {places.find(p => p.id === selectedPlaces[0])?.name || "your venue"})
+                  </span>
+                )}
+              </Label>
               <div className="space-y-2">
-                <Select onValueChange={handlePlaceToggle}>
-                  <SelectTrigger className="w-full text-base">
-                    <SelectValue placeholder="Add place" />
+                <Select onValueChange={handlePlaceToggle} disabled={placeDisabled}>
+                  <SelectTrigger className="w-full text-base" disabled={placeDisabled}>
+                    <SelectValue placeholder={placeDisabled && selectedPlaces.length > 0 
+                      ? places.find(p => p.id === selectedPlaces[0])?.name || "Your venue"
+                      : "Add place"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
                     {places.map((place) => (
@@ -206,13 +234,15 @@ export function FiltersModal({
                           className="gap-1 pr-1"
                         >
                           {place?.name || "Unknown"}
-                          <button
-                            type="button"
-                            onClick={() => handlePlaceToggle(placeId)}
-                            className="ml-1 rounded-full hover:bg-secondary-foreground/20 p-0.5"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
+                          {!placeDisabled && (
+                            <button
+                              type="button"
+                              onClick={() => handlePlaceToggle(placeId)}
+                              className="ml-1 rounded-full hover:bg-secondary-foreground/20 p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
                         </Badge>
                       );
                     })}
@@ -247,6 +277,51 @@ export function FiltersModal({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Motive Filter */}
+          {config.motive && (
+            <div className="space-y-2">
+              <Label>Motives</Label>
+              <div className="space-y-2">
+                <Select onValueChange={handleMotiveToggle}>
+                  <SelectTrigger className="w-full text-base">
+                    <SelectValue placeholder="Add motive" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BAN_MOTIVES.map((motive) => (
+                      <SelectItem
+                        key={motive}
+                        value={motive}
+                        disabled={selectedMotives.includes(motive)}
+                      >
+                        {motive}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedMotives.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedMotives.map((motive) => (
+                      <Badge
+                        key={motive}
+                        variant="secondary"
+                        className="gap-1 pr-1"
+                      >
+                        <span className="truncate max-w-[200px]">{motive}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleMotiveToggle(motive)}
+                          className="ml-1 rounded-full hover:bg-secondary-foreground/20 p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

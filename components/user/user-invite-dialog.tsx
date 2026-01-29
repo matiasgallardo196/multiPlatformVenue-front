@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,11 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { PlaceCombobox } from "@/components/place/place-combobox";
 
 const inviteSchema = z.object({
   email: z.string().email("Invalid email"),
   userName: z.string().min(3, "Username must be at least 3 characters"),
   role: z.enum(["manager", "staff", "head-manager"]),
+  placeId: z.string().min(1, "Venue is required"),
 });
 
 type InviteForm = z.infer<typeof inviteSchema>;
@@ -28,10 +32,19 @@ interface UserInviteDialogProps {
 
 export function UserInviteDialog({ open, onOpenChange }: UserInviteDialogProps) {
   const queryClient = useQueryClient();
+  const { isAdmin, user } = useAuth();
+
   const form = useForm<InviteForm>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: { email: "", userName: "", role: "staff" },
+    defaultValues: { email: "", userName: "", role: "staff", placeId: "" },
   });
+
+  // Para HEAD_MANAGER: preseleccionar su placeId
+  useEffect(() => {
+    if (!isAdmin && user?.placeId) {
+      form.setValue("placeId", user.placeId);
+    }
+  }, [isAdmin, user?.placeId, form]);
 
   const inviteMutation = useMutation({
     mutationFn: async (data: InviteForm) => {
@@ -116,6 +129,30 @@ export function UserInviteDialog({ open, onOpenChange }: UserInviteDialogProps) 
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="placeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Venue</FormLabel>
+                  <FormControl>
+                    <PlaceCombobox
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={!isAdmin}
+                      placeholder={!isAdmin && user?.placeId ? "Your venue (locked)" : "Select venue"}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {isAdmin 
+                      ? "Select the venue where this user will work" 
+                      : "Users are assigned to your venue"}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
                 Cancel
@@ -137,4 +174,3 @@ export function UserInviteDialog({ open, onOpenChange }: UserInviteDialogProps) 
     </Dialog>
   );
 }
-
