@@ -14,6 +14,7 @@ import {
   X,
   Clock,
   CheckCircle2,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -32,6 +33,7 @@ const navigation = [
   { name: "Persons", href: "/persons", icon: Users, roles: ["admin", "manager", "staff", "head-manager"] },
   { name: "Places", href: "/places", icon: MapPin, roles: ["admin", "head-manager"] },
   { name: "Users", href: "/users", icon: UserIcon, roles: ["admin", "head-manager"] },
+  { name: "Settings", href: "/settings", icon: Settings, roles: ["admin", "head-manager"] },
 ];
 
 export function Sidebar() {

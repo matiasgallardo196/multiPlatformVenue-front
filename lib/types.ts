@@ -173,3 +173,21 @@ export interface CurrentUser {
   userName: string;
   role: string;
 }
+
+// Place Settings types
+export interface PlaceSettings {
+  placeId: string;
+  acceptExternalBans: boolean;
+  acceptBansFromPlaceIds: string[];
+  sharePersons: boolean;
+  sharePersonsWithPlaceIds: string[];
+  updatedAt: string;
+}
+
+export interface UpdatePlaceSettingsDto {
+  acceptExternalBans?: boolean;
+  acceptBansFromPlaceIds?: string[];
+  sharePersons?: boolean;
+  sharePersonsWithPlaceIds?: string[];
+}
+

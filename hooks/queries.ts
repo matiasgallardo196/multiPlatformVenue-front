@@ -1060,8 +1060,81 @@ export function useDashboardSummary(enabled: boolean) {
     queryKey: queryKeys.dashboardSummary,
     queryFn: ({ signal }) => api.get<DashboardSummary>("/dashboard/summary", { signal }),
     enabled,
-    staleTime: 10 * 1000, // 10 segundos para forzar actualizaciones más frecuentes
+    staleTime: 10 * 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 }
+
+// Place Settings Hooks
+import type { PlaceSettings, UpdatePlaceSettingsDto } from "@/lib/types";
+
+export const placeSettingsQueryKeys = {
+  settings: (placeId: string) => ["places", placeId, "settings"] as const,
+  availableVenues: ["places", "available-for-ban"] as const,
+};
+
+export function usePlaceSettings(placeId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: placeSettingsQueryKeys.settings(placeId),
+    queryFn: ({ signal }) => api.get<PlaceSettings>(`/places/${placeId}/settings`, { signal }),
+    enabled: (options?.enabled ?? true) && !!placeId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useUpdatePlaceSettings(placeId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdatePlaceSettingsDto) =>
+      api.patch<PlaceSettings>(`/places/${placeId}/settings`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.settings(placeId) });
+      toast({
+        title: "Settings saved",
+        description: "Your venue settings have been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error saving settings",
+        description: error?.message || "Failed to update settings",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useAvailableVenuesForBan() {
+  return useQuery({
+    queryKey: placeSettingsQueryKeys.availableVenues,
+    queryFn: ({ signal }) => api.get<Place[]>("/places/available-for-ban", { signal }),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useMigratePersonAccess() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      api.post<{ created: number; skipped: number }>("/places/migrate-person-access", {}),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
+      toast({
+        title: "Migration completed",
+        description: `Created ${data.created} access records, skipped ${data.skipped} (already existed)`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Migration failed",
+        description: error?.message || "Failed to run migration",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+
