@@ -19,8 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { X, ArrowUpDown, ChevronDown } from "lucide-react";
+import { X, ArrowUpDown } from "lucide-react";
 import type { Place } from "@/lib/types";
 import { BAN_MOTIVES } from "@/components/banned/motive-select";
 
