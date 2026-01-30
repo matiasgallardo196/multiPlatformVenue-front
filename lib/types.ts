@@ -22,6 +22,42 @@ export interface Person {
   updatedAt?: string;
 }
 
+export interface PersonWithAccess extends Person {
+  ownerPlaceId?: string;
+  ownerPlaceName?: string;
+  accessType?: 'owner' | 'shared';
+  isShared?: boolean;
+  sharedWithPlaces?: { id: string; name: string }[];
+  banStatus?: 'active' | 'pending' | 'expired' | 'none';
+}
+
+export type PersonHistoryAction = 
+  | 'created'
+  | 'updated'
+  | 'shared'
+  | 'unshared'
+  | 'access_removed'
+  | 'ownership_transferred';
+
+export interface PersonHistoryChange {
+  field: string;
+  oldValue: any;
+  newValue: any;
+}
+
+export interface PersonHistory {
+  id: string;
+  personId: string;
+  action: PersonHistoryAction;
+  performedByUserId: string;
+  performedByUserName?: string;
+  performedAt: string;
+  placeId: string | null;
+  place?: Place | null;
+  changes: PersonHistoryChange[] | null;
+  notes: string | null;
+}
+
 export interface Place {
   id: string;
   name: string | null;
@@ -173,3 +209,21 @@ export interface CurrentUser {
   userName: string;
   role: string;
 }
+
+// Place Settings types
+export interface PlaceSettings {
+  placeId: string;
+  acceptExternalBans: boolean;
+  acceptBansFromPlaceIds: string[];
+  sharePersons: boolean;
+  sharePersonsWithPlaceIds: string[];
+  updatedAt: string;
+}
+
+export interface UpdatePlaceSettingsDto {
+  acceptExternalBans?: boolean;
+  acceptBansFromPlaceIds?: string[];
+  sharePersons?: boolean;
+  sharePersonsWithPlaceIds?: string[];
+}
+
