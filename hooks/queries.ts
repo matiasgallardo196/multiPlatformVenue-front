@@ -8,6 +8,8 @@ import { toast } from "@/hooks/use-toast";
 import type { AuthUser } from "@/hooks/use-auth";
 import type {
   Person,
+  PersonWithAccess,
+  PersonHistory,
   Place,
   Banned,
   CreatePersonDto,
@@ -121,11 +123,20 @@ export function useSearchPersons(query: string, enabled: boolean = true) {
 export function usePerson(id: string) {
   return useQuery({
     queryKey: queryKeys.person(id),
-    queryFn: ({ signal }) => api.get<Person>(`/persons/${id}`, { signal }),
+    queryFn: ({ signal }) => api.get<PersonWithAccess>(`/persons/${id}`, { signal }),
     enabled: !!id,
-    staleTime: 5 * 60 * 1000, // 5 minutos - los datos son frescos por 5 minutos
-    refetchOnMount: false, // No refetchear al montar si los datos están frescos
-    refetchOnWindowFocus: false, // No refetchear al enfocar ventana si los datos están frescos
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function usePersonHistory(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.person(id), 'history'],
+    queryFn: ({ signal }) => api.get<PersonHistory[]>(`/persons/${id}/history`, { signal }),
+    enabled: !!id,
+    staleTime: 60 * 1000,
   });
 }
 
@@ -402,8 +413,13 @@ export function useDeletePlace() {
 }
 
 // Banneds Hooks
-export function useBanneds(sortBy?: string, options?: { enabled?: boolean; staleTimeMs?: number }) {
-  const queryKey = sortBy
+export function useBanneds(sortBy?: string, placeId?: string, motives?: string[], options?: { enabled?: boolean; staleTimeMs?: number }) {
+  const motivesKey = motives && motives.length > 0 ? motives.join(',') : undefined;
+  const queryKey = motivesKey
+    ? [...queryKeys.banneds, "filtered", sortBy || "default", placeId || "all", motivesKey]
+    : placeId
+    ? [...queryKeys.banneds, "filtered", sortBy || "default", placeId]
+    : sortBy
     ? [...queryKeys.banneds, "sorted", sortBy]
     : queryKeys.banneds;
 
@@ -413,6 +429,12 @@ export function useBanneds(sortBy?: string, options?: { enabled?: boolean; stale
       const params = new URLSearchParams();
       if (sortBy) {
         params.append("sortBy", sortBy);
+      }
+      if (placeId) {
+        params.append("placeId", placeId);
+      }
+      if (motives && motives.length > 0) {
+        params.append("motives", motives.join(","));
       }
       const queryString = params.toString();
       const url = queryString ? `/banneds?${queryString}` : "/banneds";
@@ -1049,8 +1071,81 @@ export function useDashboardSummary(enabled: boolean) {
     queryKey: queryKeys.dashboardSummary,
     queryFn: ({ signal }) => api.get<DashboardSummary>("/dashboard/summary", { signal }),
     enabled,
-    staleTime: 10 * 1000, // 10 segundos para forzar actualizaciones más frecuentes
+    staleTime: 10 * 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 }
+
+// Place Settings Hooks
+import type { PlaceSettings, UpdatePlaceSettingsDto } from "@/lib/types";
+
+export const placeSettingsQueryKeys = {
+  settings: (placeId: string) => ["places", placeId, "settings"] as const,
+  availableVenues: ["places", "available-for-ban"] as const,
+};
+
+export function usePlaceSettings(placeId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: placeSettingsQueryKeys.settings(placeId),
+    queryFn: ({ signal }) => api.get<PlaceSettings>(`/places/${placeId}/settings`, { signal }),
+    enabled: (options?.enabled ?? true) && !!placeId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useUpdatePlaceSettings(placeId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdatePlaceSettingsDto) =>
+      api.patch<PlaceSettings>(`/places/${placeId}/settings`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.settings(placeId) });
+      toast({
+        title: "Settings saved",
+        description: "Your venue settings have been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error saving settings",
+        description: error?.message || "Failed to update settings",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useAvailableVenuesForBan() {
+  return useQuery({
+    queryKey: placeSettingsQueryKeys.availableVenues,
+    queryFn: ({ signal }) => api.get<Place[]>("/places/available-for-ban", { signal }),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useMigratePersonAccess() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      api.post<{ created: number; skipped: number }>("/places/migrate-person-access", {}),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
+      toast({
+        title: "Migration completed",
+        description: `Created ${data.created} access records, skipped ${data.skipped} (already existed)`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Migration failed",
+        description: error?.message || "Failed to run migration",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+

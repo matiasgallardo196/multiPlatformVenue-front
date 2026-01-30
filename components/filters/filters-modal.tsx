@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { X, ArrowUpDown } from "lucide-react";
 import type { Place } from "@/lib/types";
+import { BAN_MOTIVES } from "@/components/banned/motive-select";
 
 export type FilterConfig = {
   gender?: boolean;
@@ -28,6 +29,9 @@ export type FilterConfig = {
   place?: boolean;
   creator?: boolean;
   sortBy?: boolean;
+  motive?: boolean;
+  banStatus?: boolean;
+  source?: boolean;
 };
 
 export type FilterValues = {
@@ -36,6 +40,10 @@ export type FilterValues = {
   places?: string[];
   creator?: string | null;
   sortBy?: string;
+  motives?: string[];
+  banStatus?: "all" | "active" | "pending" | "expired" | "none";
+  source?: "all" | "owner" | "shared";
+  ownerPlaceId?: string;
 };
 
 interface FiltersModalProps {
@@ -48,6 +56,8 @@ interface FiltersModalProps {
   places?: Place[];
   creators?: Array<{ id: string; name: string }>;
   sortOptions?: Array<{ value: string; label: string }>;
+  placeDisabled?: boolean;
+  ownerVenues?: Array<{ id: string; name: string }>;
 }
 
 const defaultSortOptions = [
@@ -78,13 +88,17 @@ export function FiltersModal({
   places = [],
   creators = [],
   sortOptions,
+  placeDisabled = false,
+  ownerVenues = [],
 }: FiltersModalProps) {
   const [localValues, setLocalValues] = useState<FilterValues>(values);
   const [selectedPlaces, setSelectedPlaces] = useState<string[]>(values.places || []);
+  const [selectedMotives, setSelectedMotives] = useState<string[]>(values.motives || []);
 
   useEffect(() => {
     setLocalValues(values);
     setSelectedPlaces(values.places || []);
+    setSelectedMotives(values.motives || []);
   }, [values, open]);
 
   const handlePlaceToggle = (placeId: string) => {
@@ -95,10 +109,19 @@ export function FiltersModal({
     );
   };
 
+  const handleMotiveToggle = (motive: string) => {
+    setSelectedMotives((prev) =>
+      prev.includes(motive)
+        ? prev.filter((m) => m !== motive)
+        : [...prev, motive]
+    );
+  };
+
   const handleApply = () => {
     onApply({
       ...localValues,
       places: selectedPlaces,
+      motives: selectedMotives,
     });
     onOpenChange(false);
   };
@@ -110,9 +133,14 @@ export function FiltersModal({
       places: [],
       creator: config.creator ? null : undefined,
       sortBy: config.sortBy ? (sortOptions?.[0]?.value || defaultSortOptions[0].value) : undefined,
+      motives: [],
+      banStatus: config.banStatus ? "all" : undefined,
+      source: config.source ? "all" : undefined,
+      ownerPlaceId: undefined,
     };
     setLocalValues(cleared);
     setSelectedPlaces([]);
+    setSelectedMotives([]);
     onClearAll();
     onOpenChange(false);
   };
@@ -152,6 +180,75 @@ export function FiltersModal({
             </div>
           )}
 
+          {/* Ban Status Filter */}
+          {config.banStatus && (
+            <div className="space-y-2">
+              <Label>Ban Status</Label>
+              <Select
+                value={localValues.banStatus || "all"}
+                onValueChange={(value: "all" | "active" | "pending" | "expired" | "none") =>
+                  setLocalValues({ ...localValues, banStatus: value })
+                }
+              >
+                <SelectTrigger className="w-full text-base">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="active">Banned (Active)</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="none">Clean (No bans)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Source Filter */}
+          {config.source && (
+            <div className="space-y-2">
+              <Label>Source</Label>
+              <Select
+                value={localValues.source || "all"}
+                onValueChange={(value: "all" | "owner" | "shared") =>
+                  setLocalValues({ ...localValues, source: value, ownerPlaceId: undefined })
+                }
+              >
+                <SelectTrigger className="w-full text-base">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="owner">My venue</SelectItem>
+                  <SelectItem value="shared">Shared with me</SelectItem>
+                </SelectContent>
+              </Select>
+              {localValues.source === "shared" && ownerVenues.length > 0 && (
+                <div className="mt-2">
+                  <Label className="text-xs text-muted-foreground">From specific venue</Label>
+                  <Select
+                    value={localValues.ownerPlaceId || "__all__"}
+                    onValueChange={(value: string) =>
+                      setLocalValues({ ...localValues, ownerPlaceId: value === "__all__" ? undefined : value })
+                    }
+                  >
+                    <SelectTrigger className="w-full text-base mt-1">
+                      <SelectValue placeholder="All venues" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All venues</SelectItem>
+                      {ownerVenues.map((venue) => (
+                        <SelectItem key={venue.id} value={venue.id}>
+                          {venue.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Status Filter */}
           {config.status && (
             <div className="space-y-2">
@@ -177,11 +274,21 @@ export function FiltersModal({
           {/* Place Filter */}
           {config.place && (
             <div className="space-y-2">
-              <Label>Places</Label>
+              <Label>
+                Places
+                {placeDisabled && selectedPlaces.length > 0 && (
+                  <span className="text-muted-foreground text-xs ml-2">
+                    (locked to {places.find(p => p.id === selectedPlaces[0])?.name || "your venue"})
+                  </span>
+                )}
+              </Label>
               <div className="space-y-2">
-                <Select onValueChange={handlePlaceToggle}>
-                  <SelectTrigger className="w-full text-base">
-                    <SelectValue placeholder="Add place" />
+                <Select onValueChange={handlePlaceToggle} disabled={placeDisabled}>
+                  <SelectTrigger className="w-full text-base" disabled={placeDisabled}>
+                    <SelectValue placeholder={placeDisabled && selectedPlaces.length > 0 
+                      ? places.find(p => p.id === selectedPlaces[0])?.name || "Your venue"
+                      : "Add place"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
                     {places.map((place) => (
@@ -206,13 +313,15 @@ export function FiltersModal({
                           className="gap-1 pr-1"
                         >
                           {place?.name || "Unknown"}
-                          <button
-                            type="button"
-                            onClick={() => handlePlaceToggle(placeId)}
-                            className="ml-1 rounded-full hover:bg-secondary-foreground/20 p-0.5"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
+                          {!placeDisabled && (
+                            <button
+                              type="button"
+                              onClick={() => handlePlaceToggle(placeId)}
+                              className="ml-1 rounded-full hover:bg-secondary-foreground/20 p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
                         </Badge>
                       );
                     })}
@@ -247,6 +356,51 @@ export function FiltersModal({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Motive Filter */}
+          {config.motive && (
+            <div className="space-y-2">
+              <Label>Motives</Label>
+              <div className="space-y-2">
+                <Select onValueChange={handleMotiveToggle}>
+                  <SelectTrigger className="w-full text-base">
+                    <SelectValue placeholder="Add motive" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BAN_MOTIVES.map((motive) => (
+                      <SelectItem
+                        key={motive}
+                        value={motive}
+                        disabled={selectedMotives.includes(motive)}
+                      >
+                        {motive}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedMotives.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedMotives.map((motive) => (
+                      <Badge
+                        key={motive}
+                        variant="secondary"
+                        className="gap-1 pr-1"
+                      >
+                        <span className="truncate max-w-[200px]">{motive}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleMotiveToggle(motive)}
+                          className="ml-1 rounded-full hover:bg-secondary-foreground/20 p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

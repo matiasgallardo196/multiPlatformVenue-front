@@ -45,7 +45,7 @@ import { CompactPagination } from "@/components/pagination/compact-pagination";
 
 export default function PlacesPage() {
   const { toast } = useToast();
-  const { isReadOnly, isAdmin } = useAuth();
+  const { isReadOnly, isAdmin, user } = useAuth();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [searchQuery, setSearchQuery] = useState("");
@@ -213,6 +213,8 @@ export default function PlacesPage() {
                               </div>
                             </div>
 
+                            {/* Mostrar menú solo si hay acciones disponibles */}
+                            {(isAdmin || place.id === user?.placeId) && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -271,6 +273,7 @@ export default function PlacesPage() {
                                 )}
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            )}
                           </div>
                          </CardHeader>
                        </Card>

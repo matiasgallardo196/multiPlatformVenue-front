@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,12 @@ import { FiltersModal, type FilterConfig, type FilterValues } from "@/components
 
 export default function BannedsPage() {
   const { toast } = useToast();
-  const { isReadOnly } = useAuth();
+  const { isReadOnly, isAdmin, user } = useAuth();
   const { data: places, isLoading: placesLoading } = usePlaces();
   const deleteBannedMutation = useDeleteBanned();
+
+  // Determinar si es STAFF (no puede cambiar el filtro de place)
+  const isStaff = user?.role === "staff";
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +43,7 @@ export default function BannedsPage() {
     "all" | "active" | "inactive"
   >("active");
   const [selectedPlaces, setSelectedPlaces] = useState<string[]>([]);
+  const [hasInitializedPlaceFilter, setHasInitializedPlaceFilter] = useState(false);
   const [genderFilter, setGenderFilter] = useState<"all" | "Male" | "Female">(
     "all"
   );
@@ -53,14 +57,30 @@ export default function BannedsPage() {
     | "person-name-asc"
     | "person-name-desc"
   >("violations-desc");
+  const [selectedMotives, setSelectedMotives] = useState<string[]>([]);
   const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
 
-  // Fetch banneds with sorting
+  // Inicializar filtro de place según rol (solo una vez cuando user.placeId está disponible)
+  useEffect(() => {
+    if (!hasInitializedPlaceFilter && user?.placeId && !isAdmin) {
+      // STAFF / MANAGER / HEAD_MANAGER: preseleccionar su place
+      setSelectedPlaces([user.placeId]);
+      setHasInitializedPlaceFilter(true);
+    } else if (!hasInitializedPlaceFilter && isAdmin) {
+      // ADMIN: sin filtro inicial
+      setHasInitializedPlaceFilter(true);
+    }
+  }, [user?.placeId, isAdmin, hasInitializedPlaceFilter]);
+
+  // Determinar el placeId a enviar al backend (solo si hay un solo place seleccionado)
+  const backendPlaceId = selectedPlaces.length === 1 ? selectedPlaces[0] : undefined;
+
+  // Fetch banneds with sorting, placeId, and motives filter
   const {
     data: banneds,
     isLoading: bannedsLoading,
     error: bannedsError,
-  } = useBanneds(sortBy);
+  } = useBanneds(sortBy, backendPlaceId, selectedMotives.length > 0 ? selectedMotives : undefined);
 
   // Filter and search logic (sorting is done in backend)
   const filteredBanneds = useMemo(() => {
@@ -115,6 +135,7 @@ export default function BannedsPage() {
     setSelectedPlaces([]);
     setGenderFilter("all");
     setSortBy("violations-desc");
+    setSelectedMotives([]);
   };
 
   const handleFiltersApply = (values: FilterValues) => {
@@ -122,13 +143,16 @@ export default function BannedsPage() {
     if (values.gender !== undefined) setGenderFilter(values.gender);
     if (values.places !== undefined) setSelectedPlaces(values.places);
     if (values.sortBy !== undefined) setSortBy(values.sortBy as any);
+    if (values.motives !== undefined) setSelectedMotives(values.motives);
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (statusFilter !== "all") count++;
     if (genderFilter !== "all") count++;
-    if (selectedPlaces.length > 0) count += selectedPlaces.length;
+    // For STAFF, don't count their place as active filter (it's fixed)
+    if (!isStaff && selectedPlaces.length > 0) count += selectedPlaces.length;
+    if (selectedMotives.length > 0) count += selectedMotives.length;
     return count;
   };
 
@@ -150,13 +174,25 @@ export default function BannedsPage() {
         onRemove: () => setGenderFilter("all"),
       });
     }
-    selectedPlaces.forEach((placeId) => {
-      const place = places?.find((p: Place) => p.id === placeId);
+    // For STAFF, don't show place chip (it's fixed and cannot be removed)
+    if (!isStaff) {
+      selectedPlaces.forEach((placeId) => {
+        const place = places?.find((p: Place) => p.id === placeId);
+        chips.push({
+          key: `place-${placeId}`,
+          label: "Place",
+          value: place?.name || "Unknown",
+          onRemove: () => handlePlaceToggle(placeId),
+        });
+      });
+    }
+    // Add motive chips
+    selectedMotives.forEach((motive) => {
       chips.push({
-        key: `place-${placeId}`,
-        label: "Place",
-        value: place?.name || "Unknown",
-        onRemove: () => handlePlaceToggle(placeId),
+        key: `motive-${motive}`,
+        label: "Motive",
+        value: motive.length > 25 ? motive.substring(0, 25) + "..." : motive,
+        onRemove: () => setSelectedMotives(prev => prev.filter(m => m !== motive)),
       });
     });
     return chips;
@@ -296,16 +332,19 @@ export default function BannedsPage() {
             status: true,
             place: true,
             sortBy: true,
+            motive: true,
           }}
           values={{
             gender: genderFilter,
             status: statusFilter,
             places: selectedPlaces,
             sortBy: sortBy,
+            motives: selectedMotives,
           }}
           onApply={handleFiltersApply}
           onClearAll={handleClearFilters}
           places={places}
+          placeDisabled={isStaff}
         />
       </DashboardLayout>
     </RouteGuard>

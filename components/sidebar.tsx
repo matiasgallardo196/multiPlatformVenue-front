@@ -14,6 +14,7 @@ import {
   X,
   Clock,
   CheckCircle2,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -21,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { usePlace } from "@/hooks/queries";
 import { User as UserIcon } from "lucide-react";
 
 const navigation = [
@@ -31,6 +33,7 @@ const navigation = [
   { name: "Persons", href: "/persons", icon: Users, roles: ["admin", "manager", "staff", "head-manager"] },
   { name: "Places", href: "/places", icon: MapPin, roles: ["admin", "head-manager"] },
   { name: "Users", href: "/users", icon: UserIcon, roles: ["admin", "head-manager"] },
+  { name: "Settings", href: "/settings", icon: Settings, roles: ["admin", "head-manager"] },
 ];
 
 export function Sidebar() {
@@ -38,7 +41,15 @@ export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const supabase = createClient();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isAdmin } = useAuth();
+  
+  // Obtener el nombre del place del usuario (si tiene uno)
+  const { data: userPlace } = usePlace(currentUser?.placeId || "");
+  const placeName = userPlace?.name || null;
+  
+  // Para ADMIN sin place, mostrar "Venues Hub", para otros mostrar nombre del local
+  const sidebarTitle = isAdmin && !placeName ? "Venues Hub" : (placeName ? `${placeName} Hub` : "Venues Hub");
+  const versionText = isAdmin && !placeName ? "Venues Hub v1.1" : (placeName ? `${placeName} v1.1` : "Venues Hub v1.1");
 
   const visibleNavigation = currentUser?.role
     ? navigation.filter((item) => item.roles.includes(currentUser.role))
@@ -80,7 +91,7 @@ export function Sidebar() {
         <div className="flex h-full flex-col">
           {/* Header */}
           <div className="flex h-16 items-center border-b border-sidebar-border px-4 sm:px-6 pt-14 lg:pt-0">
-            <h1 className="text-base sm:text-lg font-semibold text-sidebar-foreground">Admin Dashboard</h1>
+            <h1 className="text-base sm:text-lg font-semibold text-sidebar-foreground">{sidebarTitle}</h1>
           </div>
 
           {/* Navigation */}
@@ -124,7 +135,7 @@ export function Sidebar() {
             <div className="space-y-2">
               <ThemeToggle />
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <p className="text-xs text-sidebar-foreground/60">Admin Dashboard v1.0</p>
+                <p className="text-xs text-sidebar-foreground/60">{versionText}</p>
                 {currentUser && (
                   <Button
                     variant="outline"

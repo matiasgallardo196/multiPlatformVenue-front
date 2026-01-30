@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,12 +13,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { PlaceCombobox } from "@/components/place/place-combobox";
 
 const createSchema = z.object({
   email: z.string().email("Invalid email"),
   userName: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["manager", "staff", "head-manager"]),
+  placeId: z.string().min(1, "Venue is required"),
 });
 
 type CreateForm = z.infer<typeof createSchema>;
@@ -31,10 +34,19 @@ interface UserCreateDialogProps {
 export function UserCreateDialog({ open, onOpenChange }: UserCreateDialogProps) {
   const [showPassword, setShowPassword] = useState(false);
   const queryClient = useQueryClient();
+  const { isAdmin, user } = useAuth();
+
   const form = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
-    defaultValues: { email: "", userName: "", password: "", role: "staff" },
+    defaultValues: { email: "", userName: "", password: "", role: "staff", placeId: "" },
   });
+
+  // Para HEAD_MANAGER: preseleccionar su placeId
+  useEffect(() => {
+    if (!isAdmin && user?.placeId) {
+      form.setValue("placeId", user.placeId);
+    }
+  }, [isAdmin, user?.placeId, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateForm) => {
@@ -143,6 +155,30 @@ export function UserCreateDialog({ open, onOpenChange }: UserCreateDialogProps) 
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="placeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Venue</FormLabel>
+                  <FormControl>
+                    <PlaceCombobox
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={!isAdmin}
+                      placeholder={!isAdmin && user?.placeId ? "Your venue (locked)" : "Select venue"}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {isAdmin 
+                      ? "Select the venue where this user will work" 
+                      : "Users are assigned to your venue"}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
                 Cancel
@@ -164,4 +200,3 @@ export function UserCreateDialog({ open, onOpenChange }: UserCreateDialogProps) 
     </Dialog>
   );
 }
-
