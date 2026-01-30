@@ -8,6 +8,8 @@ import { toast } from "@/hooks/use-toast";
 import type { AuthUser } from "@/hooks/use-auth";
 import type {
   Person,
+  PersonWithAccess,
+  PersonHistory,
   Place,
   Banned,
   CreatePersonDto,
@@ -121,11 +123,20 @@ export function useSearchPersons(query: string, enabled: boolean = true) {
 export function usePerson(id: string) {
   return useQuery({
     queryKey: queryKeys.person(id),
-    queryFn: ({ signal }) => api.get<Person>(`/persons/${id}`, { signal }),
+    queryFn: ({ signal }) => api.get<PersonWithAccess>(`/persons/${id}`, { signal }),
     enabled: !!id,
-    staleTime: 5 * 60 * 1000, // 5 minutos - los datos son frescos por 5 minutos
-    refetchOnMount: false, // No refetchear al montar si los datos están frescos
-    refetchOnWindowFocus: false, // No refetchear al enfocar ventana si los datos están frescos
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function usePersonHistory(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.person(id), 'history'],
+    queryFn: ({ signal }) => api.get<PersonHistory[]>(`/persons/${id}/history`, { signal }),
+    enabled: !!id,
+    staleTime: 60 * 1000,
   });
 }
 

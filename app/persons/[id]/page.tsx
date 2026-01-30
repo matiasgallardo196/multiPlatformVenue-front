@@ -9,7 +9,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, User, Camera, ChevronLeft, ChevronRight } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Loader2, User, Camera, ChevronLeft, ChevronRight, Building2, Share2, History, Clock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ import {
   usePersonBanStatus,
   usePersonBans,
   useDeletePerson,
+  usePersonHistory,
 } from "@/hooks/queries";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +43,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import type { PersonHistory as PersonHistoryType } from "@/lib/types";
 
 export default function PersonDetailPage() {
   const params = useParams<{ id: string }>();
@@ -48,12 +51,35 @@ export default function PersonDetailPage() {
   const { data: person, isLoading, error } = usePerson(id);
   const { data: banStatus } = usePersonBanStatus(id);
   const { data: bans } = usePersonBans(id);
-  const { isReadOnly } = useAuth();
+  const { data: history } = usePersonHistory(id);
+  const { isReadOnly, isManager } = useAuth();
   const deletePerson = useDeletePerson();
   const { toast } = useToast();
   const router = useRouter();
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+
+  const formatHistoryAction = (action: string) => {
+    const actionLabels: Record<string, string> = {
+      created: "Created",
+      updated: "Updated",
+      shared: "Shared",
+      unshared: "Unshared",
+      access_removed: "Access Removed",
+      ownership_transferred: "Ownership Transferred",
+    };
+    return actionLabels[action] || action;
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   // Calcular estados de bans basado en bannedPlaces
   const { hasActiveBans, hasPendingBans, banDisplayStatus, mostRecentBanId } = useMemo(() => {
@@ -305,6 +331,126 @@ export default function PersonDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Access Info */}
+        <Card>
+          <CardContent className="p-3 sm:p-4 md:p-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Access Information</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {person.ownerPlaceName && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="gap-1 cursor-help">
+                      <Building2 className="h-3 w-3" />
+                      {person.accessType === "owner" ? "Owner" : "Shared"}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <span className="text-xs">
+                      {person.accessType === "owner" 
+                        ? `Your venue (${person.ownerPlaceName})` 
+                        : `Created by: ${person.ownerPlaceName}`}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {person.isShared && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="secondary" className="gap-1 cursor-help">
+                      <Share2 className="h-3 w-3" />
+                      Shared with {person.sharedWithPlaces?.length || 0} venues
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <div className="text-xs">
+                      <p className="font-medium mb-1">Shared with:</p>
+                      <ul className="list-disc list-inside">
+                        {person.sharedWithPlaces?.map((place) => (
+                          <li key={place.id}>{place.name}</li>
+                        )) || <li>No venues</li>}
+                      </ul>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {!person.ownerPlaceName && !person.isShared && (
+                <span className="text-sm text-muted-foreground">No access information available</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* History Section - Manager+ only */}
+        {isManager && history && history.length > 0 && (
+          <Card className="md:col-span-2">
+            <CardContent className="p-3 sm:p-4 md:p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Change History</span>
+              </div>
+              <div className="space-y-3 max-h-64 overflow-y-auto overflow-x-visible">
+                {history.map((entry: PersonHistoryType & { performedByUserName?: string }) => (
+                  <div key={entry.id} className="flex items-start gap-3 text-sm border-l-2 border-muted pl-3 py-1">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className="text-xs">
+                          {formatHistoryAction(entry.action)}
+                        </Badge>
+                        {entry.place?.name && (
+                          <span className="text-xs text-muted-foreground">@ {entry.place.name}</span>
+                        )}
+                      </div>
+                      <div className="text-muted-foreground mt-1">
+                        <span>by {entry.performedByUserName || "Unknown"}</span>
+                        <span className="mx-1">·</span>
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDate(entry.performedAt)}
+                        </span>
+                      </div>
+                      {entry.changes && entry.changes.length > 0 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="mt-1 text-xs text-muted-foreground cursor-help underline decoration-dotted">
+                              Changed: {entry.changes.map((c) => c.field).join(", ")}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" align="start" className="max-w-sm z-50">
+                            <div className="text-xs space-y-1">
+                              {entry.changes.map((change, idx) => (
+                                <div key={idx} className="flex flex-col">
+                                  <span className="font-medium capitalize">{change.field}:</span>
+                                  <span className="text-destructive line-through">
+                                    {Array.isArray(change.oldValue) 
+                                      ? change.oldValue.join(", ") || "(empty)"
+                                      : String(change.oldValue ?? "(empty)")}
+                                  </span>
+                                  <span className="text-green-400">
+                                    → {Array.isArray(change.newValue) 
+                                      ? change.newValue.join(", ") || "(empty)"
+                                      : String(change.newValue ?? "(empty)")}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {entry.notes && (
+                        <div className="mt-1 text-xs italic text-muted-foreground">{entry.notes}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {person.imagenProfileUrl && person.imagenProfileUrl.length > 1 && (
           <Card className="md:col-span-2">
             <CardContent className="p-3 sm:p-4 md:p-6 space-y-3">

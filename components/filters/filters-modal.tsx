@@ -30,6 +30,8 @@ export type FilterConfig = {
   creator?: boolean;
   sortBy?: boolean;
   motive?: boolean;
+  banStatus?: boolean;
+  source?: boolean;
 };
 
 export type FilterValues = {
@@ -39,6 +41,9 @@ export type FilterValues = {
   creator?: string | null;
   sortBy?: string;
   motives?: string[];
+  banStatus?: "all" | "active" | "pending" | "expired" | "none";
+  source?: "all" | "owner" | "shared";
+  ownerPlaceId?: string;
 };
 
 interface FiltersModalProps {
@@ -52,6 +57,7 @@ interface FiltersModalProps {
   creators?: Array<{ id: string; name: string }>;
   sortOptions?: Array<{ value: string; label: string }>;
   placeDisabled?: boolean;
+  ownerVenues?: Array<{ id: string; name: string }>;
 }
 
 const defaultSortOptions = [
@@ -83,6 +89,7 @@ export function FiltersModal({
   creators = [],
   sortOptions,
   placeDisabled = false,
+  ownerVenues = [],
 }: FiltersModalProps) {
   const [localValues, setLocalValues] = useState<FilterValues>(values);
   const [selectedPlaces, setSelectedPlaces] = useState<string[]>(values.places || []);
@@ -127,6 +134,9 @@ export function FiltersModal({
       creator: config.creator ? null : undefined,
       sortBy: config.sortBy ? (sortOptions?.[0]?.value || defaultSortOptions[0].value) : undefined,
       motives: [],
+      banStatus: config.banStatus ? "all" : undefined,
+      source: config.source ? "all" : undefined,
+      ownerPlaceId: undefined,
     };
     setLocalValues(cleared);
     setSelectedPlaces([]);
@@ -167,6 +177,75 @@ export function FiltersModal({
                   <SelectItem value="Female">Female</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Ban Status Filter */}
+          {config.banStatus && (
+            <div className="space-y-2">
+              <Label>Ban Status</Label>
+              <Select
+                value={localValues.banStatus || "all"}
+                onValueChange={(value: "all" | "active" | "pending" | "expired" | "none") =>
+                  setLocalValues({ ...localValues, banStatus: value })
+                }
+              >
+                <SelectTrigger className="w-full text-base">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="active">Banned (Active)</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="none">Clean (No bans)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Source Filter */}
+          {config.source && (
+            <div className="space-y-2">
+              <Label>Source</Label>
+              <Select
+                value={localValues.source || "all"}
+                onValueChange={(value: "all" | "owner" | "shared") =>
+                  setLocalValues({ ...localValues, source: value, ownerPlaceId: undefined })
+                }
+              >
+                <SelectTrigger className="w-full text-base">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="owner">My venue</SelectItem>
+                  <SelectItem value="shared">Shared with me</SelectItem>
+                </SelectContent>
+              </Select>
+              {localValues.source === "shared" && ownerVenues.length > 0 && (
+                <div className="mt-2">
+                  <Label className="text-xs text-muted-foreground">From specific venue</Label>
+                  <Select
+                    value={localValues.ownerPlaceId || "__all__"}
+                    onValueChange={(value: string) =>
+                      setLocalValues({ ...localValues, ownerPlaceId: value === "__all__" ? undefined : value })
+                    }
+                  >
+                    <SelectTrigger className="w-full text-base mt-1">
+                      <SelectValue placeholder="All venues" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All venues</SelectItem>
+                      {ownerVenues.map((venue) => (
+                        <SelectItem key={venue.id} value={venue.id}>
+                          {venue.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           )}
 

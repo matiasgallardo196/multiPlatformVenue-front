@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FiltersButton } from "@/components/filters/filters-button";
 import { ActiveFiltersChips, type ActiveFilter } from "@/components/filters/active-filters-chips";
 import { FiltersModal, type FilterConfig, type FilterValues } from "@/components/filters/filters-modal";
@@ -41,10 +42,12 @@ import {
   Loader2,
   User,
   Search,
+  Building2,
+  Share2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import type { Person } from "@/lib/types";
+import type { PersonWithAccess } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { RouteGuard } from "@/components/auth/route-guard";
 
@@ -62,6 +65,9 @@ export default function PersonsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
+  const [banStatusFilter, setBanStatusFilter] = useState<"all" | "active" | "pending" | "expired" | "none">("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "owner" | "shared">("all");
+  const [ownerVenueFilter, setOwnerVenueFilter] = useState<string | undefined>();
 
   // Debounce de búsqueda para no disparar por cada tecla
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -78,6 +84,9 @@ export default function PersonsPage() {
       sortBy?: "newest-first" | "oldest-first" | "name-asc" | "name-desc";
       page?: number;
       limit?: number;
+      banStatus?: "active" | "pending" | "expired" | "none";
+      accessType?: "owner" | "shared";
+      ownerPlaceId?: string;
     } = {};
 
     if (genderFilter !== "all") {
@@ -92,35 +101,56 @@ export default function PersonsPage() {
       filterObj.sortBy = sortBy;
     }
 
+    if (banStatusFilter !== "all") {
+      filterObj.banStatus = banStatusFilter;
+    }
+
+    if (sourceFilter !== "all") {
+      filterObj.accessType = sourceFilter;
+    }
+
+    if (ownerVenueFilter) {
+      filterObj.ownerPlaceId = ownerVenueFilter;
+    }
+
     filterObj.page = page;
     filterObj.limit = limit;
 
     return Object.keys(filterObj).length > 0 ? filterObj : undefined;
-  }, [genderFilter, debouncedSearch, sortBy, page, limit]);
+  }, [genderFilter, debouncedSearch, sortBy, page, limit, banStatusFilter, sourceFilter, ownerVenueFilter]);
 
   const { data: personsPage, isLoading, error } = usePersons(filters);
 
   // Resetear a página 1 cuando cambian búsqueda/filtros/sort
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, genderFilter, sortBy]);
+  }, [debouncedSearch, genderFilter, sortBy, banStatusFilter, sourceFilter, ownerVenueFilter]);
 
-  const hasActiveFilters = searchQuery || genderFilter !== "all";
+  const hasActiveFilters = searchQuery || genderFilter !== "all" || banStatusFilter !== "all" || sourceFilter !== "all" || ownerVenueFilter;
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setGenderFilter("all");
     setSortBy("newest-first");
+    setBanStatusFilter("all");
+    setSourceFilter("all");
+    setOwnerVenueFilter(undefined);
   };
 
   const handleFiltersApply = (values: FilterValues) => {
     if (values.gender !== undefined) setGenderFilter(values.gender);
     if (values.sortBy !== undefined) setSortBy(values.sortBy as any);
+    if (values.banStatus !== undefined) setBanStatusFilter(values.banStatus as any);
+    if (values.source !== undefined) setSourceFilter(values.source as any);
+    if (values.ownerPlaceId !== undefined) setOwnerVenueFilter(values.ownerPlaceId || undefined);
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (genderFilter !== "all") count++;
+    if (banStatusFilter !== "all") count++;
+    if (sourceFilter !== "all") count++;
+    if (ownerVenueFilter) count++;
     return count;
   };
 
@@ -132,6 +162,30 @@ export default function PersonsPage() {
         label: "Gender",
         value: genderFilter,
         onRemove: () => setGenderFilter("all"),
+      });
+    }
+    if (banStatusFilter !== "all") {
+      chips.push({
+        key: "banStatus",
+        label: "Ban Status",
+        value: banStatusFilter === "active" ? "Banned" : banStatusFilter.charAt(0).toUpperCase() + banStatusFilter.slice(1),
+        onRemove: () => setBanStatusFilter("all"),
+      });
+    }
+    if (sourceFilter !== "all") {
+      chips.push({
+        key: "source",
+        label: "Source",
+        value: sourceFilter === "owner" ? "My venue" : "Shared with me",
+        onRemove: () => setSourceFilter("all"),
+      });
+    }
+    if (ownerVenueFilter) {
+      chips.push({
+        key: "ownerVenue",
+        label: "From venue",
+        value: ownerVenueFilter.substring(0, 8) + "...",
+        onRemove: () => setOwnerVenueFilter(undefined),
       });
     }
     return chips;
@@ -164,7 +218,7 @@ export default function PersonsPage() {
     }
   };
 
-  const getPersonName = (person: Person) => {
+  const getPersonName = (person: PersonWithAccess) => {
     return (
       [person.name, person.lastName].filter(Boolean).join(" ") ||
       person.nickname ||
@@ -278,10 +332,16 @@ export default function PersonsPage() {
 
               <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {items.map((person) => (
+                  {items.map((person) => {
+                    const banBorderClass = 
+                      person.banStatus === 'active' ? 'border-l-4 border-l-destructive' :
+                      person.banStatus === 'pending' ? 'border-l-4 border-l-yellow-500' :
+                      person.banStatus === 'expired' ? 'border-l-4 border-l-muted-foreground/50' : '';
+                    
+                    return (
                     <Card
                       key={person.id}
-                      className="transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                      className={`transition-transform duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${banBorderClass}`}
                       onClick={(e) => {
                         const modalOpen = document.querySelector(
                           '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
@@ -319,9 +379,26 @@ export default function PersonsPage() {
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <h3 className="font-semibold">
-                                {getPersonName(person)}
-                              </h3>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold">
+                                  {getPersonName(person)}
+                                </h3>
+                                {person.banStatus === 'active' && (
+                                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                                    Banned
+                                  </Badge>
+                                )}
+                                {person.banStatus === 'pending' && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-yellow-500 text-yellow-600">
+                                    Pending
+                                  </Badge>
+                                )}
+                                {person.banStatus === 'expired' && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                    Expired
+                                  </Badge>
+                                )}
+                              </div>
                               {person.nickname &&
                                 person.nickname !== getPersonName(person) && (
                                   <p className="text-sm text-muted-foreground">
@@ -417,6 +494,47 @@ export default function PersonsPage() {
                       </CardHeader>
 
                       <CardContent className="space-y-3">
+                        {/* Access Info Badges */}
+                        <div className="flex flex-wrap gap-2">
+                          {person.ownerPlaceName && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="text-xs gap-1 cursor-help">
+                                  <Building2 className="h-3 w-3" />
+                                  {person.accessType === "owner" ? "Owner" : "Shared"}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <span className="text-xs">
+                                  {person.accessType === "owner" 
+                                    ? `Your venue (${person.ownerPlaceName})` 
+                                    : `Created by: ${person.ownerPlaceName}`}
+                                </span>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {person.isShared && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="secondary" className="text-xs gap-1 cursor-help">
+                                  <Share2 className="h-3 w-3" />
+                                  Shared
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                <div className="text-xs">
+                                  <p className="font-medium mb-1">Shared with:</p>
+                                  <ul className="list-disc list-inside">
+                                    {person.sharedWithPlaces?.map((place) => (
+                                      <li key={place.id}>{place.name}</li>
+                                    )) || <li>No venues</li>}
+                                  </ul>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+
                         {person.imagenProfileUrl &&
                           person.imagenProfileUrl.length > 1 && (
                             <div className="space-y-2">
@@ -447,7 +565,8 @@ export default function PersonsPage() {
                           )}
                       </CardContent>
                     </Card>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             </>
@@ -461,10 +580,15 @@ export default function PersonsPage() {
           config={{
             gender: true,
             sortBy: true,
+            banStatus: true,
+            source: true,
           }}
           values={{
             gender: genderFilter,
             sortBy: sortBy,
+            banStatus: banStatusFilter,
+            source: sourceFilter,
+            ownerPlaceId: ownerVenueFilter,
           }}
           onApply={handleFiltersApply}
           onClearAll={handleClearFilters}
