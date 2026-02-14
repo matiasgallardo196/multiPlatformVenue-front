@@ -332,7 +332,7 @@ export default function PersonsPage() {
 
               <div className="max-h-[calc(100vh-280px)] overflow-y-auto border rounded-lg p-4">
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {items.map((person) => {
+                  {items.map((person: PersonWithAccess) => {
                     const banBorderClass = 
                       person.banStatus === 'active' ? 'border-l-4 border-l-destructive' :
                       person.banStatus === 'pending' ? 'border-l-4 border-l-yellow-500' :
@@ -525,7 +525,7 @@ export default function PersonsPage() {
                                 <div className="text-xs">
                                   <p className="font-medium mb-1">Shared with:</p>
                                   <ul className="list-disc list-inside">
-                                    {person.sharedWithPlaces?.map((place) => (
+                                    {person.sharedWithPlaces?.map((place: { id: string; name: string }) => (
                                       <li key={place.id}>{place.name}</li>
                                     )) || <li>No venues</li>}
                                   </ul>
@@ -544,7 +544,7 @@ export default function PersonsPage() {
                               <div className="flex gap-1">
                                 {person.imagenProfileUrl
                                   .slice(1, 4)
-                                  .map((url, index) => (
+                                  .map((url: string, index: number) => (
                                     <Avatar key={index} className="h-6 w-6">
                                       <AvatarImage
                                         src={url || "/placeholder.svg"}
