@@ -369,7 +369,7 @@ export default function PersonDetailPage() {
                     <div className="text-xs">
                       <p className="font-medium mb-1">Shared with:</p>
                       <ul className="list-disc list-inside">
-                        {person.sharedWithPlaces?.map((place) => (
+                        {person.sharedWithPlaces?.map((place: { id: string; name: string }) => (
                           <li key={place.id}>{place.name}</li>
                         )) || <li>No venues</li>}
                       </ul>
