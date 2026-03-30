@@ -144,6 +144,20 @@ export const searchSchema = z.object({
   placeIds: z.array(z.string()).optional(),
 });
 
+// Import bans schema
+export const importBansSchema = z
+  .object({
+    sourcePlaceId: z.string().uuid("Select a source venue"),
+    targetPlaceId: z.string().uuid("Select a target venue"),
+    filter: z.enum(["active_only", "all"]).default("active_only"),
+  })
+  .refine((data) => data.sourcePlaceId !== data.targetPlaceId, {
+    path: ["targetPlaceId"],
+    message: "Source and target venues must be different",
+  });
+
+export type ImportBansForm = z.infer<typeof importBansSchema>;
+
 export type CreatePersonForm = z.infer<typeof createPersonSchema>;
 export type UpdatePersonForm = z.infer<typeof updatePersonSchema>;
 export type CreatePlaceForm = z.infer<typeof createPlaceSchema>;

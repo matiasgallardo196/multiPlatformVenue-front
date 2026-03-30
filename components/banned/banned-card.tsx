@@ -18,6 +18,7 @@ import {
   Trash2,
   Calendar,
   MapPin,
+  Home,
 } from "lucide-react";
 import { BannedEditDialog } from "@/components/banned/banned-edit-dialog";
 import { format } from "date-fns";
@@ -75,9 +76,20 @@ export function BannedCard({
     return acc;
   }, {} as Record<string, string>);
 
-  const bannedPlaceNames = (banned.bannedPlaces ?? [])
-    .map((bp) => placeMap[bp.placeId])
-    .filter(Boolean);
+  const originPlaceId = banned.createdBy?.placeId ?? null;
+
+  // Approved bannedPlaces enriched with origin flag
+  const bannedPlaceEntries = (banned.bannedPlaces ?? [])
+    .filter((bp) => bp.status === 'approved')
+    .map((bp) => ({
+      placeId: bp.placeId,
+      name: bp.place?.name ?? placeMap[bp.placeId] ?? "Unknown Place",
+      isOrigin: bp.placeId === originPlaceId,
+    }))
+    .filter((entry) => entry.name);
+
+  // Keep a plain list for backwards-compat usage elsewhere
+  const bannedPlaceNames = bannedPlaceEntries.map((e) => e.name);
 
   // Calculate approval status
   const approvalStatus = useMemo(() => {
@@ -478,18 +490,39 @@ export function BannedCard({
             )}
 
             {/* Banned Places */}
-            {bannedPlaceNames.length > 0 && (
+            {bannedPlaceEntries.length > 0 && (
               <div className="space-y-1 sm:space-y-1.5">
                 <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
                   <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span>Banned from:</span>
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {bannedPlaceNames.map((placeName, index) => (
-                    <Badge key={index} variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0.5">
-                      {placeName}
-                    </Badge>
-                  ))}
+                  {bannedPlaceEntries.map((entry) =>
+                    entry.isOrigin ? (
+                      <Tooltip key={entry.placeId}>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] sm:text-xs px-1.5 py-0.5 gap-1 cursor-default"
+                          >
+                            <Home className="h-2.5 w-2.5 shrink-0" />
+                            {entry.name}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          Origin venue — this ban was created here
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Badge
+                        key={entry.placeId}
+                        variant="outline"
+                        className="text-[10px] sm:text-xs px-1.5 py-0.5"
+                      >
+                        {entry.name}
+                      </Badge>
+                    )
+                  )}
                 </div>
               </div>
             )}
