@@ -227,3 +227,17 @@ export interface UpdatePlaceSettingsDto {
   sharePersonsWithPlaceIds?: string[];
 }
 
+export type ImportBansFilter = 'active_only' | 'all';
+
+export interface ImportBansDto {
+  sourcePlaceId: string;
+  targetPlaceId: string;
+  filter?: ImportBansFilter;
+}
+
+export interface ImportBansResult {
+  imported: number;
+  skipped: number;
+  personsGranted: number;
+}
+
