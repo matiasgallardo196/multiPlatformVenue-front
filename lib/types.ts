@@ -96,6 +96,7 @@ export interface Banned {
   policeNotifiedEvent: string | null;
   isActive: boolean;
   createdByUserId: string;
+  createdBy?: { id: string; placeId?: string | null };
   lastModifiedByUserId?: string | null;
   requiresApproval: boolean;
   violationsCount?: number;
@@ -225,5 +226,19 @@ export interface UpdatePlaceSettingsDto {
   acceptBansFromPlaceIds?: string[];
   sharePersons?: boolean;
   sharePersonsWithPlaceIds?: string[];
+}
+
+export type ImportBansFilter = 'active_only' | 'all';
+
+export interface ImportBansDto {
+  sourcePlaceId: string;
+  targetPlaceId: string;
+  filter?: ImportBansFilter;
+}
+
+export interface ImportBansResult {
+  imported: number;
+  skipped: number;
+  personsGranted: number;
 }
 

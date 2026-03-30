@@ -1125,6 +1125,26 @@ export function useAvailableVenuesForBan() {
   });
 }
 
+export function useImportBans() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: import("@/lib/types").ImportBansDto) =>
+      api.post<import("@/lib/types").ImportBansResult>("/banneds/import", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.banneds });
+      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Import failed",
+        description: error?.message || "Failed to import bans",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
 export function useMigratePersonAccess() {
   const queryClient = useQueryClient();
 

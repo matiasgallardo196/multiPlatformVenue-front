@@ -24,8 +24,7 @@ function SettingsContent() {
   });
 
   const { data: placesData, isLoading: placesLoading } = usePlaces(
-    { page: 1, limit: 100 },
-    { enabled: !!placeId || isAdmin }
+    { page: 1, limit: 100, enabled: !!placeId || isAdmin }
   );
   const otherPlaces = (placesData?.items || []).filter((p: Place) => p.id !== placeId);
 
@@ -269,7 +268,7 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <RouteGuard allowedRoles={["head-manager", "admin"]}>
+    <RouteGuard requireHeadManager>
       <DashboardLayout>
         <SettingsContent />
       </DashboardLayout>

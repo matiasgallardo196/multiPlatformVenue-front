@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { BannedCreateFullDialog } from "@/components/banned/banned-create-full-dialog";
+import { ImportBansDialog } from "@/components/banned/import-bans-dialog";
 import { BannedCard } from "@/components/banned/banned-card";
 import { useBanneds, usePlaces, useDeleteBanned } from "@/hooks/queries";
 import {
@@ -18,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Loader2, Search } from "lucide-react";
+import { Plus, Loader2, Search, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Banned, Place, BannedPlace } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
@@ -246,6 +247,14 @@ export default function BannedsPage() {
           title="Banned Persons"
           description="Manage banned individuals and their restrictions"
         >
+          {isAdmin && (
+            <ImportBansDialog>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Import Bans
+              </Button>
+            </ImportBansDialog>
+          )}
           {!isReadOnly && (
             <BannedCreateFullDialog>
               <Button>
