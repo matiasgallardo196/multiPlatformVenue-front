@@ -96,6 +96,7 @@ export interface Banned {
   policeNotifiedEvent: string | null;
   isActive: boolean;
   createdByUserId: string;
+  createdBy?: { id: string; placeId?: string | null };
   lastModifiedByUserId?: string | null;
   requiresApproval: boolean;
   violationsCount?: number;
