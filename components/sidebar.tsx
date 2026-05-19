@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { usePlace } from "@/hooks/queries";
 import { User as UserIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin", "manager", "staff", "head-manager"] },
@@ -41,6 +42,7 @@ export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const queryClient = useQueryClient();
   const { user: currentUser, isAdmin } = useAuth();
   
   // Obtener el nombre del place del usuario (si tiene uno)
@@ -143,6 +145,10 @@ export function Sidebar() {
                     onClick={async () => {
                       try {
                         await supabase.auth.signOut();
+                        // Drop every cached React Query entry so the next
+                        // sign-in cannot inherit data from the previous user.
+                        queryClient.cancelQueries();
+                        queryClient.clear();
                         toast.success("Sesión cerrada");
                         router.replace("/");
                         router.refresh();
