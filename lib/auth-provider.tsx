@@ -79,6 +79,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       }
 
+      // Defense-in-depth: drop every cached query when Supabase reports
+      // SIGNED_OUT so we never serve the previous tenant's data to the
+      // next sign-in in the same browser tab. The explicit logout button
+      // also clears, but this catches token expiry and external sign-outs.
+      if (event === "SIGNED_OUT") {
+        queryClient.cancelQueries();
+        queryClient.clear();
+      }
+
       // Si acabamos de iniciar sesión, refrescar la sesión para asegurar que las cookies estén actualizadas
       if (event === "SIGNED_IN") {
         // Pequeño delay para asegurar que las cookies se hayan establecido
@@ -108,9 +117,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Vincular con la query compartida para evitar múltiples llamadas
   const { data: meData, isFetching: meFetching, isLoading: meLoading } = useAuthMe(hasSession);
 
+  // Tenant-isolation guard: when the logged-in user id transitions to a
+  // different non-null user id (e.g. user A signs out and user B signs
+  // in without a full page reload), drop every cached query so user B
+  // cannot see user A's data even momentarily.
+  const previousUserIdRef = useRef<string | null>(null);
   useEffect(() => {
+    const nextId = meData?.id ?? null;
+    const prevId = previousUserIdRef.current;
+    if (prevId && nextId && prevId !== nextId) {
+      queryClient.cancelQueries();
+      queryClient.clear();
+    }
+    previousUserIdRef.current = nextId;
     setUser(meData ?? null);
-  }, [meData]);
+  }, [meData, queryClient]);
 
   // Usar helpers de jerarquía de roles
   const userRole = user?.role || "";

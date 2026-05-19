@@ -234,6 +234,7 @@ export interface ImportBansDto {
   sourcePlaceId: string;
   targetPlaceId: string;
   filter?: ImportBansFilter;
+  allowCrossOrg?: boolean;
 }
 
 export interface ImportBansResult {
