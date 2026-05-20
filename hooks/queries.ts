@@ -1106,6 +1106,8 @@ import type { PlaceSettings, UpdatePlaceSettingsDto } from "@/lib/types";
 export const placeSettingsQueryKeys = {
   settings: (placeId: string) => ["places", placeId, "settings"] as const,
   availableVenues: ["places", "available-for-ban"] as const,
+  incomingShares: (placeId: string) =>
+    ["places", placeId, "settings", "incoming-shares"] as const,
 };
 
 export function usePlaceSettings(placeId: string, options?: { enabled?: boolean }) {
@@ -1145,6 +1147,67 @@ export function useAvailableVenuesForBan() {
     queryKey: placeSettingsQueryKeys.availableVenues,
     queryFn: ({ signal }) => api.get<Place[]>("/places/available-for-ban", { signal }),
     staleTime: 60 * 1000,
+  });
+}
+
+export function useIncomingShareOffers(placeId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: placeSettingsQueryKeys.incomingShares(placeId),
+    queryFn: ({ signal }) =>
+      api.get<import("@/lib/types").IncomingShareOffer[]>(
+        `/places/${placeId}/settings/incoming-shares`,
+        { signal },
+      ),
+    enabled: (options?.enabled ?? true) && !!placeId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAcceptPersonShare(placeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sourcePlaceId: string) =>
+      api.post(`/places/${placeId}/settings/accept-share/${sourcePlaceId}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.incomingShares(placeId) });
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.settings(placeId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
+      toast({
+        title: "Share accepted",
+        description: "You now see persons shared by this venue.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Could not accept share",
+        description: error?.message || "Failed to accept the share offer",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useRevokePersonShare(placeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sourcePlaceId: string) =>
+      api.delete(`/places/${placeId}/settings/accept-share/${sourcePlaceId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.incomingShares(placeId) });
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.settings(placeId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
+      toast({
+        title: "Share revoked",
+        description: "You no longer see persons shared by this venue.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Could not revoke share",
+        description: error?.message || "Failed to revoke the share",
+        variant: "destructive",
+      });
+    },
   });
 }
 

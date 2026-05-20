@@ -5,15 +5,15 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { RouteGuard } from "@/components/auth/route-guard";
 import { useAuth } from "@/hooks/use-auth";
-import { usePlaceSettings, useUpdatePlaceSettings, usePlaces, useMigratePersonAccess } from "@/hooks/queries";
+import { usePlaceSettings, useUpdatePlaceSettings, usePlaces, useMigratePersonAccess, useIncomingShareOffers, useAcceptPersonShare, useRevokePersonShare } from "@/hooks/queries";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, Settings, Users, Ban, Save, Database, Loader2 } from "lucide-react";
-import type { Place } from "@/lib/types";
+import { AlertTriangle, Settings, Users, Ban, Save, Database, Loader2, Inbox, Check, X } from "lucide-react";
+import type { Place, IncomingShareOffer } from "@/lib/types";
 
 function SettingsContent() {
   const { user, isHeadManager, isAdmin } = useAuth();
@@ -30,6 +30,13 @@ function SettingsContent() {
 
   const updateSettings = useUpdatePlaceSettings(placeId);
   const migrateAccess = useMigratePersonAccess();
+
+  // Incoming person-share offers (other venues offering to share with us).
+  const { data: incomingShares, isLoading: sharesLoading } = useIncomingShareOffers(placeId, {
+    enabled: !!placeId && (isHeadManager || isAdmin),
+  });
+  const acceptShare = useAcceptPersonShare(placeId);
+  const revokeShare = useRevokePersonShare(placeId);
 
   // Local state
   const [acceptExternalBans, setAcceptExternalBans] = useState(false);
@@ -245,6 +252,68 @@ function SettingsContent() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Incoming Share Offers */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Inbox className="h-5 w-5 text-primary" />
+                <CardTitle className="text-lg">Incoming Share Offers</CardTitle>
+              </div>
+              <CardDescription>
+                Other venues that offered to share their person database with you.
+                Accept to start seeing their persons; revoke to stop.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {sharesLoading && (
+                <p className="text-sm text-muted-foreground py-2 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading offers...
+                </p>
+              )}
+              {!sharesLoading && (incomingShares?.length ?? 0) === 0 && (
+                <p className="text-sm text-muted-foreground py-2">
+                  No venues have offered to share their persons with you.
+                </p>
+              )}
+              {!sharesLoading &&
+                (incomingShares ?? []).map((offer: IncomingShareOffer) => (
+                  <div
+                    key={offer.sourcePlaceId}
+                    className="flex items-center justify-between gap-3 border rounded-md p-3 bg-muted/30"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {offer.sourcePlaceName || offer.sourcePlaceId}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {offer.accepted ? "Accepted — you see their persons" : "Pending your approval"}
+                      </span>
+                    </div>
+                    {offer.accepted ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        disabled={revokeShare.isPending}
+                        onClick={() => revokeShare.mutate(offer.sourcePlaceId)}
+                      >
+                        <X className="h-4 w-4" /> Revoke
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="gap-1"
+                        disabled={acceptShare.isPending}
+                        onClick={() => acceptShare.mutate(offer.sourcePlaceId)}
+                      >
+                        <Check className="h-4 w-4" /> Accept
+                      </Button>
+                    )}
+                  </div>
+                ))}
             </CardContent>
           </Card>
 
