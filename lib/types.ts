@@ -218,6 +218,7 @@ export interface PlaceSettings {
   acceptBansFromPlaceIds: string[];
   sharePersons: boolean;
   sharePersonsWithPlaceIds: string[];
+  acceptPersonsFromPlaceIds: string[];
   updatedAt: string;
 }
 
@@ -226,6 +227,15 @@ export interface UpdatePlaceSettingsDto {
   acceptBansFromPlaceIds?: string[];
   sharePersons?: boolean;
   sharePersonsWithPlaceIds?: string[];
+  acceptPersonsFromPlaceIds?: string[];
+}
+
+// Incoming person-share offer (another venue offered to share its persons
+// with us); `accepted` reflects whether we have opted in.
+export interface IncomingShareOffer {
+  sourcePlaceId: string;
+  sourcePlaceName: string | null;
+  accepted: boolean;
 }
 
 export type ImportBansFilter = 'active_only' | 'all';
@@ -234,6 +244,7 @@ export interface ImportBansDto {
   sourcePlaceId: string;
   targetPlaceId: string;
   filter?: ImportBansFilter;
+  allowCrossOrg?: boolean;
 }
 
 export interface ImportBansResult {

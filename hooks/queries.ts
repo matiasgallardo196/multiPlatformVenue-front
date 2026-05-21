@@ -52,6 +52,9 @@ export function usePersons(
     sortBy?: "newest-first" | "oldest-first" | "name-asc" | "name-desc";
     page?: number;
     limit?: number;
+    banStatus?: "all" | "active" | "pending" | "expired" | "none";
+    accessType?: "all" | "owner" | "shared";
+    ownerPlaceId?: string;
   },
   options?: { enabled?: boolean; staleTimeMs?: number },
 ) {
@@ -63,7 +66,7 @@ export function usePersons(
     queryKey,
     queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
-      
+
       if (filters?.gender && filters.gender !== "all") {
         if (filters.gender === null) {
           params.append("gender", "null");
@@ -71,15 +74,35 @@ export function usePersons(
           params.append("gender", filters.gender);
         }
       }
-      
+
       if (filters?.search && filters.search.trim()) {
         params.append("search", filters.search.trim());
       }
-      
+
       if (filters?.sortBy) {
         params.append("sortBy", filters.sortBy);
       }
-      
+
+      if (
+        filters?.banStatus &&
+        filters.banStatus !== "all" &&
+        ["active", "pending", "expired", "none"].includes(filters.banStatus)
+      ) {
+        params.append("banStatus", filters.banStatus);
+      }
+
+      if (
+        filters?.accessType &&
+        filters.accessType !== "all" &&
+        (filters.accessType === "owner" || filters.accessType === "shared")
+      ) {
+        params.append("accessType", filters.accessType);
+      }
+
+      if (filters?.ownerPlaceId && filters.ownerPlaceId.trim()) {
+        params.append("ownerPlaceId", filters.ownerPlaceId.trim());
+      }
+
       if (typeof filters?.page === "number" && filters.page > 0) {
         params.append("page", String(filters.page));
       }
@@ -1083,6 +1106,8 @@ import type { PlaceSettings, UpdatePlaceSettingsDto } from "@/lib/types";
 export const placeSettingsQueryKeys = {
   settings: (placeId: string) => ["places", placeId, "settings"] as const,
   availableVenues: ["places", "available-for-ban"] as const,
+  incomingShares: (placeId: string) =>
+    ["places", placeId, "settings", "incoming-shares"] as const,
 };
 
 export function usePlaceSettings(placeId: string, options?: { enabled?: boolean }) {
@@ -1122,6 +1147,67 @@ export function useAvailableVenuesForBan() {
     queryKey: placeSettingsQueryKeys.availableVenues,
     queryFn: ({ signal }) => api.get<Place[]>("/places/available-for-ban", { signal }),
     staleTime: 60 * 1000,
+  });
+}
+
+export function useIncomingShareOffers(placeId: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: placeSettingsQueryKeys.incomingShares(placeId),
+    queryFn: ({ signal }) =>
+      api.get<import("@/lib/types").IncomingShareOffer[]>(
+        `/places/${placeId}/settings/incoming-shares`,
+        { signal },
+      ),
+    enabled: (options?.enabled ?? true) && !!placeId,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAcceptPersonShare(placeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sourcePlaceId: string) =>
+      api.post(`/places/${placeId}/settings/accept-share/${sourcePlaceId}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.incomingShares(placeId) });
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.settings(placeId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
+      toast({
+        title: "Share accepted",
+        description: "You now see persons shared by this venue.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Could not accept share",
+        description: error?.message || "Failed to accept the share offer",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useRevokePersonShare(placeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sourcePlaceId: string) =>
+      api.delete(`/places/${placeId}/settings/accept-share/${sourcePlaceId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.incomingShares(placeId) });
+      queryClient.invalidateQueries({ queryKey: placeSettingsQueryKeys.settings(placeId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.persons });
+      toast({
+        title: "Share revoked",
+        description: "You no longer see persons shared by this venue.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Could not revoke share",
+        description: error?.message || "Failed to revoke the share",
+        variant: "destructive",
+      });
+    },
   });
 }
 
